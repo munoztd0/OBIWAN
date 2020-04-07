@@ -8,7 +8,7 @@ Folders are organised in BIDS format (see in each folder for further info)
 
 Please note that not these scripts have been modified for reproducibility purpose (e.g. code flexibility) and are then not exactly the same used by us. The scripts should work as it is but some of them might need to be adapted.
 
-Codes and data from the REWOD project
+Codes and data from the OBIWAN project
 David Muñoz Tord
 
 This folder contains all codes and data necessary to reproduce the behavioral and MRI analyses
