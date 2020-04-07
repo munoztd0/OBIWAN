@@ -1,0 +1,52 @@
+1. Software to download
+	PyMVPA http://www.pymvpa.org/index.html
+	Install in python 2.7 to be compatible with my code
+	PyMVPAw -> Helpful wrappers and help functions for PyMVPAhttps://github.com/rystoli/PyMVPAw. 
+	#David#BUT NEED TO INSTALL nltogls == 0.3.10 or else it won't work ## 
+2. Run glm_scripts/beta_everytrial_pav.m 
+	This uses SPM to create a beta for every trial in every voxel. 
+	These betas are then transformed to t-stats and used as examples in MVPA. 
+	Other non value related events are modeled to regress out things related to motor response, stimulus onset, etc. 
+3. Run glm_scripts/create_examples_tstats_pav.m
+	Section 1 of this script creates a contrast and t-stat for every trial 
+	Section 2 concatenates these t maps into a 4D volume that can be used for MVPA
+	MVPA data structure will be a matrix with dimensions: num trials x num voxels
+4a. Classification
+	Run mvpa_main
+	Implements a full brain searchlight w/ SVM as the classifier 	
+	Modify class_dict to customize how trials should be labeled by classifier 
+	Cross validates by run ##(here we did by mini-runs)
+	##Default is to exclude 3rd run, change this with runs2use variable
+4b. MVPA Statistics
+Option 1 - quick but not optimal
+	Conduct a typical 2nd level group analysis/t-test with SPM 
+	using accuracy minus chance maps for every subject (H0: accuracy=50%)
+Option 2 - nonparametric permutation tests
+	There’s much debate on how to do this but we will probably be safe with the procedure in this paper
+	https://www.sciencedirect.com/science/article/pii/S1053811912009810?via%3Dihub#bb0035
+	-Run mvpa_perms_1stlevel for each subject
+	-100 permutations per subject
+	-Transform accuracy map and permutation map to standard space 
+	-Run mvpa_perms_2ndlevel
+5a. Representational Similarity Analysis (RSA)
+	Run rsa_main
+	Implements a full brain searchlight correlating voxel patterns to a model dissimilarity matrix (DSM)
+	Default implement is finding correlations to a CS+/CS- representation
+	Modify class_dict to customize how trials should be labeled by model DSM
+	Partials out the correlation due to between run variance (this reduces confounds)
+	##Default is to exclude 3rd run, change this with runs2use variable
+	Change plot_dsm to True to visualize what the model DSMs look like
+5b.	RSA Statistics
+Option 1 - quick but not optimal
+	Conduct a typical 2nd level group analysis/t-test with SPM 
+	using correlation maps for every subject (H0: r=0)
+Option 2 - nonparametric permutation tests
+	There’s much debate on how to do this but we will probably be safe with the procedure in this paper
+	https://www.sciencedirect.com/science/article/pii/S1053811912009810?via%3Dihub#bb0035
+	-Run rsa_perms_1stlevel for each subject
+	-100 permutations per subject
+	-Transform accuracy map and permutation map to standard space 
+	-Run mvpa_perms_2ndlevel
+
+
+

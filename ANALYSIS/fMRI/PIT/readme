@@ -1,0 +1,21 @@
+ReadMe PIT:
+
+
+GLM-01: Control model, no modulators & durations = 0 (stick functions)
+--> 1 cotrol contrast (Grips)
+
+GLM-02: Main model, no modulators & durations = 1
+--> 4 basic contrasts (CSp-CSm, CSp-Base,  CSp-CSm&Base, CSm-Base)
+
+GLM-03: Model with 1st level modulators & durations = 1 & mean centered & orth = 0
+-->  8 contrasts (4 basic + 4 modulated contrasts)
+
+GLM-04: Model with 2nd level covariates & durations = 1 & rank norm by condition
+-->  8 contrasts (4 basic + 4 modulated contrasts)
+
+GLM-05: same as GLM-04 but without any mask
+-->  8 contrasts (4 basic + 4 modulated contrasts)
+
+GLM-06: CONN file for connectivity analysis (ROI-to-ROI and Seed-to-Voxel)
+
+

@@ -1,0 +1,53 @@
+ReadMe HEDONIC
+
+GLM-01: Control model, no modulators & durations = 0 (stick functions)
+--> 1 control contrast (odor presence)
+
+GLM-02: Main model, no modulators & durations = 1
+--> 5 basic contrasts (Reward-Control, Reward-Neutral, Odor-NoOdor, Odor presence, Reward-NoReward)
+
+GLM-03: Control model for odor.all modulated by intenisty and liking as 1st level modulators &  durations = 1 & mean centered & orth =0
+->  2 contrast odor*lik + odor*int
+
+GLM-04: Model with 2nd level covariates & durations = 1 & mean centered by condition
+-> 10 contrasts (5 basics + 5 modulated contrasts)
+
+GLM-05: Conjunction analysis PIT_CS+>CS- GLM_04 _eff > HED_lik GLM_03
+-> 1 contrast
+
+GLM-06: dummy model for connectivity analysis (onsets in SCANS instead of SECS)
+-> 0 contrast
+
+GLM-07: CONN file for connectivity analysis (ROI-to-ROI and Seed-to-Voxel)
+
+GLM-08: model, no modulators BUT separated in 3 mini block of by order of presentation & durations = 1
+--> 12 = 4 basic contrasts (Reward-Control, Reward-Neutral, Odor-NoOdor,  Reward-NoReward) * 3 order
+
+GLM-09: model, no modulators BUT MEDIAN SPLIT & durations = 1, (9 trials per condition)
+--> 7 = 3 basic contrasts (Reward-Control, Reward-Neutral, Reward-NoReward) * 2 (Low VS High) +  Reward1-NoReward1and2
+
+GLM-10: model, no modulators BUT THIRD SPLIT & durations = 1, (6 trials per condition)
+--> 8 = 4 basic contrasts (Reward-Control, Reward-Neutral, Odor-NoOdor, Reward-NoReward) * 2 (Low VS High)
+
+GLM-11: model for odor.all modulated by intenisty and liking as 1st level modulators BUT ALSO MEDIAN SPLITTED &  durations = 1 & mean centered & orth =0
+->  4 = 2 contrast (odor*lik + odor*int) * 2 (Low VS High)
+
+GLM-12: model, no modulators BUT separated in 3 mini block of by order of presentation BUT ALSO MEDIAN SPLITTED &  durations = 1 & mean centered & orth =0
+~model08*model09
+->  4 = 2 contrast (odor*lik + odor*int) * 2 (Low VS High)
+
+GLM-13: variations of GLM-11 but cut in 3
+
+GLM-14: same than GLM-02 but with mini-block regressor
+
+GLM-15: Model for odor (neutral + reward) modulated by intensity and liking as 1st level modulators &  durations = 1 & mean centered & orth =0
+->  2 contrast odor*lik + odor*int
+
+GLM-16: Model for neutral, reward, control modulated by EMG activity in the corrugator as 1st level modulators &  durations = 1 & mean centered & orth =0
+->  2 contrast reward-neutral + reward*EMG-neutral*EMG  (EMG is reversed*-1 to show a positive correlation)
+
+GLM-17: Model for odor (neutral + reward) modulated by EMG, intensity and liking as 1st level modulators &  durations = 1 & mean centered & orth =0
+->  3 contrast odor*EMG + odor*lik + odor*int (EMG is reversed*-1 to show a positive correlation)
+
+GLM-18: Model with 2nd level covariates for EMG & durations = 1 & mean centered by condition
+-> 1 contrast reward-neutral X EMG (EMG is reversed*-1 to show a positive correlation)
