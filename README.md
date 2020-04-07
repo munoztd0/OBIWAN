@@ -1,8 +1,8 @@
-These are the the codes used for preprocessing and analyzing behavioral and functional MRI data used for the following two studies:
+These are the the codes used for preprocessing and analyzing behavioral and functional MRI data used for the following study:
 
 Flow chart of the preprocessing pipeline:
 
-![preproc](https://github.com/evapool/REWOD/blob/master/PREPROC/Figure_preproc.png)
+#![preproc](https://github.com/evapool/REWOD/blob/master/PREPROC/Figure_preproc.png)
 
 
 Folders are organised in BIDS format (see in each folder for further info)
