@@ -2,8 +2,6 @@ These are the the codes used for preprocessing and analyzing behavioral and func
 
 Flow chart of the preprocessing pipeline:
 
-#![preproc](https://github.com/evapool/REWOD/blob/master/PREPROC/Figure_preproc.png)
-
 
 Folders are organised in BIDS format (see in each folder for further info)
 
