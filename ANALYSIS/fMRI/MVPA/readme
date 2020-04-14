@@ -2,7 +2,7 @@
 	PyMVPA http://www.pymvpa.org/index.html
 	Install in python 2.7 to be compatible with my code
 	PyMVPAw -> Helpful wrappers and help functions for PyMVPAhttps://github.com/rystoli/PyMVPAw. 
-	#David#BUT NEED TO INSTALL nltogls == 0.3.10 or else it won't work ## 
+	#David#BUT NEED TO INSTALL nltools == 0.3.10 or else it won't work ## 
 2. Run glm_scripts/beta_everytrial_pav.m 
 	This uses SPM to create a beta for every trial in every voxel. 
 	These betas are then transformed to t-stats and used as examples in MVPA. 
