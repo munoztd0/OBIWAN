@@ -2,14 +2,15 @@
 % BUILD DATABASE FOR PAVLOVIAN LEARNING
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % last modified by David on August 2020
+% added ACCuracy and rescued 101 and 103
 
 
 dbstop if error
 clear all
 
-analysis_name = 'REWOD_PAVCOND_ses_first';
-task          = 'pavconditioning';
-taskshort          = 'PAV';
+analysis_name = 'OBIWAN_PAV';
+task          = 'pavlovianlearning';
+
 %% DEFINE WHAT WE WANT TO DO
 
 save_Rdatabase = 1; % leave 1 when saving all subjects
@@ -18,249 +19,312 @@ save_Rdatabase = 1; % leave 1 when saving all subjects
 
 cd ~
 home = pwd;
-homedir = [home '/REWOD/'];
+homedir = [home '/OBIWAN/'];
 
 
-R_dir        = fullfile(homedir,'DERIVATIVES/BEHAV/PAV');
+analysis_dir = fullfile(homedir, 'ANALYSIS/BEHAV/PIT');
+R_dir        = fullfile(homedir,'DERIVATIVES/BEHAV');
 % add tools
 addpath (genpath(fullfile(homedir, 'CODE/ANALYSIS/BEHAV/matlab_functions')));
 
 %% DEFINE POPULATION
 
-subj    = {'01';'02';'03';'04';'05';'06';'07';'09';'10';'11';'12';'13';'14';'15';'16';'17';'18';'20';'21';'22';'23';'24';'25';'26'};    % number 01 has not instru
+control = [homedir 'SOURCEDATA/behav/control*'];
+obese = [homedir 'SOURCEDATA/behav/obese*'];
 
-session = {'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'; 'one'};
+controlX = dir(control);
+obeseX = dir(obese);
 
-ses = {'ses-first'};
+subj = vertcat(controlX, obeseX);
 
-for i = 1:length(subj)
+session = {'second'; 'third'};
+% 
+% subj    = {'01';'02';'03';'04';'05';'06';'07';'09';'10';'11';'12';'13';'14';'15';'16';'17';'18';'20';'21';'22';'23';'24';'25';'26'};    % subject ID excluding 8 & 19
+% session = {'two';'two';'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'};
+% 
+% ses = {'ses-second'};
+k = 0; %counter for database index
+
+for j = 1:length(session)
+    
+    for i = 1:length(subj)
         
-    subjO=subj(i,1);
-    subjX=char(subjO);
-    %conditionX=char(group(i,1))
-    sessionX  =char(ses);   
-    
-    disp (['****** PARTICIPANT: ' subjX ' *******']);
-   
-    %load behavioral file
-    behavior_dir = fullfile(homedir, 'SOURCEDATA', 'behav', subjX, [sessionX '_task-' task]);
-            cd (behavior_dir)
-            load (['conditioning' num2str(subjX) ])
-   
-    ntrials = size(responseTimes,1) +1;
-        
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%  get onsets  
-  
-    %ONSETS.action  = nan;
-    
-    %ONSETS.CS = data.Onsets.StageTwo;
-    %cmpt = 0;
-  
+        %subjX=subj(i,1);
+        subjX = subj(i).name;
+        subjX=char(subjX);
+        group = subjX(1:end-3);
+        sub = subjX(end-2:end);
+        %conditionX=char(group(i,1));
+        sessionX=char(session(j)); 
+        sess=['ses-' sessionX];
 
-    
-    ONSETS.dummy =     zeros(1,ntrials);
-    DURATIONS.dummy   = zeros(1,ntrials);
 
-    %ONSETS.reward  = data.Onsets.StageNine;
-    %ONSETS.swallow = data.Onsets.StageThirten;
-    %ONSETS.ITI     = data.Onsets.StageThirten;
-    %ONSETS.baseline = data.Onsets.BaselineStart;
-    
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%  get durations
-    
-    %DURATIONS.action  = nan;
-   
-    %DURATIONS.CS = data.Durations.TrialStageTwo;
-    %cmpt = 0;
-    %for ii = 1:length(data.Durations.TrialStageSix) % here take onther variable
-        %if data.Durations.TrialStageSix(ii) < 0.9999
-            %cmpt = cmpt+1;
-            %DURATIONS.action(cmpt,1) = data.Durations.TrialStageSix(ii);
-        %end
-    %end
-    
-    %DURATIONS.signal   = data.Durations.TrialStageSix;
-    %DURATIONS.reward   = data.Durations.TrialStageNine + data.Durations.TrialStageEleven;
-    %DURATIONS.swallow  = data.Durations.TrialStageThirten;
-    %DURATIONS.ITI      = data.Durations.TrialStageThirten;
-    %DURATIONS.baseline = data.Durations.ShowBaseline;
-    
-     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%  create task  
-    pav = ['PavlovianTask'];
-    TASK = repmat({pav}, ntrials, 1);
-    TASK(end,1) = {'ManipulationCheck'};
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% add baseline row
-    dataPav.csNames(end+1,1) = {'Baseline'};
-    dataPav.rounds(end+1,1) = [NaN];
-    responseTimes(end+1,1) = [NaN];
-       
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%  get condition name right
-    A =strcmp(dataPav.csNames,'CSplus');
-    B = strcmp(dataPav.csNames,'CSminu');
-    dataPav.csNames2 = categorical(zeros(1,ntrials)'+ 2*A + B);
-    dataPav.csNames2 = mergecats(dataPav.csNames2,'2','CSplus');
-    dataPav.csNames2 = mergecats(dataPav.csNames2,'1','CSminus');
-    dataPav.csNames2 = cellstr(mergecats(dataPav.csNames2,'0','Baseline')); 
-    CONDITIONS = dataPav.csNames2;
-    ROUNDS = dataPav.rounds;
-    TRIAL = [1:ntrials]';
-    
-  
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% get BEHAVIOR
-    BEHAVIOR.RT  = responseTimes;
-    
-    %%%% change Response into 0 and 1
-    D =strcmp(keysPressed,'a');
-    keysPressed2 = zeros(1,ntrials-1)'+ D; 
-    keysPressed2(end+1,1) = [NaN];
-    BEHAVIOR.ACC = keysPressed2;
-    
-    %for ii = 1:length(DURATIONS.action)
-        %BEHAVIOR.RT(ii) = DURATIONS.action(ii);
-        %BEHAVIOR.ACC(ii) = nan; % to be added
-    %end
-    
-    %%%%%get ratings
-    A =strcmp(CONDITIONS,'CSplus');
-    B = strcmp(CONDITIONS,'CSminus');
-    C = zeros(1,ntrials)'+ 2*A + B;
-      for r = 1:ntrials
-        if C(r,1) == 2
-            C(r,1) =  PavCheck.ratings(strcmp('CSplus.jpg',PavCheck.imagesName));
-        elseif C(r,1) == 1
-            C(r,1) = PavCheck.ratings(strcmp('CSminu.jpg',PavCheck.imagesName));
+
+        %load behavioral file
+        if strcmp(sessionX, 'third')
+            
+%             %missing trials
+%             if strcmp(subjX(end-2:end), '214')  
+%                 continue
+%             end
+%             
+            %missing PAV sess
+            if  strcmp(subjX(end-2:end), '212')  || strcmp(subjX(end-2:end), '245') || strcmp(subjX(end-2:end), '249')
+                continue
+            end
+           
+
+            behavior_dir = fullfile(homedir,'SOURCEDATA/behav/', num2str(subjX), sess);
+            if exist(behavior_dir, 'dir')
+                cd (behavior_dir)
+                load (['conditioning_2' subjX(end-2:end) ])
+            else 
+                continue
+            end
         else
-            C(r,1) = PavCheck.ratings(strcmp('Baseli.jpg',PavCheck.imagesName));
+            
+            %old structure
+            if strcmp(subjX(end-2:end), '103') 
+                continue
+            end
+
+            %missing trials
+            if strcmp(subjX(end-2:end), '212') %|| strcmp(subjX(end-2:end), '218') %|| strcmp(subjX(end-2:end), '234')
+                continue
+            end
+% 
+%             %missing PAV sess
+%             if strcmp(subjX(end-2:end), '212') || strcmp(subjX(end-2:end), '224')
+%                 continue
+%             end
+%             
+            behavior_dir = fullfile(homedir,'SOURCEDATA/behav/', num2str(subjX), sess);
+            if exist(behavior_dir, 'dir')
+                cd (behavior_dir)
+                load (['conditioning_' subjX(end-2:end) ])
+            else 
+                continue
+            end
         end
-      end
-    BEHAVIOR.ratings = C;
+        
+        
+        disp (['****** PARTICIPANT: ' subjX ' **** session ' sessionX ' ****' ]);
+        
+        k = k +1;
+        
+        ntrials = length(data.SwallowPresentation);  %+1;
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%  get onsets  
+
+        ONSETS.action  = nan;
+
+        ONSETS.CS = data.Onsets.StageTwo;
+        cmpt = 0;
+
+        for ii = 1:ntrials % here take other variable length(data.Durations.TrialStageSix)
+            if data.Durations.TrialStageSix(ii) < 0.9999
+                cmpt = cmpt+1;
+                ONSETS.action(cmpt,1) = data.Onsets.StageSix(ii) + data.Durations.TrialStageSix(ii);
+            end
+        end
+
+        ONSETS.signal = data.Onsets.StageSix;
+        ONSETS.reward  = data.Onsets.StageNine;
+        ONSETS.swallow = data.Onsets.StageThirten;
+        ONSETS.ITI     = data.Onsets.StageThirten;
+        ONSETS.baseline = data.Onsets.BaselineStart;
+
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%  get durations
+
+        DURATIONS.action  = nan;
+
+        DURATIONS.CS = data.Durations.TrialStageTwo;
+        cmpt = 0;
+        for ii = 1:length(data.Durations.TrialStageSix) % here take onther variable
+            if data.Durations.TrialStageSix(ii) < 0.9999
+                cmpt = cmpt+1;
+                DURATIONS.action(cmpt,1) = data.Durations.TrialStageSix(ii);
+            end
+        end
+
+        DURATIONS.signal   = data.Durations.TrialStageSix;
+        DURATIONS.reward   = data.Durations.TrialStageNine + data.Durations.TrialStageEleven;
+        DURATIONS.swallow  = data.Durations.TrialStageThirten;
+        DURATIONS.ITI      = data.Durations.TrialStageThirten;
+        DURATIONS.baseline = data.Durations.ShowBaseline;
+
     
-    % item by condition
-    itemxc          = nan(ntrials,1);
-    count_CSp       = 0;
-    count_CSm       = 0;
-    count_B       = 0;
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%  get condition name
+        %rescuing data from old structure 
+        if strcmp(subjX(end-2:end), '101') 
+            data.rounds = data.rounds(1:ntrials);
+            CONDITIONS.CS =  data.csNames(1:ntrials);
+            
+            for p = 1:ntrials
+                if strcmp(CONDITIONS.CS{p}, 'CSminu')
+                    CONDITIONS.CS{p} = 'CSminus';
+                end
+            end
+            
+            PavCheck.imagesCond = PavCheck.imagesName;
+            for o = 1:3
+                if strcmp(PavCheck.imagesCond{o}, 'Baseli.jpg')
+                    PavCheck.imagesCond{o} = 'BL';
+                elseif strcmp(PavCheck.imagesCond{o}, 'CSminu.jpg')
+                    PavCheck.imagesCond{o} = 'CSminus';
+                elseif strcmp(PavCheck.imagesCond{o}, 'CSplus.jpg')
+                    PavCheck.imagesCond{o} = 'CSplus';
+                end
+            end
+        else
+
+            CONDITIONS.CS =  data.PavCond(~cellfun('isempty',data.csNames));
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% get Behavior
+        BEHAVIOR.RT  = nan(ntrials,1);
+        BEHAVIOR.ACC = nan(ntrials,1);
+        for ii = 1:length(DURATIONS.action)
+            BEHAVIOR.RT(ii) = DURATIONS.action(ii);
+            if strcmp(keysPressed{ii},'3#') 
+                BEHAVIOR.ACC(ii) = 1; % to be added
+            else
+                BEHAVIOR.ACC(ii) = 0; % to be added
+            end
+        end
+        
+        
+
+        BEHAVIOR.liking.CSp = PavCheck.ratings(strcmp('CSplus',PavCheck.imagesCond)); 
+        BEHAVIOR.liking.CSm = PavCheck.ratings(strcmp('CSminus',PavCheck.imagesCond)); 
+        BEHAVIOR.liking.b   = PavCheck.ratings(strcmp('BL',PavCheck.imagesCond)); 
+
+        % item by condition
+        itemxc          = nan(ntrials,1);
+        count_CSp       = 0;
+        count_CSm       = 0;
+        Behavior.liking = nan(ntrials,1);
+
+
+        for ii = 1:length(CONDITIONS.CS)
+
+            if strcmp ('CSplus', CONDITIONS.CS(ii))
+                count_CSp            =  count_CSp + 1;
+                itemxc(ii)           = count_CSp;
+                Behavior.liking (ii) = BEHAVIOR.liking.CSp;
+            elseif strcmp ('CSminus', CONDITIONS.CS(ii))
+                count_CSm            = count_CSm + 1;
+                itemxc(ii)           = count_CSm;
+                Behavior.liking(ii) = BEHAVIOR.liking.CSm;
+            end
+
+        end
+        
+        
+        ROUNDS = data.rounds;
+
+
+       
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% save mat file
+        func_dir = fullfile (homedir, 'DERIVATIVES', 'PREPROC', ['sub-' num2str(subjX)], ['ses-' sessionX], 'func');
+        
+        if ~exist(func_dir, 'dir')
+            mkdir(func_dir)
+        end
+        
+        cd (func_dir)
+        matfile_name = ['sub-' num2str(subjX)  '_ses-' sessionX  '_task-' task '_events.mat'];
+        save(matfile_name, 'ONSETS', 'DURATIONS',  'BEHAVIOR', 'CONDITIONS', 'ROUNDS')
+
+
+       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% save tsv file according to BIDS format
+        phase = {'CS';'signal';'reward';'swallow';'baseline'};
+        nevents = ntrials*length(phase);
+
+        % put everything in the event structure
+        events.onsets       = zeros(nevents,1);
+        events.durations    = zeros(nevents,1);
+        events.phase        = cell (nevents,1);
+        events.CSname       = cell (nevents,1);
+        events.reactionTime = nan (nevents,1);
+        events.responseACC  = nan (nevents,1);
+        events.rounds       = zeros(nevents,1);
+
+        cmpt = 0;
+        for ii = 1:ntrials
+
+            for iii = 1:length(phase)
+
+                cmpt = cmpt+1;
+                phaseX = char(phase(iii));
+
+                events.onsets(cmpt)     = ONSETS.(phaseX) (ii);
+                events.durations(cmpt)  = DURATIONS.(phaseX) (ii);
+                events.phase(cmpt)      = phase (iii);
+                events.CSname(cmpt)     = CONDITIONS.CS(ii);
+                events.reactionTime(cmpt) = BEHAVIOR.RT(ii);
+                events.responseACC(cmpt) = BEHAVIOR.ACC(ii);
+                events.rounds(cmpt)   = ROUNDS(ii);
+
+            end
+
+        end
+
+        events.onsets       = num2cell(events.onsets);
+        events.durations    = num2cell(events.durations);
+        events.reactionTime = num2cell(events.reactionTime);
+        events.responseACC  = num2cell(events.responseACC);
+        events.rounds  = num2cell(events.rounds);
+        eventfile = [events.onsets, events.durations, events.phase,...
+            events.CSname, events.reactionTime,events.responseACC, events.rounds];
+
+
+        % open data base
+        eventfile_name = ['sub-' num2str(subjX) '_ses-' sessionX '_task-' task '_run-01_events.tsv'];
+        fid = fopen(eventfile_name,'wt');
+
+        % print heater
+        fprintf (fid, '%s   %s   %s   %s   %s   %s   %s\n',...
+            'onset', 'duration', 'trialPhase',...
+            'CSname','RT', 'ACC', 'Rounds');
+
+        % print data
+        formatSpec = '%d   %d   %s   %s  %d  %d  %d\n';
+        [nrows,ncols] = size(eventfile);
+        for row = 1:nrows
+            fprintf(fid,formatSpec,eventfile{row,:});
+        end
+
+        fclose(fid);
+
+
      
-    for ii = 1:length(CONDITIONS)
-        
-        if strcmp ('CSplus', CONDITIONS(ii))
-            count_CSp            =  count_CSp + 1;
-            itemxc(ii)           = count_CSp;
-            %Behavior.ratings (ii) = BEHAVIOR.ratings.CSp;
-        elseif strcmp ('CSminus', CONDITIONS(ii))
-            count_CSm            = count_CSm + 1;
-            itemxc(ii)           = count_CSm;
-            %Behavior.ratings(ii) = BEHAVIOR.ratings.CSm;
-        elseif strcmp ('Baseline', CONDITIONS(ii))
-            count_CSm            = count_B + 1;
-            itemxc(ii)           = count_B;
-        end
-        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% save data for compiled database
+
+        db.id(:,k)        = cellstr(repmat(sub,ntrials, 1));
+        db.group(:,k)     = cellstr(repmat(group,ntrials, 1));
+        db.session(:,k)   = cellstr(repmat(sessionX,ntrials,1));
+        db.task(:,k)      = repmat({task},ntrials,1);
+        db.trial(:,k)     = [1:ntrials]';
+        db.condition(:,k) = CONDITIONS.CS;
+        db.itemxc(:,k)    = itemxc;
+        db.RT (:,k)       = BEHAVIOR.RT;
+        db.ACC(:,k)       = BEHAVIOR.ACC;
+        db.liking(:,k)    = Behavior.liking;
+        db.baseLiking(:,k)= BEHAVIOR.liking.b;
+        db.rounds(:,k)    = ROUNDS;
+    
     end
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% save mat file
-    func_dir = fullfile (homedir, 'DERIVATIVES', 'PREPROC', ['sub-' num2str(subjX)], 'ses-first', 'beh');
-    cd (func_dir)
-    matfile_name = ['sub-' num2str(subjX) '_ses-first' '_task-' task '_events.mat'];
-    save(matfile_name, 'ROUNDS', 'TRIAL', 'TASK' , 'BEHAVIOR', 'CONDITIONS')
-    
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% save tvs file according to BIDS format
-    %phase = {'CS';'signal';'reward';'swallow';'baseline'};
-    nevents = ntrials; %*length(phase);
-    
-    % put everything in the event structure
-    events.onsets       = zeros(nevents,1);
-    events.duration       = zeros(nevents,1);
-    events.ratings    = zeros(nevents,1);
-    events.trial    = zeros(nevents,1);
-    events.task        = cell (nevents,1);
-    events.CSname       = cell (nevents,1);
-    events.reactionTime  = zeros (nevents,1);
-    events.response  = zeros(nevents,1);
-    events.rounds       = zeros(nevents,1);
-    
-    
-    cmpt = 0;
-    for ii = 1:ntrials
-        
-        
-            
-            cmpt = cmpt+1;
-            %phaseX = char(phase(iii));
-            
-            events.trial(cmpt)     = TRIAL(ii);
-            events.ratings(cmpt)  = BEHAVIOR.ratings(ii);
-            events.task(cmpt)      = TASK (ii);
-            events.CSname(cmpt)     = CONDITIONS(ii);
-            events.reactionTime(cmpt) = BEHAVIOR.RT(ii);
-            events.response(cmpt) = BEHAVIOR.ACC(ii);
-            events.rounds(cmpt) = ROUNDS(ii);
-            
-  
-        
-    end
-    
-    events.ratings    = num2cell(events.ratings);
-    events.reactionTime = num2cell(events.reactionTime);
-    events.rounds  = num2cell(events.rounds);
-    events.response  = num2cell(events.response);
-    events.trial  = num2cell(events.trial);
-    events.onsets  = num2cell(events.onsets);
-    events.duration  = num2cell(events.duration);
-            
-    eventfile = [events.onsets, events.duration, events.trial, events.CSname, events.reactionTime, events.ratings, events.response, events.rounds];
-    
-    
-    base_dir = fullfile (homedir, ['sub-' num2str(subjX)], 'ses-first', 'beh');
-    %mkdir(base_dir)
-    cd (base_dir)
-    
-    
-    % open data base
-    eventfile_name = ['sub-' num2str(subjX) '_ses-first' '_task-' task '_events.tsv'];
-    fid = fopen(eventfile_name,'wt');
-    
-    % print header
-    fprintf (fid, '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n',...
-        'onset', 'duration','trial', 'condition','reaction_times', 'liking_ratings', 'accuracy', 'rounds');
-    
-    % print data
-    formatSpec = '%d\t%d\t%d\t%s\t%f\t%f\t%d\t%d\n';
-    [nrows,ncols] = size(eventfile);
-    for row = 1:nrows
-        fprintf(fid,formatSpec,eventfile{row,:});
-    end
-    
-    fclose(fid);
- 
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% save data for compiled database
-    
-    db.id(:,i)        = repmat(subj(i,1),ntrials, 1);
-    %db.group(:,i)     = repmat(group(i,1),ntrials, 1);
-    db.session(:,i)   = repmat(session(i,1),ntrials,1);
-    db.task(:,i)      = repmat({task},ntrials,1);
-    db.trial(:,i)     = TRIAL;
-    db.condition(:,i) = CONDITIONS;
-    db.itemxc(:,i)    = itemxc;
-    db.RT (:,i)       = BEHAVIOR.RT;
-    db.Response(:,i)    = BEHAVIOR.ACC;
-    db.ratings(:,i)    = BEHAVIOR.ratings;
-    db.rounds(:,i)     = ROUNDS;
-    
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -271,19 +335,19 @@ R.id      = db.id(:);
 R.trial   = num2cell(db.trial(:));
 
 %fixe
-%R.group     = db.group(:);
+R.group     = db.group(:);
 R.session   = db.session(:);
 R.task      = db.task(:);
 R.condition = db.condition(:);
-R.rounds    = num2cell(db.rounds(:));
 
 % mixed
 R.itemxc    = num2cell(db.itemxc(:));
+R.rounds    = num2cell(db.rounds(:));
 
 % dependent variable
 R.RT        = num2cell(db.RT(:));
-R.Response       = num2cell(db.Response(:));
-R.ratings    = num2cell(db.ratings(:));
+R.ACC       = num2cell(db.ACC(:));
+R.liking    = num2cell(db.liking(:));
 
 
 %% print the database
@@ -292,19 +356,19 @@ if save_Rdatabase
     cd (R_dir)
     
     % concatenate
-    Rdatabase = [R.task, R.id, R.session, R.trial, R.condition, R.itemxc, R.RT, R.Response, R.ratings, R.rounds];
+    Rdatabase = [R.task, R.id, R.group, R.session, R.trial,R.condition, R.itemxc, R.RT, R.ACC, R.liking, R.rounds];
     
     % open database
     fid = fopen([analysis_name '.txt'], 'wt');
     
     % print heater
-    fprintf(fid,'%s %s %s %s %s %s %s %s %s %s\n',...
-        'task','id',  ...
+    fprintf(fid,'%s   %s   %s   %s   %s   %s   %s   %s   %s   %s   %s\n',...
+        'task','id', 'group', ...
         'session','trial', 'condition',...
-        'trialxcondition','RT', 'accuracy', 'liking_ratings', 'rounds');
+        'trialxcondition','RT', 'ACC', 'liking', 'rounds');
     
     % print data
-    formatSpec ='%s %s %s %d %s %d %f %d %f %d\n';
+    formatSpec ='%s   %s   %s   %s   %d    %s   %d   %d   %d   %d   %d\n';
     [nrows,~] = size(Rdatabase);
     for row = 1:nrows
         fprintf(fid,formatSpec,Rdatabase{row,:});
@@ -313,6 +377,7 @@ if save_Rdatabase
     fclose(fid);
     
 end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %% CREATE FIGURE

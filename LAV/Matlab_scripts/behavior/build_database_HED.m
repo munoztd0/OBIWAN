@@ -18,7 +18,9 @@ task          = 'hedonicreactivity';
 save_Rdatabase = 0; % leave 1 when saving all subjects
 
 %% DEFINE PATH
-
+%cd ~
+%home = pwd;
+%homedir = [home '/OBIWAN/'];
 home = '/home/cisa/mountpoint';
 %home = '/home/cisa/mountpoint/OBIWAN';
 %home = '/Users/lavinia/mountpoint';

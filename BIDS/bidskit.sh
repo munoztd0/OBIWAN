@@ -1,10 +1,10 @@
 #!/bin/bash
 #instal bidskit via Docker
-home=$(eval echo ~$user)
+home=$(eval echo ~$user)/OBIWAN
 
 #for subj in 01 , #02 03 04 05 06 07 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
   #do
-docker run -it -v ${home}/REWOD/SOURCEDATA/brain/ jmtyszka/bidskit -d ${home}/REWOD
+docker run -it -v ${home}/SOURCEDATA/brain/ jmtyszka/bidskit -d ${home}
 
 #biskit will anonymize the dataset
 

@@ -148,7 +148,7 @@ for i = 1:length(subj)
     save(matfile_name, 'ONSETS', 'DURATIONS',  'BEHAVIOR', 'CONDITIONS')
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% save tvs file according to BIDS format
+    %%% save tsv file according to BIDS format
     phase = {'CS';'signal';'reward';'swallow';'baseline'};
     nevents = ntrials*length(phase);
     

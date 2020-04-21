@@ -8,7 +8,7 @@ if(!require(pacman)) {
 }
 pacman::p_load(car, lme4, lmerTest, pbkrtest, ggplot2, dplyr, plyr, tidyr, multcomp, mvoutlier, HH, doBy, psych, pastecs, reshape, reshape2, 
                jtools, effects, compute.es, DescTools, MBESS, afex, ez, metafor, influence.ME)
-
+#nfluence.ME,lmerTest, lme4, MBESS, afex, car, ggplot2, dplyr, plyr, tidyr, reshape, Hmisc, Rmisc,  ggpubr, gridExtra, plotrix, lsmeans, BayesFactor)
 
 #SETUP
 

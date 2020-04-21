@@ -10,7 +10,7 @@
 dbstop if error
 clear all
 
-analysis_name = 'REWOD_HEDONIC_ses_second';
+analysis_name = 'OBIWAN_HEDONIC';
 task          = 'hedonic';
 %% DEFINE WHAT WE WANT TO DO
 
@@ -20,237 +20,288 @@ save_Rdatabase = 1; % leave 1 when saving all subjects
 
 cd ~
 home = pwd;
-homedir = [home '/REWOD/'];
+homedir = [home '/OBIWAN/'];
 
 
-analysis_dir = fullfile(homedir, 'ANALYSIS/BEHAV/build_database');
+analysis_dir = fullfile(homedir, 'ANALYSIS/BEHAV/HED');
 R_dir        = fullfile(homedir,'DERIVATIVES/BEHAV');
 % add tools
-addpath (genpath(fullfile(homedir, 'CODE/ANALYSIS/BEHAV/my_tools')));
+addpath (genpath(fullfile(homedir, 'CODE/ANALYSIS/BEHAV/matlab_functions')));
 
 %% DEFINE POPULATION
 
-subj    = {'01'; '02';'03';'04';'05';'06';'07';'09';'10';'11';'12';'13';'14';'15';'16';'17';'18';'20';'21';'22';'23';'24';'25';'26'};    % outliers and removed ?? subject ID excluding 8 & 1
-session = {'two';'two';'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'};
+control = [homedir '/SOURCEDATA/behav/control*'];
+obese = [homedir '/SOURCEDATA/behav/obese*'];
 
-ses = {'ses-second'};
+controlX = dir(control);
+obeseX = dir(obese);
+
+subj = vertcat(controlX, obeseX);
+
+session = {'second'; 'third'};
 
 
-for i = 1:length(subj)
+%subj    = {'101'};     % subject ID
+%group   = {'control'}; % control or obsese
+%session = {'second'};
+
+k = 0; %counter for database index
+
+for j = 1:length(session)
+    
+    for i = 1:length(subj)
+
+        %subjX=subj(i,1);
+        subjX = subj(i).name;
+        subjX=char(subjX);
+        group = subjX(1:end-3);
+        sub = subjX(end-2:end);
+        %conditionX=char(group(i,1));
+        sessionX=char(session(j)); 
+        sess=['ses-' sessionX];
+
+
+        %load behavioral file
+        if strcmp(sessionX, 'third') %session third exceptions
+                
+            %missing trials
+            if strcmp(subjX(end-2:end), '201')  || strcmp(subjX(end-2:end), '214') 
+                continue
+            end
+            
+            %missing hedonic sess
+            if  strcmp(subjX(end-2:end), '208') || strcmp(subjX(end-2:end), '212') || strcmp(subjX(end-2:end), '245') || strcmp(subjX(end-2:end), '249')
+                continue
+            end
+            
+            behavior_dir = fullfile(homedir,'/SOURCEDATA/behav/', num2str(subjX), sess);
+            if exist(behavior_dir, 'dir')
+                cd (behavior_dir)
+                load (['hedonic_2' subjX(end-2:end) ])
+            else 
+                continue
+            end
+        else   %session second exceptions
+            
+            %old structure
+            if strcmp(subjX(end-2:end), '101') || strcmp(subjX(end-2:end), '103')
+                continue
+            end
+
+            %missing trials
+            if strcmp(subjX(end-2:end), '123') || strcmp(subjX(end-2:end), '124') || strcmp(subjX(end-2:end), '234')
+                continue
+            end
+
+            %missing hedonic sess
+            if strcmp(subjX(end-2:end), '212')
+                continue
+            end
         
-    subjO=subj(i,1);
-    subjX=char(subjO);
-    %conditionX=char(group(i,1))
-    sessionX  =char(ses);   
-    
-    disp (['****** PARTICIPANT: ' subjX ' *******']);
-   
-    %load behavioral file
-    behavior_dir = fullfile(homedir, 'SOURCEDATA', 'behav', subjX, [sessionX '_task-' task]);
-            cd (behavior_dir)
-            load (['hedonic_S' num2str(subjX) ])
-    
-    
-   ntrials = data.Trial(end);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%  get onsets
-
-    ONSETS.trialstart  = data.tTrialStart; 
-    ONSETS.trialEnd  = data.tTrialEnd; 
-    ONSETS.sniffSignalOnset  = data.sniffSignalOnset; 
-    ONSETS.ValveOpen      = data.tValveOpen;
-    ONSETS.ValveClose      = data.tValveClose;
-    %ONSETS.break       = data.Onsets.Startjitter;
-    ONSETS.ITI         = data.sniffSignalOnset+data.duration.asterix1+data.duration.oCommitISI+ data.duration.asterix2+data.duration.jitter+data.duration.Liking+data.duration.IQCross+data.duration.Intensity;
-    ONSETS.liking          = data.sniffSignalOnset+data.duration.asterix1+data.duration.oCommitISI+ data.duration.asterix2+data.duration.jitter;
-    ONSETS.intensity       = data.sniffSignalOnset+data.duration.asterix1+data.duration.oCommitISI+ data.duration.asterix2+data.duration.jitter+data.duration.Liking+data.duration.IQCross;
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%  get durations
-    DURATIONS.trialstart  = data.duration.asterix1 + data.duration.asterix2;
-    DURATIONS.break       = data.duration.jitter;
-    DURATIONS.liking      = data.duration.Liking;
-    DURATIONS.intensity   = data.duration.Intensity;
-    DURATIONS.ITI         = data.duration.ITI;
-    DURATIONS.SendTriggerStart         = data.duration.SendTriggerStart;
-    DURATIONS.CommitOdor         = data.duration.oCommitOdor;
-    DURATIONS.CommitISI         = data.duration.oCommitISI;
-    DURATIONS.SendTriggerSniff         = data.duration.SendTriggerSniff;
-    DURATIONS.fixation      = data.duration.IQCross;
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%  get condition name and the trial and drift
-    % fix the cell bug for odorLabel
-    A =strcmp(data.odorLabel,'empty');
-    B = strcmp(data.odorLabel,'chocolate');
-    data.odorLabel2 = categorical(zeros(1,data.Trial(end))'+ A + A + B);
-    data.odorLabel2 = mergecats(data.odorLabel2,'2','empty');
-    data.odorLabel2 = mergecats(data.odorLabel2,'1','chocolate');
-    data.odorLabel2 = cellstr(mergecats(data.odorLabel2,'0','neutral')); 
-    CONDITIONS = data.odorLabel2;
-    TRIAL = data.Trial;
-    DRIFT = data.drift;
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% get the ratings
-    BEHAVIOR.liking      = data.liking;
-    BEHAVIOR.intensity   = data.intensity;
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% get the odor
-    ODOR.Trigger = data.odorTrigger;
-    ODOR.Side = data.odorSide;
-    ODOR.Stim = data.odorStim;
-    
-    % item by condition
-    itemxc          = nan(ntrials,1);
-    count_reward    = 0;
-    count_control   = 0;
-    count_neutral   = 0;
-    
-    for ii = 1:length(CONDITIONS)
-        
-        if strcmp ('chocolate', CONDITIONS(ii))
-            count_reward         = count_reward + 1;
-            itemxc(ii)           = count_reward;
-     
-        elseif strcmp ('empty', CONDITIONS(ii))
-            count_control        = count_control + 1;
-            itemxc(ii)           = count_control;
-        
-        elseif strcmp ('neutral', CONDITIONS(ii))
-            count_neutral        = count_neutral + 1;
-            itemxc(ii)           = count_neutral;
-        
+            behavior_dir = fullfile(homedir,'SOURCEDATA/behav/', num2str(subjX), sess);
+            if exist(behavior_dir, 'dir')
+                cd (behavior_dir)
+                load (['hedonic_' subjX(end-2:end) ])
+            else 
+                continue
+            end
         end
         
-    end
-    
-    %load physio file
-    physio_dir = fullfile(homedir, 'SOURCEDATA', 'physio', subjX);
-    cd (physio_dir)
-    load (['sub-' num2str(subjX) '_ses-second_task-hedonic_EMG'])
-    
-    [A IdX] = sort(data.ORDER);
-    
-    PHYSIO.EMG = data.COR(IdX,:);
-    %EMG.BASE = data.BASE(IdX,:);
-    
-    ONSETS.EMG     =    ONSETS.sniffSignalOnset + 2.5;
-    DURATIONS.EMG  =    zeros(length(ONSETS.EMG),1) + 0.5;
-    
-    
-    
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% save mat file
-    func_dir = fullfile (homedir, 'DERIVATIVES', 'PREPROC', ['sub-' num2str(subjX)], 'ses-second', 'func');
-    cd (func_dir)
-    matfile_name = ['sub-' num2str(subjX) '_ses-second' '_task-' task '_run-01_events.mat'];
-    %cd (behavior_dir)
-    save(matfile_name, 'ONSETS', 'DURATIONS', 'BEHAVIOR', 'CONDITIONS', 'ODOR', 'TRIAL', 'DRIFT', 'PHYSIO' )
-    
+        disp (['****** PARTICIPANT: ' subjX ' **** session ' sessionX ' ****' ]);
+
+        k = k +1;
+
+        ntrials = length(data.Trial);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%  get onsets
+
+        ONSETS.trialstart  = data.Onsets.TrialStart; 
+        ONSETS.liquid      = data.Onsets.PumpStart; % PumpStart or Stop?
+        ONSETS.break       = data.Onsets.Starttjietter;
+        ONSETS.liking      = data.Onsets.Liking;
+        ONSETS.intensity   = data.Onsets.Intensity;
+        ONSETS.familiarity = data.Onsets.Familiarity;
+        ONSETS.rince       = data.Onsets.RinseStart; % start or stop?
+        ONSETS.ITI         = data.Onsets.ITI;
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%  get durations
+        DURATIONS.trialstart  = data.Durations.count1+data.Durations.count2+data.Durations.count3;
+        DURATIONS.liquid      = data.Durations.asterix1 + data.Durations.asterix2; % what is asterix 3 and 4?
+        DURATIONS.break       = data.Durations.jitter;
+        DURATIONS.liking      = data.Durations.Liking;
+        DURATIONS.intensity   = data.Durations.Intensity;
+        DURATIONS.familiarity = data.Durations.Familiarity;
+        DURATIONS.rince       = data.Durations.asterix3; % start or stop?
+        DURATIONS.ITI         = data.Durations.ITI;
 
 
-    
-    
-   
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% save tvs file according to BIDS format
-    phase = {'trialstart';'liking'; 'EMG'; 'intensity'; 'ITI'};
-    nevents = ntrials*length(phase);
-    
-    % put everything in the event structure
-    events.onsets       = zeros(nevents,1);
-    events.durations    = zeros(nevents,1);
-    events.phase        = cell (nevents,1);
-    events.condition    = cell (nevents,1);
-    events.liking       = nan (nevents,1);
-    events.intensity    = nan (nevents,1);
-    events.trial        = zeros (nevents,1);
-    events.EMG          = nan (nevents,1);
-    
-    
-    
-    cmpt = 0;
-    for ii = 1:ntrials
-        
-        for iii = 1:length(phase)
-            
-            cmpt = cmpt+1;
-            phaseX = char(phase(iii));
-            
-            events.onsets(cmpt)     = ONSETS.(phaseX) (ii);
-            events.durations(cmpt)  = DURATIONS.(phaseX) (ii);
-            events.phase(cmpt)      = phase (iii);
-            events.condition(cmpt)  = CONDITIONS(ii);
-            events.liking(cmpt)     = BEHAVIOR.liking(ii);
-            events.intensity(cmpt)  = BEHAVIOR.intensity(ii);
-            events.trial(cmpt)      = TRIAL(ii);
-            events.EMG(cmpt)        = PHYSIO.EMG(ii);
-            
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%  get condition name and the trial and drift
+        % fix the cell bug for odorLabel
+    %     A =strcmp(data.odorLabel,'empty');
+    %     B = strcmp(data.odorLabel,'chocolate');
+    %     data.odorLabel2 = categorical(zeros(1,data.Trial(end))'+ A + A + B);
+    %     data.odorLabel2 = mergecats(data.odorLabel2,'2','empty');
+    %     data.odorLabel2 = mergecats(data.odorLabel2,'1','chocolate');
+    %     data.odorLabel2 = cellstr(mergecats(data.odorLabel2,'0','neutral')); 
+    %     CONDITIONS = data.odorLabel2;
+    %     TRIAL = data.Trial;
+    %     DRIFT = data.drift;
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%  get condition name
+        CONDITIONS = data.tasteLabel;
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% get the ratings
+        BEHAVIOR.liking      = data.liking;
+        BEHAVIOR.intensity   = data.intensity;
+        BEHAVIOR.familiarity = data.familiarity;
+
+
+        % item by condition
+        itemxc          = nan(ntrials,1);
+        count_reward    = 0;
+        count_control   = 0;
+
+        for ii = 1:length(CONDITIONS)
+
+            if strcmp ('MilkShake', CONDITIONS(ii))
+                count_reward         = count_reward + 1;
+                itemxc(ii)           = count_reward;
+
+            elseif strcmp ('Empty', CONDITIONS(ii))
+                count_control        = count_control + 1;
+                itemxc(ii)           = count_control;
+
+            end
+
         end
+
+    %     
+    %     %load physio file
+    %     physio_dir = fullfile(homedir, 'SOURCEDATA', 'physio', subjX);
+    %     cd (physio_dir)
+    %     load (['sub-' num2str(subjX) '_ses-second_task-hedonic_EMG'])
+    %     
+    %     [A IdX] = sort(data.ORDER);
+    %     
+    %     PHYSIO.EMG = data.COR(IdX,:);
+    %     %EMG.BASE = data.BASE(IdX,:);
+    %     
+    %     ONSETS.EMG     =    ONSETS.sniffSignalOnset + 2.5;
+    %     DURATIONS.EMG  =    zeros(length(ONSETS.EMG),1) + 0.5;
+    %     
+    %     
+    %     
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% save mat file
+        func_dir = fullfile (homedir, 'DERIVATIVES', 'PREPROC', ['sub-'  num2str(subjX)], ['ses-' sessionX], 'func');
         
+        if ~exist(func_dir, 'dir')
+            mkdir(func_dir)
+        end 
+        
+        cd (func_dir)
+        matfile_name = ['sub-'  num2str(subjX) '_ses-' sessionX '_task-' task '_run-01_events.mat'];
+        %cd (behavior_dir)
+        save(matfile_name, 'ONSETS', 'DURATIONS', 'BEHAVIOR', 'CONDITIONS') %, 'ODOR', 'TRIAL', 'DRIFT', 'PHYSIO' )
+
+
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% save tvs file according to BIDS format
+        phase = {'trialstart';'liquid';'liking'; 'intensity';'familiarity'; 'rince'; 'ITI'};
+        nevents = ntrials*length(phase);
+
+        % put everything in the event structure
+        events.onsets       = zeros(nevents,1);
+        events.durations    = zeros(nevents,1);
+        events.phase        = cell (nevents,1);
+        events.condition    = cell (nevents,1);
+        events.liking       = nan (nevents,1);
+        events.intensity    = nan (nevents,1);
+        events.familiarity  = nan (nevents,1);
+
+
+        cmpt = 0;
+        for ii = 1:ntrials
+
+            for iii = 1:length(phase)
+
+                cmpt = cmpt+1;
+                phaseX = char(phase(iii));
+
+                events.onsets(cmpt)     = ONSETS.(phaseX) (ii);
+                events.durations(cmpt)  = DURATIONS.(phaseX) (ii);
+                events.phase(cmpt)      = phase (iii);
+                events.condition(cmpt) = CONDITIONS(ii);
+                events.liking(cmpt)     = BEHAVIOR.liking(ii);
+                events.familiarity(cmpt)= BEHAVIOR.familiarity(ii);
+                events.intensity(cmpt)  = BEHAVIOR.intensity(ii);
+
+            end
+
+        end
+
+        events.onsets       = num2cell(events.onsets);
+        events.durations    = num2cell(events.durations);
+        events.liking       = num2cell(events.liking);
+        events.familiarity  = num2cell(events.familiarity);
+        events.intensity    = num2cell(events.intensity);
+
+
+
+         eventfile = [events.onsets, events.durations, events.phase,...
+            events.condition, events.liking, events.familiarity, events.intensity];
+
+        % open data base
+        eventfile_name = ['sub-'  num2str(subjX) '_ses-' sessionX '_task-' task '_run-01_events.tsv'];
+        fid = fopen(eventfile_name,'wt');
+
+         % print heater
+        fprintf (fid, '%s   %s   %s   %s   %s   %s   %s\n',...
+            'onset', 'duration', 'trialPhase',...
+            'condition','perceived_liking','perceived_familiarity','perceived_intesity');
+
+        % print data
+        formatSpec = '%d   %d   %s   %s  %d  %d  %d \n';
+        [nrows,ncols] = size(eventfile);
+        for row = 1:nrows
+            fprintf(fid,formatSpec,eventfile{row,:});
+        end
+
+        fclose(fid);
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% save data for compiled database
+
+        db.id(:,k)           = cellstr(repmat(sub,ntrials, 1));
+        db.group(:,k)        = cellstr(repmat(group,ntrials, 1));
+        db.session(:,k)      = cellstr(repmat(sessionX,ntrials,1));
+        db.task(:,k)         = repmat({task},ntrials,1);
+        db.trial(:,k)        = [1:ntrials]';
+        db.condition(:,k)    = CONDITIONS;
+        db.itemxc(:,k)       = itemxc;
+        db.liking (:,k)      = BEHAVIOR.liking;
+        db.familiarity (:,k) = BEHAVIOR.familiarity;
+        db.intensity (:,k)   = BEHAVIOR.intensity;
+
     end
-    
-    events.onsets       = num2cell(events.onsets);
-    events.durations    = num2cell(events.durations);
-    events.liking       = num2cell(events.liking);
-    events.intensity    = num2cell(events.intensity);
-    events.trial        = num2cell(events.trial);
-    events.EMG        = num2cell(events.EMG);
-    
-    
-    
-     eventfile = [events.onsets, events.durations, events.phase,...
-        events.trial, events.condition, events.EMG, events.liking, events.intensity];
-    
-    % open data base
-    eventfile_name = ['sub-' num2str(subjX) '_ses-second' '_task-' task '_run-01_events.tsv'];
-    fid = fopen(eventfile_name,'wt');
-    
-    % print heater
-    fprintf (fid, '%s	%s	%s	%s	%s	%s	%s	%s\n',...
-        'onset', 'duration', 'trial_phase',...
-        'trial', 'condition','EMG_cor', 'perceived_liking','perceived_intensity');
-    
-    % print data
-    formatSpec = '%f	%f	%s	%d	%s	%f	%f	%f\n'; %d = vector s=text
-    [nrows,ncols] = size(eventfile);
-    for row = 1:nrows
-        fprintf(fid,formatSpec,eventfile{row,:});
-    end
-    
-    fclose(fid);
- 
-   
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% save data for compiled database
-    
-    db.id(:,i)           = repmat(subj(i,1),ntrials, 1);
-    %db.group(:,i)        = repmat(group(i,1),ntrials, 1);
-    db.session(:,i)      = repmat(session(i,1),ntrials,1);
-    db.task(:,i)         = repmat({task},ntrials,1);
-    db.trial(:,i)        = [1:ntrials]';
-    db.condition(:,i)    = CONDITIONS;
-    db.itemxc(:,i)       = itemxc;
-    db.liking (:,i)      = BEHAVIOR.liking;
-    %db.familiarity (:,i) = BEHAVIOR.familiarity;
-    db.intensity (:,i)   = BEHAVIOR.intensity;
-    db.EMG (:,i)         = PHYSIO.EMG;
-    
 end
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %% SAVE RESULTS IN TXT for analysis in R
+
 
 % random
 R.id      = db.id(:);
 R.trial   = num2cell(db.trial(:));
 
 %fixe
-%R.group      = db.group(:);
+R.group      = db.group(:);
 R.session    = db.session(:);
 R.task       = db.task(:);
 R.condition  = db.condition(:);
@@ -261,31 +312,33 @@ R.itemxc     = num2cell(db.itemxc(:));
 % dependent variable
 R.liking      = num2cell(db.liking(:));
 R.intensity   = num2cell(db.intensity(:));
-R.EMG   = num2cell(db.EMG(:));
-%R.familiarity = num2cell(db.familiarity(:));
+R.familiarity = num2cell(db.familiarity(:));
+
 
 %% print the database
-cd (R_dir)
+if save_Rdatabase
+    cd (R_dir)
+    % concatenate
+    Rdatabase = [R.task, R.id, R.group, R.session, R.trial,R.condition, R.itemxc, R.liking, R.familiarity, R.intensity];
 
-% concatenate
-Rdatabase = [R.task, R.id, R.session, R.trial, R.condition, R.itemxc, R.liking, R.intensity, R.EMG];
+    % open database
+    fid = fopen([analysis_name '.txt'], 'wt');
 
-% open database
-fid = fopen([analysis_name '.txt'], 'wt');
+    % print heater
+    fprintf(fid,'%s   %s   %s   %s   %s   %s   %s   %s   %s   %s\n',...
+        'task','id', 'group', ...
+        'session','trial', 'condition',...
+        'trialxcondition','perceived_liking','perceived_familiarity', 'perceived_intensity');
 
-% print heater
-fprintf(fid,'%s %s %s %s %s %s %s %s %s\n',...
-    'task','id', 'session','trial', 'condition','trialxcondition','perceived_liking', 'perceived_intensity', 'EMG');
+    % print data
+    formatSpec ='%s   %s   %s   %s   %d    %s   %d   %d   %d   %d\n';
+    [nrows,~] = size(Rdatabase);
+    for row = 1:nrows
+        fprintf(fid,formatSpec,Rdatabase{row,:});
+    end
 
-% print data
-formatSpec ='%s %s %s %d %s %d %f %f %f\n';
-[nrows,~] = size(Rdatabase);
-for row = 1:nrows
-    fprintf(fid,formatSpec,Rdatabase{row,:});
+    fclose(fid);
 end
-
-fclose(fid);
-
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %% CREATE FIGURE

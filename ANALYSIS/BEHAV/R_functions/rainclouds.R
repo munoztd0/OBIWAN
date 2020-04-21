@@ -1,10 +1,17 @@
-##########################################################################
-#                                                                        #
-#                R FUNCTION FOR DRAWING FLAT VIOLIN PLOTS                #
-#                                                                        #
-##########################################################################
+### This script creates an R function to generate raincloud plots, then simulates
+### data for plots. If using for your own data, you only need lines 1-80.
+### It relies largely on code previously written by David Robinson
+### (https://gist.github.com/dgrtwo/eb7750e74997891d7c20)
+### and the package ggplot2 by Hadley Wickham
 
-# Retrieved from: https://github.com/RainCloudPlots/RainCloudPlots/blob/master/tutorial_R/R_rainclouds.R
+# Check if required packages are installed ----
+packages <- c("cowplot", "readr", "ggplot2", "dplyr", "lavaan", "smooth", "Hmisc")
+if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  install.packages(setdiff(packages, rownames(installed.packages())))
+}
+
+# Load packages ----
+library(ggplot2)
 
 # Defining the geom_flat_violin function ----
 # Note: the below code modifies the

@@ -1,4 +1,4 @@
-function dicom_anonym(subID)
+function dicom_anonym(subID, grp)
 
 %%little script to anonymize dicom
 
@@ -7,9 +7,10 @@ function dicom_anonym(subID)
 
 cd ~
 home = pwd;
-homedir =[home '/REWOD/'];
+homedir =[home '/OBIWAN/'];
 
-subj  =  {'11'}; %subID; %{'01';'02';'03';'04';'05';'06';'07';'09';'10';'11';'12';'13';'14';'15';'16';'17';'18';'19'; '20';'21';'22';'23';'24';'25';'26'};
+subj  =  subID; %{'01';'02';'03';'04';'05';'06';'07';'09';'10';'11';'12';'13';'14';'15';'16';'17';'18';'19'; '20';'21';'22';'23';'24';'25';'26'};
+group= grp;
 
 for i = 1:length(subj)
 

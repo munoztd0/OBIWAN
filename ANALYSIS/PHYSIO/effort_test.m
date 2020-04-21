@@ -18,7 +18,7 @@ dbstop if error
 
 cd ~
 home = pwd;
-homedir = [home '/REWOD'];
+homedir = [home '/OBIWAN'];
 
 %subj   = subID;
 %subj = {'02'};

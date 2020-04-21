@@ -1,16 +1,15 @@
-## R code for FOR OBIWAN_HED
-# last modified on March 2020 by David
-
-
+## R code for FOR OBIWAN_PIT
+# last modified on April by David
 # -----------------------  PRELIMINARY STUFF ----------------------------------------
-# load libraries
-pacman::p_load(mosaic, doBy, influence.ME,lmerTest, lme4, MBESS, afex, car, ggplot2, dplyr, sm, plyr, tidyr, reshape, Hmisc, Rmisc,  ggpubr, gridExtra, plotrix, lsmeans, BayesFactor)
-
 if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-
+pacman::p_load(ggplot2, Rmisc, dplyr, ggplot2, lmerTest, lme4, car, r2glmm, MuMin, optimx, visreg)
+#pacman::p_load(Rmisc, car, lme4, lmerTest, pbkrtest, ggplot2, dplyr, plyr, tidyr, multcomp, mvoutlier, HH, doBy, psych, pastecs, reshape, reshape2, 
+               #jtools, effects, compute.es, DescTools, MBESS, afex, ez, metafor, influence.ME)
+# Influence.ME
+#nfluence.ME,lmerTest, lme4, MBESS, afex, car, ggplot2, dplyr, plyr, tidyr, reshape, Hmisc, Rmisc,  ggpubr, gridExtra, plotrix, lsmeans, BayesFactor)
 
 #SETUP
 task = 'HED'
@@ -19,119 +18,190 @@ task = 'HED'
 analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV') 
 setwd(analysis_path)
 
-# open dataset (session two only)
-OBIWAN_HED <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
+figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV') 
+
+
+# open dataset
+OBIWAN_HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
+
+OBIWAN_HED  <- subset(OBIWAN_HED_full, group != 'obese')
 
 # define factors
-OBIWAN_HED$session          <- factor(OBIWAN_HED$session)
-OBIWAN_HED$condition        <- factor(OBIWAN_HED$condition)
-OBIWAN_HED$group            <- factor(OBIWAN_HED$group)
+OBIWAN_HED$id      <- factor(OBIWAN_HED$id)
+OBIWAN_HED$trial    <- factor(OBIWAN_HED$trial)
+OBIWAN_HED$group    <- factor(OBIWAN_HED$group)
 
 OBIWAN_HED$Condition[OBIWAN_HED$condition== 'MilkShake']     <- 'Reward'
 OBIWAN_HED$Condition[OBIWAN_HED$condition== 'Empty']     <- 'Control'
-#OBIWAN_HED$Condition[OBIWAN_HED$condition== 'neutral']     <- 'Neutral'
+
+OBIWAN_HED$Condition <- factor(OBIWAN_HED$Condition, levels = rev(levels(OBIWAN_HED$Condition)))
+OBIWAN_HED$trialxcondition <- factor(OBIWAN_HED$trialxcondition)
 
 
-OBIWAN_HED$Condition        <- factor(OBIWAN_HED$Condition)
-OBIWAN_HED$trialxcondition        <- factor(OBIWAN_HED$trialxcondition)
-#OBIWAN_HED$Condition2        <- factor(OBIWAN_HED$Condition2)
-
-## remove sub only group contorl for now
-OBIWAN_HED <- filter(OBIWAN_HED,  group == "control")
-#OBIWAN_HED <- filter(OBIWAN_HED,  id != "8")
-
-# PLOTS
 
 
 # get means by condition 
-bt = ddply(OBIWAN_HED, .(trialxcondition), summarise,  perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE)) 
+bt = ddply(OBIWAN_HED, .(trialxcondition), summarise,  perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
 # get means by condition and trialxcondition
-btc = ddply(OBIWAN_HED, .(Condition, trialxcondition), summarise,  perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE)) #, EMG = mean(EMG, na.rm = TRUE)) 
+btc = ddply(OBIWAN_HED, .(Condition, trialxcondition), summarise,  perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
 
 # get means by participant 
-bsT = ddply(OBIWAN_HED, .(id, trialxcondition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE)) #, EMG = mean(EMG, na.rm = TRUE)) 
-bsC= ddply(OBIWAN_HED, .(id, Condition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE))
-bsTC = ddply(OBIWAN_HED, .(id, trialxcondition, Condition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE))
-
-
-# be consistent so do the same for fMRI
-
-# functions ---------------------------------------------------------------
-
-
-ggplotRegression <- function (fit) {
-  
-  ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
-    geom_point() +
-    stat_smooth(method = "lm", col = "red") +
-    labs(title = paste("Rˆ2* = ",signif(summary(fit)$adj.r.squared, 5),
-                       " P =",signif(summary(fit)$coef[2,4], 5)))
-}
-
-data_summary <- function(data, varname, groupnames){
-  require(plyr)
-  summary_func <- function(x, col){
-    c(mean = mean(x[[col]], na.rm=TRUE),
-      sd = sd(x[[col]], na.rm=TRUE))
-  }
-  data_sum<-ddply(data, groupnames, .fun=summary_func,
-                  varname)
-  data_sum <- rename(data_sum, c("mean" = varname))
-  return(data_sum)
-}
+bsT = ddply(OBIWAN_HED, .(id, trialxcondition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
+bsC= ddply(OBIWAN_HED, .(id, Condition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
+bsTC = ddply(OBIWAN_HED, .(id, trialxcondition, Condition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
 
 
 
-# plots -------------------------------------------------------------------
+# PLOTS -------------------------------------------------------------------
 
 
-# # plot liking by time by condition with regression lign
-# ggplotRegression(lm(perceived_liking ~ Condition, data = bct)) + 
-#       facet_wrap(~Condition)
+#  Liking  
 
 
+#********************************** PLOT 1 main effect by subject ########### rainplot Liking
+source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R')
+
+
+#ratings
+
+dfLIK <- summarySEwithin(bsC,
+                         measurevar = "perceived_liking",
+                         withinvars = c("Condition"), 
+                         idvar = "id")
+
+plt1 <- ggplot(bsC, aes(x = Condition, y = perceived_liking, color = Condition, fill = Condition)) +
+  geom_point(alpha=0.5, size = 0.5, position = position_jitter(width = 0.025, seed = 123)) +
+  geom_bar(data=dfLIK, stat="identity", alpha=0.6, width=0.35) +
+  geom_flat_violin(alpha = .5, position = position_nudge(x = .25, y = 0), adjust = 1.5, trim = F, color = NA) + 
+  scale_fill_manual("legend", values = c("Reward"="blue", "Control"="black")) +
+  scale_color_manual( values = c("Reward"="blue", "Control"="black")) +
+  geom_line(aes(x=Condition, y=perceived_liking, group=id), col="grey", alpha=0.4,  position = position_jitter(width = 0.025, seed = 123)) +
+  geom_errorbar(data=dfLIK, aes(x = Condition, ymax = perceived_liking + se, ymin = perceived_liking - se), width=0.1, colour="black", alpha=1, size=0.4)+
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) +
+  theme_classic() +
+  theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),
+        axis.text.x = element_text(size=12,  colour = "black"),
+        axis.title.x = element_text(size=16), 
+        axis.title.y = element_text(size=16), 
+        legend.position = "none", 
+        axis.ticks.x = element_blank(), 
+        axis.line.x = element_line(color = "white")) +
+  labs(
+    x = "Taste Stimulus",
+    y = "Plesantness Ratings"
+  )
+
+
+pdf(file.path(figures_path,paste(task, 'Liking_ratings_control.pdf',  sep = "_")))
+plot(plt1)
+dev.off()
+
+
+#**********************************  PLOT 2 main effect by trial # # plot liking by time by condition  
 
 dfLIK <- summarySEwithin(bsTC,
                          measurevar = "perceived_liking",
                          withinvars = c("Condition", "trialxcondition"), 
                          idvar = "id")
 
-dfLIK$Condition = as.factor(dfLIK$Condition)
-dfLIK$Condition = factor(dfLIK$Condition,levels(dfLIK$Condition)[c(2,1)])
 dfLIK$trialxcondition =as.numeric(dfLIK$trialxcondition)
 
-
-ggplot(dfLIK, aes(x = trialxcondition, y = perceived_liking, color=Condition)) +
+plt2 <- ggplot(dfLIK, aes(x = trialxcondition, y = perceived_liking, fill = Condition, color=Condition)) +
   geom_line(alpha = .7, size = 1) +
   geom_point() +
-  geom_errorbar(aes(ymax = perceived_liking +se, ymin = perceived_liking -se), width=0.25, alpha=0.7, size=0.4)+
-  scale_colour_manual(values = c("Reward"="blue",  "Control"="black")) +
-  scale_y_continuous(expand = c(0, 0),  limits = c(40,75),  breaks=c(seq.int(40,80, by = 5))) +  #breaks = c(4.0, seq.int(5,16, by = 2.5)),
-  scale_x_continuous(expand = c(0, 0), limits = c(0,20.25), breaks=c(seq.int(1,20, by = 1)))+ 
+  geom_abline(slope= 0, intercept=50, linetype = "dashed", color = "black") +
+  geom_ribbon(aes(ymax = perceived_liking +se, ymin = perceived_liking -se), alpha=0.2, linetype = 0 ) +
+  scale_fill_manual(values = c("Reward"="blue",  "Control"="black")) +
+  scale_color_manual(values = c("Reward"="blue",  "Control"="black")) +
+  scale_y_continuous(expand = c(0, 0),  limits = c(40,75),  breaks=c(seq.int(40,80, by = 5))) +  
+  #scale_x_continuous(expand = c(0, 0), limits = c(0,20.25), breaks=c(seq.int(1,20, by = 1)))+ 
   theme_classic() +
-    theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"), axis.title.x = element_text(size=16),
-          axis.title.y = element_text(size=16), legend.position = c(0.9, 0.9), legend.title=element_blank()) +
+  theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"), 
+        axis.title.x = element_text(size=16),axis.title.y = element_text(size=16), 
+        legend.position = c(0.9, 0.9), legend.title=element_blank()) +
   labs(x = "Trials",y = "Pleasantness Ratings")
 
 
-#### INTENSITY
+pdf(file.path(figures_path,paste(task, 'Liking_time_control.pdf',  sep = "_")))
+plot(plt2)
+dev.off()
+
+# 
+# ppp <- plt + theme_linedraw(base_size = 12, base_family = "Helvetica")+
+#   theme(strip.text.x = element_text(size = 12, face = "bold"),
+#         plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank(),
+#         panel.border = element_blank(),
+#         axis.line.y = element_line(size = 0.5, linetype = "solid", colour = "#999999"),
+#         axis.line.x = element_line(size = 0.5, linetype = "solid", colour = "#999999"),
+#         #legend.position="none",
+#         legend.text  = element_text(size = 12),
+#         #axis.ticks.x = element_blank(),
+#         axis.text.x  = element_text(size = 12),
+#         axis.title.x = element_text(size = 12, face = "bold", hjust = 0.5),
+#         axis.title.y = element_text(size = 12, face = "bold", hjust = 0.5))
+
+
+
+
+#**************************************************
+
+#  Intensity
+
+
+#ratings
+
+dfINT <- summarySEwithin(bsC,
+                         measurevar = "perceived_intensity",
+                         withinvars = c("Condition"), 
+                         idvar = "id")
+
+plt3 <- ggplot(bsC, aes(x = Condition, y = perceived_intensity, color = Condition, fill = Condition)) +
+  geom_point(alpha=0.5, size = 0.5, position = position_jitter(width = 0.025, seed = 123)) +
+  geom_bar(data=dfINT, stat="identity", alpha=0.6, width=0.35) +
+  geom_flat_violin(alpha = .5, position = position_nudge(x = .25, y = 0), adjust = 1.5, trim = F, color = NA) + 
+  scale_fill_manual("legend", values = c("Reward"="blue", "Control"="black")) +
+  scale_color_manual( values = c("Reward"="blue", "Control"="black")) +
+  geom_line(aes(x=Condition, y=perceived_intensity, group=id), col="grey", alpha=0.4,  position = position_jitter(width = 0.025, seed = 123)) +
+  geom_errorbar(data=dfINT, aes(x = Condition, ymax = perceived_intensity + se, ymin = perceived_intensity - se), width=0.1, colour="black", alpha=1, size=0.4)+
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) +
+  theme_classic() +
+  theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),
+        axis.text.x = element_text(size=12,  colour = "black"),
+        axis.title.x = element_text(size=16), 
+        axis.title.y = element_text(size=16), 
+        legend.position = "none", 
+        axis.ticks.x = element_blank(), 
+        axis.line.x = element_line(color = "white")) +
+  labs(
+    x = "Taste Stimulus",
+    y = "Intensity Ratings"
+  )
+plot(plt3)
+
+pdf(file.path(figures_path,paste(task, 'Intensity_ratings_control.pdf',  sep = "_")))
+plot(plt3)
+dev.off()
+
+
+#**********************************  PLOT 2 main effect by trial # # plot intensity by time by condition  
 
 dfINT <- summarySEwithin(bsTC,
                          measurevar = "perceived_intensity",
                          withinvars = c("Condition", "trialxcondition"), 
                          idvar = "id")
 
-dfINT$Condition = as.factor(dfINT$Condition)
-dfINT$Condition = factor(dfINT$Condition,levels(dfINT$Condition)[c(3,2,1)])
 dfINT$trialxcondition =as.numeric(dfINT$trialxcondition)
 
-
-ggplot(dfINT, aes(x = trialxcondition, y = perceived_intensity, color=Condition)) +
+plt4 <- ggplot(dfINT, aes(x = trialxcondition, y = perceived_intensity, fill = Condition, color=Condition)) +
   geom_line(alpha = .7, size = 1) +
   geom_point() +
-  geom_errorbar(aes(ymax = perceived_intensity +se, ymin = perceived_intensity -se), width=0.25, alpha=0.7, size=0.4)+
-  scale_colour_manual(values = c("Reward"="blue", "Control"="black")) +
-  scale_y_continuous(expand = c(0, 0),  limits = c(30,75),  breaks=c(seq.int(30,75, by = 5))) +  #breaks = c(4.0, seq.int(5,16, by = 2.5)),
+  geom_abline(slope= 0, intercept=50, linetype = "dashed", color = "black") +
+  geom_ribbon(aes(ymax = perceived_intensity +se, ymin = perceived_intensity -se), alpha=0.2, linetype = 0 ) +
+  scale_fill_manual(values = c("Reward"="blue",  "Control"="black")) +
+  scale_color_manual(values = c("Reward"="blue",  "Control"="black")) +
+  scale_y_continuous(expand = c(0, 0),  limits = c(30,75),  breaks=c(seq.int(30,80, by = 5))) + 
   scale_x_continuous(expand = c(0, 0), limits = c(0,20.25), breaks=c(seq.int(1,20, by = 1)))+ 
   theme_classic() +
   theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"), axis.title.x = element_text(size=16),
@@ -139,319 +209,266 @@ ggplot(dfINT, aes(x = trialxcondition, y = perceived_intensity, color=Condition)
   labs(x = "Trials",y = "Intensity Ratings")
 
 
-
-####Corr EMG_COR & LIK
-
-# 
-# dfEMG$perceived_liking = dfLIK$perceived_liking
-# df = ddply(OBIWAN_HED, .(id, Condition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE),  EMG = mean(EMG, na.rm = TRUE)) 
-# # 
-# # df = dfEMG
-# 
-# ggplot(df, aes(x = perceived_liking, y = EMG, color=Condition)) +
-#   #geom_line(alpha = .7, size = 1, position =position_dodge(width = 0.5)) +
-#   geom_point() +
-#   theme_classic() +
-#   theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"), axis.title.x = element_text(size=16),
-#         axis.title.y = element_text(size=16),  legend.title=element_blank())
-# 
-# dfR <- filter(df,  Condition == "Reward")
-# dfN <- filter(df,  Condition == "Neutral")
-# dfC <- filter(df,  Condition == "Control")
-# 
-# 
-# cor.test(dfR$EMG,dfR$perceived_liking)  
-# cor.test(dfN$EMG,dfN$perceived_liking)  
-# cor.test(dfC$EMG,dfC$perceived_liking)  
-# 
-# bsEMG2 = ddply(OBIWAN_HED, .(id), summarise, EMG = mean(EMG, na.rm = TRUE), EMG = mean(EMG, na.rm = TRUE))
-# Boxplot(~EMG, data= bsEMG2, id=TRUE) # across conditions
-# Boxplot(~EMG, data= dfR, id=TRUE) # for REW
-# Boxplot(~EMG, data= dfN, id=TRUE) # for NEU
-# Boxplot(~EMG, data= dfC, id=TRUE) # for CON
+pdf(file.path(figures_path,paste(task, 'Intensity_time_control.pdf',  sep = "_")))
+plot(plt4)
+dev.off()
 
 
 
-# corre <- rmcorr(id, perceived_liking, EMG, OBIWAN_HED, CIs = c("analytic",
-#                                                      "bootstrap"), nreps = 100, bstrap.out = F)
-
-
-# x = OBIWAN_HED$perceived_liking[OBIWAN_HED$Condition2 == 'Reward']
-# y = OBIWAN_HED$perceived_liking[OBIWAN_HED$Condition2 == 'NoReward']
-# #Compute Leven test for homgeneity of variance
-# leveneTest(OBIWAN_HED$perceived_liking ~ OBIWAN_HED$Condition)
-# 
-# Dummy <- data.frame(numbers = 1:432)
-# Dummy2 <- data.frame(numbers = 1:864)
-# Dummy$'Reward pleasantness ratings' =  x
-# Dummy2$'No Reward pleasantness ratings' =  y
-# 
-# 
-# 
-# 
-# ggplot(Dummy, aes('Reward pleasantness ratings')) +
-# geom_density() + 
-# theme_classic() +
-# theme(plot.subtitle = element_text(size = 8, vjust = -90, hjust =1), panel.grid.major = element_blank(), legend.position = "none", panel.grid.minor = element_blank(),
-#         panel.background = element_blank(), axis.line = element_line(colour = "black"), margin = NULL, aspect.ratio=1)
-# 
-# d <- density(Dummy$'Reward pleasantness ratings' ) + theme_classic() +
-#   theme(plot.subtitle = element_text(size = 8, vjust = -90, hjust =1), panel.grid.major = element_blank(), legend.position = "none", panel.grid.minor = element_blank(),
-#         panel.background = element_blank(), axis.line = element_line(colour = "black"), margin = NULL, aspect.ratio=1)
-# 
-# plot(d)
-# 
-# 
-# 
-# # plot densities
-# sm.density.compare(OBIWAN_HED$perceived_liking, OBIWAN_HED$Condition,  xlab="Pleasantness ratings")
-# 
-# 
-# # add legend via mouse click
-# colfill<-c(2:(2+length(levels(OBIWAN_HED$Condition))))
-# legend(locator(1), levels(OBIWAN_HED$Condition), fill=colfill)
-# 
-# df <- summarySE(OBIWAN_HED, measurevar="perceived_liking", groupvars=c("id", "Condition"))
-# 
-# # inspecting variance  control ###
-# 
-# OBIWAN_check<- filter(OBIWAN_HED,  id != "3" & id !='4' & id !='13' & id != '20' & id != '23')
-# 
-# 
-# # plot densities
-# sm.density.compare(OBIWAN_check$perceived_liking, OBIWAN_check$Condition,  xlab="Pleasantness ratings")
-# colfill<-c(2:(2+length(levels(OBIWAN_check$Condition))))
-# legend(locator(1), levels(OBIWAN_check$Condition), fill=colfill)
-# 
-# df2 <- summarySE(OBIWAN_check, measurevar="perceived_liking", groupvars=c("id", "Condition"))
-# 
-# 
-# dfLIK3 <- summarySEwithin(df2,
-#                           measurevar = "perceived_liking",
-#                           withinvars = c("Condition"), 
-#                           idvar = "id")
-# 
-# dfLIK3 <- summarySEwithin(df2,
-#                           measurevar = "perceived_liking",
-#                           withinvars = c("Condition"), 
-#                           idvar = "id")
-# 
-# # get means by participant 
-# bs2 = ddply(OBIWAN_check, .(id, trialxcondition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE))
-# bsLIK2 = ddply(OBIWAN_check, .(id, Condition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE))
-# 
-# 
-# 
-# dfLIK3$Condition <- as.factor(dfLIK3$Condition)
-# bsLIK2$Condition <- as.factor(bsLIK2$Condition)
-# 
-# dfLIK3$Condition = factor(dfLIK2$Condition,levels(dfLIK3$Condition)[c(3,2,1)])
-# bsLIK2$Condition = factor(bsLIK$Condition,levels(bsLIK2$Condition)[c(3,2,1)])  
-# 
-# ggplot(bsLIK2, aes(x = Condition, y = perceived_liking, fill = Condition)) +
-#   geom_jitter(width = 0.02, color="black",alpha=0.5, size = 0.5) +
-#   geom_bar(data=dfLIK3, stat="identity", alpha=0.6, width=0.35, position = position_dodge(width = 0.01)) +
-#   geom_flat_violin(alpha = .5, position = position_nudge(x = .25, y = 0), adjust = 1.5, trim = F, color = NA) + 
-#   scale_fill_manual("legend", values = c("Reward"="blue", "Neutral"="red", "Control"="black")) +
-#   geom_line(aes(x=Condition, y=perceived_liking, group=id), col="grey", alpha=0.4) +
-#   geom_errorbar(data=dfLIK3, aes(x = Condition, ymax = perceived_liking + se, ymin = perceived_liking - se), width=0.1, colour="black", alpha=1, size=0.4)+
-#   scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) +
-#   theme_classic() +
-#   theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),  axis.title.x = element_text(size=16), axis.text.x = element_text(size=12),
-#         axis.title.y = element_text(size=16), legend.position = "none", axis.ticks.x = element_blank(), axis.line.x = element_line(color = "white")) +
-#   labs(
-#     x = "Odor Stimulus",
-#     y = "Plesantness Ratings"
-#   )
-# 
-# 
-# # inspecting variance NEUTRAL ###
-# 
-# OBIWAN_check<- filter(OBIWAN_HED,  id != "23" )
-# 
-# 
-# # plot densities
-# sm.density.compare(OBIWAN_check$perceived_liking, OBIWAN_check$Condition,  xlab="Pleasantness ratings")
-# colfill<-c(2:(2+length(levels(OBIWAN_check$Condition))))
-# legend(locator(1), levels(OBIWAN_check$Condition), fill=colfill)
-# 
-# df2 <- summarySE(OBIWAN_check, measurevar="perceived_liking", groupvars=c("id", "Condition"))
-# 
-# 
-# dfLIK3 <- summarySEwithin(df2,
-#                           measurevar = "perceived_liking",
-#                           withinvars = c("Condition"), 
-#                           idvar = "id")
-# 
-# dfLIK3 <- summarySEwithin(df2,
-#                           measurevar = "perceived_liking",
-#                           withinvars = c("Condition"), 
-#                           idvar = "id")
-# 
-# # get means by participant 
-# bs2 = ddply(OBIWAN_check, .(id, trialxcondition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE))
-# bsLIK2 = ddply(OBIWAN_check, .(id, Condition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE))
-# 
-# 
-# 
-# dfLIK3$Condition <- as.factor(dfLIK3$Condition)
-# bsLIK2$Condition <- as.factor(bsLIK2$Condition)
-# 
-# dfLIK3$Condition = factor(dfLIK2$Condition,levels(dfLIK3$Condition)[c(3,2,1)])
-# bsLIK2$Condition = factor(bsLIK$Condition,levels(bsLIK2$Condition)[c(3,2,1)])  
-# 
-# ggplot(bsLIK2, aes(x = Condition, y = perceived_liking, fill = Condition)) +
-#   geom_jitter(width = 0.02, color="black",alpha=0.5, size = 0.5) +
-#   geom_bar(data=dfLIK3, stat="identity", alpha=0.6, width=0.35, position = position_dodge(width = 0.01)) +
-#   geom_flat_violin(alpha = .5, position = position_nudge(x = .25, y = 0), adjust = 1.5, trim = F, color = NA) + 
-#   scale_fill_manual("legend", values = c("Reward"="blue", "Neutral"="red", "Control"="black")) +
-#   geom_line(aes(x=Condition, y=perceived_liking, group=id), col="grey", alpha=0.4) +
-#   geom_errorbar(data=dfLIK3, aes(x = Condition, ymax = perceived_liking + se, ymin = perceived_liking - se), width=0.1, colour="black", alpha=1, size=0.4)+
-#   scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) +
-#   theme_classic() +
-#   theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),  axis.title.x = element_text(size=16), axis.text.x = element_text(size=12),
-#         axis.title.y = element_text(size=16), legend.position = "none", axis.ticks.x = element_blank(), axis.line.x = element_line(color = "white")) +
-#   labs(
-#     x = "Odor Stimulus",
-#     y = "Plesantness Ratings"
-#   )
-
-
+# Familiarity 
 
 #ratings
 
+dfFAM <- summarySEwithin(bsC,
+                         measurevar = "perceived_familiarity",
+                         withinvars = c("Condition"), 
+                         idvar = "id")
 
-dfLIK2 <- summarySEwithin(df,
-                          measurevar = "perceived_liking",
-                          withinvars = c("Condition"), 
-                          idvar = "id")
-
-dfLIK2 <- summarySEwithin(df,
-                          measurevar = "perceived_liking",
-                          withinvars = c("Condition"), 
-                          idvar = "id")
-
-
-dfLIK2$Condition <- as.factor(dfLIK2$Condition)
-bsLIK$Condition <- as.factor(bsLIK$Condition)
-
-dfLIK2$Condition = factor(dfLIK2$Condition,levels(dfLIK2$Condition)[c(3,2,1)])
-bsLIK$Condition = factor(bsLIK$Condition,levels(bsLIK$Condition)[c(3,2,1)])  
-
-# ggplot(bsLIK, aes(x = Condition, y = perceived_liking, fill = Condition)) +
-#   geom_jitter(width = 0.02, color="black",alpha=0.5, size = 0.5) +
-#   geom_bar(data=dfLIK2, stat="identity", alpha=0.6, width=0.35, position = position_dodge(width = 0.01)) +
-#   scale_fill_manual("legend", values = c("Reward"="blue", "Neutral"="red", "Control"="black")) +
-#   geom_line(aes(x=Condition, y=perceived_liking, group=id), col="grey", alpha=0.4) +
-#   geom_errorbar(data=dfLIK2, aes(x = Condition, ymax = perceived_liking + se, ymin = perceived_liking - se), width=0.1, colour="black", alpha=1, size=0.4)+
-#   scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) +
-#   theme_classic() +
-#   theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),  axis.title.x = element_text(size=16), axis.text.x = element_text(size=12),
-#         axis.title.y = element_text(size=16), legend.position = "none", axis.ticks.x = element_blank(), axis.line.x = element_line(color = "white")) +
-#   labs(
-#     x = "Odor Stimulus",
-#     y = "Plesantness Ratings"
-#   )
-
-
-# ggplot(bsLIK, aes(x = Condition, y = perceived_liking, fill = Condition)) +
-#   geom_jitter(width = 0.02, color="black",alpha=0.5, size = 0.5) +
-#   geom_bar(data=dfLIK2, stat="identity", alpha=0.6, width=0.35, position = position_dodge(width = 0.01)) +
-#   scale_fill_manual("legend", values = c("Reward"="blue", "Neutral"="red", "Control"="black")) +
-#   geom_line(aes(x=Condition, y=perceived_liking, group=id), col="grey", alpha=0.4) +
-#   geom_errorbar(data=dfLIK2, aes(x = Condition, ymax = perceived_liking + se, ymin = perceived_liking - se), width=0.1, colour="black", alpha=1, size=0.4)+
-#   scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) +
-#   theme_classic() +
-#   theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),  axis.title.x = element_text(size=16), axis.text.x = element_text(size=12),
-#         axis.title.y = element_text(size=16), legend.position = "none", axis.ticks.x = element_blank(), axis.line.x = element_line(color = "white")) +
-#   labs(
-#     x = "Odor Stimulus",
-#     y = "Plesantness Ratings"
-#   )
-
-#rainplot Liking
-source('~/OBIWAN/CODE/ANALYSIS/BEHAV/my_tools/rainclouds.R')
-
-
-
-ggplot(bsLIK, aes(x = Condition, y = perceived_liking, fill = Condition)) +
-  geom_jitter(width = 0.02, color="black",alpha=0.5, size = 0.5) +
-  geom_bar(data=dfLIK2, stat="identity", alpha=0.6, width=0.35, position = position_dodge(width = 0.01)) +
+plt5 <- ggplot(bsC, aes(x = Condition, y = perceived_familiarity, color = Condition, fill = Condition)) +
+  geom_point(alpha=0.5, size = 0.5, position = position_jitter(width = 0.025, seed = 123)) +
+  geom_bar(data=dfFAM, stat="identity", alpha=0.6, width=0.35) +
   geom_flat_violin(alpha = .5, position = position_nudge(x = .25, y = 0), adjust = 1.5, trim = F, color = NA) + 
-  scale_fill_manual("legend", values = c("Reward"="blue", "Neutral"="red", "Control"="black")) +
-  geom_line(aes(x=Condition, y=perceived_liking, group=id), col="grey", alpha=0.4) +
-  geom_errorbar(data=dfLIK2, aes(x = Condition, ymax = perceived_liking + se, ymin = perceived_liking - se), width=0.1, colour="black", alpha=1, size=0.4)+
+  scale_fill_manual("legend", values = c("Reward"="blue", "Control"="black")) +
+  scale_color_manual( values = c("Reward"="blue", "Control"="black")) +
+  geom_line(aes(x=Condition, y=perceived_familiarity, group=id), col="grey", alpha=0.4,  position = position_jitter(width = 0.025, seed = 123)) +
+  geom_errorbar(data=dfFAM, aes(x = Condition, ymax = perceived_familiarity + se, ymin = perceived_familiarity - se), width=0.1, colour="black", alpha=1, size=0.4)+
   scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) +
   theme_classic() +
-  theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),  axis.title.x = element_text(size=16), axis.text.x = element_text(size=12),
-        axis.title.y = element_text(size=16), legend.position = "none", axis.ticks.x = element_blank(), axis.line.x = element_line(color = "white")) +
+  theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),
+        axis.text.x = element_text(size=12,  colour = "black"),
+        axis.title.x = element_text(size=16), 
+        axis.title.y = element_text(size=16), 
+        legend.position = "none", 
+        axis.ticks.x = element_blank(), 
+        axis.line.x = element_line(color = "white")) +
   labs(
-    x = "Odor Stimulus",
-    y = "Plesantness Ratings"
+    x = "Taste Stimulus",
+    y = "Familiarity Ratings"
   )
+plot(plt5)
 
-#EMG - Physio
-
-dfEMG2 <- summarySEwithin(df,
-                          measurevar = "EMG",
-                          withinvars = c("Condition"), 
-                          idvar = "id")
-
-dfEMG2 <- summarySEwithin(df,
-                          measurevar = "EMG",
-                          withinvars = c("Condition"), 
-                          idvar = "id")
+pdf(file.path(figures_path,paste(task, 'Familiarity_ratings_control.pdf',  sep = "_")))
+plot(plt3)
+dev.off()
 
 
-dfEMG2$Condition <- as.factor(dfEMG2$Condition)
-bsEMG$Condition <- as.factor(bsEMG$Condition)
+#**********************************  PLOT 2 main effect by trial # # plot familiarity by time by condition  
 
-dfEMG2$Condition = factor(dfEMG2$Condition,levels(dfEMG2$Condition)[c(3,2,1)])
-bsEMG$Condition = factor(bsEMG$Condition,levels(bsEMG$Condition)[c(3,2,1)])  
+dfFAM <- summarySEwithin(bsTC,
+                         measurevar = "perceived_familiarity",
+                         withinvars = c("Condition", "trialxcondition"), 
+                         idvar = "id")
 
+dfFAM$trialxcondition =as.numeric(dfFAM$trialxcondition)
 
-ggplot(bsEMG, aes(x = Condition, y = EMG, fill = Condition)) +
-  geom_jitter(width = 0.02, color="black",alpha=0.5, size = 0.5) +
-  geom_bar(data=dfEMG2, stat="identity", alpha=0.6, width=0.35, position = position_dodge(width = 0.01)) +
-  geom_flat_violin(alpha = .5, position = position_nudge(x = .25, y = 0), adjust = 1.5, trim = F, color = NA) + 
-  scale_fill_manual("legend", values = c("Reward"="blue", "Neutral"="red", "Control"="black")) +
-  geom_line(aes(x=Condition, y=EMG, group=id), col="grey", alpha=0.4) +
-  geom_errorbar(data=dfEMG2, aes(x = Condition, ymax = EMG + se, ymin = EMG - se), width=0.1, colour="black", alpha=1, size=0.4)+
-  #scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) +
+plt6 <- ggplot(dfFAM, aes(x = trialxcondition, y = perceived_familiarity, fill = Condition, color=Condition)) +
+  geom_line(alpha = .7, size = 1) +
+  geom_point() +
+  #geom_abline(slope= 0, intercept=50, linetype = "dashed", color = "black") +
+  geom_ribbon(aes(ymax = perceived_familiarity +se, ymin = perceived_familiarity -se), alpha=0.2, linetype = 0 ) +
+  scale_fill_manual(values = c("Reward"="blue",  "Control"="black")) +
+  scale_color_manual(values = c("Reward"="blue",  "Control"="black")) +
+  scale_y_continuous(expand = c(0, 0),  limits = c(50,80),  breaks=c(seq.int(50,80, by = 5))) + 
+  scale_x_continuous(expand = c(0, 0), limits = c(0,20.25), breaks=c(seq.int(1,20, by = 1)))+ 
   theme_classic() +
-  theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),  axis.title.x = element_text(size=16), axis.text.x = element_text(size=12),
-        axis.title.y = element_text(size=16), legend.position = "none", axis.ticks.x = element_blank(), axis.line.x = element_line(color = "white")) +
-  labs(
-    x = "Odor Stimulus",
-    y = "EMG activity Cor"
-  )
+  theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"), axis.title.x = element_text(size=16),
+        axis.title.y = element_text(size=16), legend.position = c(0.9, 0.9), legend.title=element_blank()) +
+  labs(x = "Trials",y = "Familiarity Ratings")
 
 
-# ANALYSIS
+pdf(file.path(figures_path,paste(task, 'Familiarity_time_control.pdf',  sep = "_")))
+plot(plt6)
+dev.off()
 
-OBIWAN_HED$id               <- factor(OBIWAN_HED$id)
-OBIWAN_HED$condition       <- factor(OBIWAN_HED$condition)
-OBIWAN_HED$trialxcondition           <- factor(OBIWAN_HED$trialxcondition)
 
-#removing empty condition
-OBIWAN_HED.woemp <- filter(OBIWAN_HED, condition != "empty")
 
-#Assumptions:
-my.model = lmer(perceived_liking ~ condition + trialxcondition + (1|id), data = OBIWAN_HED)
+
+
+
+
+
+#  ANALYSIS ---------------------------------------------------------------
+#scale everything!
+OBIWAN_HED$perceived_liking = scale(OBIWAN_HED$perceived_liking)
+OBIWAN_HED$perceived_familiarity = scale(OBIWAN_HED$perceived_familiarity)
+OBIWAN_HED$perceived_intensity = scale(OBIWAN_HED$perceived_intensity)
+
+
+#eva
+#************************************************** test
+mdl.liking = lmer(perceived_liking ~ condition*trialxcondition+(condition|id)+ (condition|trialxcondition), data = OBIWAN_HED, REML=FALSE)
+anova(mdl.liking)
+
+#************************************************** test
+mdl.intensity = lmer(perceived_intensity ~ condition*trialxcondition+(condition|id)+ (condition|trialxcondition), data = OBIWAN_HED, REML=FALSE)
+anova(mdl.intensity)
+
+#************************************************** test
+mdl.familiarity= lmer(perceived_familiarity ~ condition*trialxcondition+(condition|id)+ (condition|trialxcondition), data = OBIWAN_HED, REML=FALSE)
+anova(mdl.familiarity)
+
+n = length(unique(OBIWAN_HED$id))
+
+#ben #MODEL SELECTION
+source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R')
+
+#set "better" optimizer
+control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
+
+# Bates et al. 2015 seems to be that one starts with the maximal model a la Barr et al. 2013 
+# and then decreases the complexity until the covariance matrix is full rank. 
+# (Moreover, they would often recommend to reduce the complexity even further, 
+# in order to increase the power.) Update: In contrast, Barr et al. recommend to reduce complexity 
+# ONLY if the model did not converge; they are willing to tolerate singular covariance matrices.
+
+
+
+## COMPARING RANDOM EFFECTS MODELS #REML
+
+mod1 <-  lmer(perceived_liking ~  condition*trialxcondition + perceived_familiarity + perceived_intensity +(condition|id) +  (condition|trialxcondition) , data = OBIWAN_HED)
+mod2 <-  lmer(perceived_liking ~  condition*trialxcondition + perceived_familiarity + perceived_intensity +(condition|id) +  (1|trialxcondition) , data = OBIWAN_HED)
+mod3 <- lmer(perceived_liking ~  condition*trialxcondition + perceived_familiarity + perceived_intensity + (1|trialxcondition) , data = OBIWAN_HED)
+mod4 <- lmer(perceived_liking ~  condition*trialxcondition + perceived_familiarity + perceived_intensity + (condition|id) , data = OBIWAN_HED)
+mod5 <- lmer(perceived_liking ~  condition*trialxcondition + perceived_familiarity + perceived_intensity + (1|id) , data = OBIWAN_HED)
+
+
+AIC(mod1) ; BIC(mod1)
+AIC(mod2) ; BIC(mod2)
+AIC(mod3) ; BIC(mod3)
+AIC(mod4) ; BIC(mod4)
+AIC(mod5) ; BIC(mod5) 
+
+
+## BEST RANDOM SLOPE MODEL
+rslope = mod4
+summary(rslope) #win #check cor is Not 1 #var is not 0  # not warnings #AIC and BIC are congruent!
+
+
+
+## COMPARE FIXED #ML
+mod1 <- lmer(perceived_liking ~  condition*trialxcondition + perceived_familiarity + perceived_intensity +(condition|id) , data = OBIWAN_HED,  REML=FALSE, control= control)
+mod2 <- lmer(perceived_liking ~  condition*trialxcondition + perceived_familiarity +  (condition|id) , data = OBIWAN_HED, REML=FALSE, control= control)
+mod3 <- lmer(perceived_liking ~  condition*trialxcondition + perceived_intensity + (condition|id) , data = OBIWAN_HED,  REML=FALSE, control= control)
+mod4 <- lmer(perceived_liking ~  condition*trialxcondition +  (condition|id) , data = OBIWAN_HED, REML=FALSE, control= control)
+mod5 <- lmer(perceived_liking ~  condition + trialxcondition + perceived_familiarity + perceived_intensity + (condition|id) , data = OBIWAN_HED,  REML=FALSE, control= control)
+mod6 <- lmer(perceived_liking ~  condition + perceived_familiarity + perceived_intensity + (condition|id) , data = OBIWAN_HED,  REML=FALSE, control= control)
+mod7 <- lmer(perceived_liking ~  condition + trialxcondition + perceived_familiarity + (condition|id) , data = OBIWAN_HED,  REML=FALSE, control= control)
+mod8 <- lmer(perceived_liking ~  condition + trialxcondition + perceived_intensity+ (condition|id) , data = OBIWAN_HED,  REML=FALSE, control= control)
+mod9 <- lmer(perceived_liking ~  condition + trialxcondition + (condition|id) , data = OBIWAN_HED,  REML=FALSE, control= control)
+mod10 <- lmer(perceived_liking ~  condition + (condition|id) , data = OBIWAN_HED,  REML=FALSE, control= control)
+
+AIC(mod1) ; BIC(mod1)
+AIC(mod2) ; BIC(mod2)
+AIC(mod3) ; BIC(mod3)
+AIC(mod4) ; BIC(mod4)
+AIC(mod5) ; BIC(mod5) 
+AIC(mod6) ; BIC(mod6)
+AIC(mod7) ; BIC(mod7)
+AIC(mod8) ; BIC(mod8)
+AIC(mod9) ; BIC(mod9)
+AIC(mod10) ; BIC(mod10)
+
+
+
+## BEST MODEL
+model = mod5
+summary(model) #win #check cor is Not 1  #var is not 0 # not warnings #AIC and BIC are congruent!
+
+
+## TESTING THE RANDOM INTERCEPT
+mod1 <- lmer(perceived_liking ~  condition + trialxcondition + perceived_familiarity + perceived_intensity + (condition|id) , data = OBIWAN_HED,  REML=FALSE)
+mod2 <- lm(perceived_liking ~  condition + trialxcondition + perceived_familiarity + perceived_intensity + (condition|id) , data = OBIWAN_HED)
+
+AIC(mod1) ; BIC(mod1) # largely better !
+AIC(mod2) ; BIC(mod2)
+
+
+## R-SQUARED IN MULTILEVEL MODELS
+
+r2beta(rslope,method="nsj")
+
+#drop the condition random because its condtional we want
+mod1 <- lmer(perceived_liking ~  condition + trialxcondition + perceived_familiarity + perceived_intensity + (1|id) , data = OBIWAN_HED,  REML=FALSE)
+#drop the condition fixed AND random
+mod2 <- lmer(perceived_liking ~  trialxcondition + perceived_familiarity + perceived_intensity + (1|id) , data = OBIWAN_HED,  REML=FALSE)
+r.squaredGLMM(mod1)
+r.squaredGLMM(mod2)
+#well nothing to see here..this value thus reflects the partial marginal R2 for the condition effect
+
+
+main.model.lik = model
+#only remove fixed ef cond
+null.model.lik = lmer(perceived_liking ~ trialxcondition + perceived_familiarity + perceived_intensity + (condition|id) , data = OBIWAN_HED,  REML=FALSE)
+
+test = anova(main.model.lik, null.model.lik, test = 'Chisq')
+test
+
+#Δ BIC = -5.271089 -> evidence for model without condition...
+delta_BIC = test$BIC[1] -test$BIC[2] 
+delta_BIC
+
+
+
+## PLOTTING MODEL ##
+visreg(model,points.par=list(col="lightblue"),line.par=list(col="royalblue4",lwd=4))
+
+inter <- lmer(perceived_liking ~ condition*trialxcondition + (condition|id) , data = OBIWAN_HED,  REML=FALSE , control= control)
+
+#confusing
+visreg(inter,xvar="condition",by="trialxcondition",gg=TRUE,type="contrast",ylab="Liking (z)",breaks=c(-2,0,2),xlab="Condition")
+
+#clearer #but whatcha interptr
+visreg(inter,xvar="id",by="condition",gg=TRUE,type="contrast",ylab="Liking (z)",breaks=c(-2,0,2),xlab="Condition")
+
+
+
+#Assumptions: REML = TRUE
+mod = lmer(perceived_liking ~  condition + trialxcondition + perceived_familiarity + perceived_intensity + (condition|id) , data = OBIWAN_HED)
 
 #1)Linearity 
-plot(my.model)
-#2) Absence of collinearity
+plot(mod)
+
+#2) Multicollinearity / VIF larger than 10 is considered problematic. 
+vif(mod)
+
 #3)Homoscedasticity AND #4)Normality of residuals
-qqnorm(residuals(my.model))
-#5) Absence of influential data points (less visible but need to check)
-alt.est.id <- influence(model=my.model, group="id")
-#plot(alt.est.id)
+#par(mfrow=c(2,2))
+hist(residuals(mod),breaks=100,main="Untransformed",freq=FALSE,col="slategray",border="white")
+lines(density(residuals(mod)),lwd=3,col="firebrick")
+hist(tdiagnostic(mod)$tres,breaks=100,main="Transformed",freq=FALSE,col="slategray",border="white")
+lines(density(tdiagnostic(mod)$tres),lwd=3,col="firebrick")
+qqnorm(residuals(mod),pch=4,col="bisque3") ; qqline(residuals(mod),col="darkblue",lwd=2)
+qqnorm(tdiagnostic(mod)$tres,pch=4,col="bisque3") ; qqline(tdiagnostic(mod)$tres,col="darkblue",lwd=2)
+#dev.off()
+
+
+#5) Absence of influential data points (109) 116
+
+boxplot(scale(ranef(mod)$id))
+
+#4/(𝑁−𝑘−1) 
+cut = 4/(n-4-1)
+set.seed(1816)
+im <- influence(mod,maxfun=100,  group="id")
+
+infIndexPlot(im,col="steelblue",
+                   vars=c("cookd"))
 
 
 
 
-# LIKING ------------------------------------------------------------------
+
+summary(mdl.liking)
+
+null.model.lik = lmer(perceived_liking ~ trialxcondition  + (1+condition|id), data = OBIWAN_HED, REML=FALSE)
+
+test = anova(main.model.lik, null.model.lik, test = 'Chisq')
+test
+
+
+
+
+# other ------------------------------------------------------------------
 
 
 main.model.lik = lmer(perceived_liking ~ condition + trialxcondition  + (1+condition|id), data = OBIWAN_HED, REML=FALSE)
@@ -521,8 +538,7 @@ delta_BIC
 
 
 
-# INTENSITY ---------------------------------------------------------------
-
+#INTENSITY
 
 main.model.int = lmer(perceived_intensity ~ condition + trialxcondition + (1+condition|id), data = OBIWAN_HED, REML=FALSE)
 summary(main.model.int)
