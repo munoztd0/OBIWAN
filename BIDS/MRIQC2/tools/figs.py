@@ -217,9 +217,6 @@ def make_vio_plot(data, IQM_to_plot, data_descriptors, label1, outliers=False):
                     y=API_data,
                     legendgroup='mriQC API', scalegroup='mriQC API', name='mriQC API',
                     side='positive',
-                    points='all',
-                    pointpos=0.5, # where to position points
-                    jitter=0.1,
                     line_color='rgb(58,54,54)')
          )
     # update characteristics shared by all traces
@@ -278,16 +275,8 @@ def make_vio_plot(data, IQM_to_plot, data_descriptors, label1, outliers=False):
     #print description of figure
 
     #print(dictionary.get(var_name))
-#!/usr/bin/env python
 
-### IMPORTS GO HERE ###
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
-from ipywidgets import widgets
-import sys
-
-def make_vio_plot_df(data, IQM_to_plot, data_descriptors, outliers=False):
+def make_vio_plot_label(data, IQM_to_plot, data_descriptors, label1, label2, outliers=False):
     ''' Make a violin plot of the api and user QC metrics.
 
     Args:
@@ -485,7 +474,7 @@ def make_vio_plot_df(data, IQM_to_plot, data_descriptors, outliers=False):
 
     fig.add_trace(go.Violin(x=df_long.loc[(df_long['var']==var_name)&(df_long['SOURCE']=='USER'),'var'],
                     y=df_long.loc[(df_long['var']==var_name)&(df_long['SOURCE']=='USER'),'values'],
-                    legendgroup='Before', scalegroup='Before', name='Before',
+                    legendgroup=label1, scalegroup=label1, name=label1,
                     side='negative',
                     points='all',
                     pointpos=-0.5, # where to position points
@@ -495,7 +484,7 @@ def make_vio_plot_df(data, IQM_to_plot, data_descriptors, outliers=False):
          )
     fig.add_trace(go.Violin(x=df_long.loc[(df_long['var']==var_name)&(df_long['SOURCE']=='API'),'var'],
                     y=df_long.loc[(df_long['var']==var_name)&(df_long['SOURCE']=='API'),'values'],
-                    legendgroup='After', scalegroup='After', name='After',
+                    legendgroup=label2, scalegroup=label2, name=label2,
                     side='positive',
                     points='all',
                     pointpos=0.5, # where to position points
@@ -555,7 +544,3 @@ def make_vio_plot_df(data, IQM_to_plot, data_descriptors, outliers=False):
 
     return(dropdown_widget, fig_widget, data)
 
-
-    #print description of figure
-
-    #print(dictionary.get(var_name))

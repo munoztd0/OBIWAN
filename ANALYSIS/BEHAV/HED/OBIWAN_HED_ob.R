@@ -1,4 +1,4 @@
-## R code for FOR OBIWAN_HED
+## R code for FOR OBIWAN_HED Obese
 # last modified on April by David
 # -----------------------  PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
@@ -22,7 +22,9 @@ figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV')
 # open dataset
 OBIWAN_HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
 
-OBIWAN_HED  <- subset(OBIWAN_HED_full, group == 'control') #wihtout obese
+
+#subset
+OBIWAN_HED  <- subset(OBIWAN_HED_full, group == 'obese' & session == 'second') #without control and only session 2
 
 # define factors
 OBIWAN_HED$id      <- factor(OBIWAN_HED$id)
@@ -73,7 +75,7 @@ dfLIK_R  <- subset(dfLIK, condition == 'MilkShake')
 bsC_C  <- subset(bsC, condition == 'Empty')
 bsC_R  <- subset(bsC, condition == 'MilkShake')
 
-  
+
 plt1 <- ggplot(data = bsC, aes(x = condition, y = perceived_liking, color = condition, fill = condition)) +
   #left
   geom_left_violin(data = bsC_C, alpha = .4, adjust = 1.5, trim = F, color = NA) + 
@@ -107,7 +109,7 @@ plt1 <- ggplot(data = bsC, aes(x = condition, y = perceived_liking, color = cond
   labs( x = "     Taste Stimulus", y = "Plesantness Ratings")
 
 
-pdf(file.path(figures_path,paste(task, 'Liking_ratings_control.pdf',  sep = "_")),
+pdf(file.path(figures_path,paste(task, 'Liking_ratings_obese.pdf',  sep = "_")),
     width     = 5.5,
     height    = 6)
 
@@ -145,7 +147,7 @@ plt2 <- ggplot(dfLIK, aes(x = trialxcondition, y = perceived_liking, fill = cond
   labs(x = "Trials",y = "Pleasantness Ratings")
 
 
-pdf(file.path(figures_path,paste(task, 'Liking_time_control.pdf',  sep = "_")),
+pdf(file.path(figures_path,paste(task, 'Liking_time_obese.pdf',  sep = "_")),
     width     = 7.5,
     height    = 6)
 
@@ -203,7 +205,7 @@ plt3 <- ggplot(data = bsC, aes(x = condition, y = perceived_intensity, color = c
   labs( x = "     Taste Stimulus", y = "Intensity Ratings")
 
 
-pdf(file.path(figures_path,paste(task, 'Intensity_ratings_control.pdf',  sep = "_")),
+pdf(file.path(figures_path,paste(task, 'Intensity_ratings_obese.pdf',  sep = "_")),
     width     = 5.5,
     height    = 6)
 
@@ -241,7 +243,7 @@ plt4 <- ggplot(dfINT, aes(x = trialxcondition, y = perceived_intensity, fill = c
   labs(x = "Trials",y = "Intensity Ratings")
 
 
-pdf(file.path(figures_path,paste(task, 'Intensity_time_control.pdf',  sep = "_")),
+pdf(file.path(figures_path,paste(task, 'Intensity_time_obese.pdf',  sep = "_")),
     width     = 7.5,
     height    = 6)
 
@@ -295,7 +297,7 @@ plt5 <- ggplot(data = bsC, aes(x = condition, y = perceived_familiarity, color =
   labs( x = "     Taste Stimulus", y = "Familiarity Ratings")
 
 
-pdf(file.path(figures_path,paste(task, 'Familiarity_ratings_control.pdf',  sep = "_")),
+pdf(file.path(figures_path,paste(task, 'Familiarity_ratings_obese.pdf',  sep = "_")),
     width     = 5.5,
     height    = 6)
 
@@ -329,11 +331,11 @@ plt6 <- ggplot(dfFAM, aes(x = trialxcondition, y = perceived_familiarity, fill =
         axis.text.x = element_text(size=11,  colour = "black"),
         axis.title.x = element_text(size=16),
         axis.title.y = element_text(size=16), 
-        legend.position = c(0.9, 0.99), legend.title=element_blank()) +
+        legend.position = c(0.9, 0.19), legend.title=element_blank()) +
   labs(x = "Trials",y = "Familiarity Ratings")
 
 
-pdf(file.path(figures_path,paste(task, 'Familiarity_time_control.pdf',  sep = "_")),
+pdf(file.path(figures_path,paste(task, 'Familiarity_time_obese.pdf',  sep = "_")),
     width     = 7.5,
     height    = 6)
 
@@ -395,13 +397,13 @@ mod5 <- lmer(perceived_liking ~  condition*trialxcondition + perceived_familiari
 AIC(mod1) ; BIC(mod1)
 AIC(mod2) ; BIC(mod2)
 AIC(mod3) ; BIC(mod3)
-AIC(mod4) ; BIC(mod4)
+AIC(mod4) ; BIC(mod4) #
 AIC(mod5) ; BIC(mod5) 
 
 
 ## BEST RANDOM SLOPE MODEL
 rslope = mod4
-summary(rslope) #win #check cor is Not 1 #var is not 0  # not warnings #AIC and BIC are congruent!
+summary(rslope) #win #check cor is Not 1 #var is not 0  # no warnings #AIC and BIC are congruent!
 
 
 
@@ -421,7 +423,7 @@ AIC(mod1) ; BIC(mod1)
 AIC(mod2) ; BIC(mod2)
 AIC(mod3) ; BIC(mod3)
 AIC(mod4) ; BIC(mod4)
-AIC(mod5) ; BIC(mod5) 
+AIC(mod5) ; BIC(mod5) #
 AIC(mod6) ; BIC(mod6)
 AIC(mod7) ; BIC(mod7)
 AIC(mod8) ; BIC(mod8)
@@ -432,8 +434,8 @@ AIC(mod10) ; BIC(mod10)
 
 ## BEST MODEL
 model = mod5
-summary(model) #win #check cor is Not 1  #var is not 0 # not warnings #AIC and BIC are congruent!
-
+summary(model) #win #check cor is Not 1  #var is not 0 # not warnings #AIC and BIC not congruent!
+#here conidtion is significnt
 
 ## TESTING THE RANDOM INTERCEPT
 mod1 <- lmer(perceived_liking ~  condition + trialxcondition + perceived_familiarity + perceived_intensity + (condition|id) , data = OBIWAN_HED,  REML=FALSE)
@@ -451,19 +453,56 @@ r2beta(rslope,method="nsj")
 mod1 <- lmer(perceived_liking ~  condition + trialxcondition + perceived_familiarity + perceived_intensity + (1|id) , data = OBIWAN_HED,  REML=FALSE)
 #drop the condition fixed AND random
 mod2 <- lmer(perceived_liking ~  trialxcondition + perceived_familiarity + perceived_intensity + (1|id) , data = OBIWAN_HED,  REML=FALSE)
-r.squaredGLMM(mod1)
-r.squaredGLMM(mod2)
-#well nothing to see here..this value thus reflects the partial marginal R2 for the condition effect
+r1 = r.squaredGLMM(mod1)
+r2 = r.squaredGLMM(mod2)
+r1 - r2
+#this value thus reflects the partial marginal and conditional R2 for the condition effect
 
 
 main.model.lik = model
 #only remove fixed ef cond
 null.model.lik = lmer(perceived_liking ~ trialxcondition + perceived_familiarity + perceived_intensity + (condition|id) , data = OBIWAN_HED,  REML=FALSE)
 
+
+#anova(model,type=2) #bad?
+
 test = anova(main.model.lik, null.model.lik, test = 'Chisq')
 test
 
-#Δ BIC = -5.271089 -> evidence for model without condition...
+library(BayesFactor)
+lik.BF = lmBF(perceived_liking ~ condition * trialxcondition + perceived_familiarity + perceived_intensity + id + condition:id,  whichRandom=c('id','condition:id'), data = OBIWAN_HED, iterations = 50000)
+
+x = anovaBF(perceived_liking ~ condition + trialxcondition + condition:id,  whichRandom=c('condition:id'), data = OBIWAN_HED)
+
+# BAYES FACTOR When the hypotheses are simple point hypotheses, the Bayes factor is equivalent to the likelihood ratio.
+# N.B. Please note that the estimated Bayes factors might (slightly) vary due to Monte Carlo sampling noise
+PIT.aov_BF  <- anovaBF(squeezing_freq ~ cue_type * trial + ParticipantID, data = PIT, whichRandom = "ParticipantID", iterations = 50000)
+(PIT.aov_BF <- recompute(PIT.aov_BF, iterations = 50000))
+plot(PIT.aov_BF)
+
+# Interaction effect
+(PIT.aov_BF[4]/PIT.aov_BF[3])
+lik.BF[1]
+
+full_BF = lmBF(perceived_liking ~ condition + trialxcondition + perceived_familiarity + perceived_intensity + id + condition:id,  whichRandom=c('id','condition:id'), data = OBIWAN_HED)
+null_BF = lmBF(perceived_liking ~ condition + trialxcondition + perceived_familiarity + perceived_intensity + id,  whichRandom=c('id'), data = OBIWAN_HED)
+
+lmBF(perceived_liking ~ condition + trialxcondition + id + condition:ID,  whichRandom=c('id','condition:id'), data = OBIWAN_HED)
+
+mixed_data$id = factor(mixed_data$id)  # BayesFactor wants the random to be a factor
+
+full_BF = lmBF(WMI ~ session * group + id, data = mixed_data, whichRandom = 'id')
+
+null_BF = lmBF(perceived_liking ~ trialxcondition + perceived_familiarity + perceived_intensity, data = OBIWAN_HED, whichRandom = 'id')
+null_BF = lmBF(perceived_liking ~ session + group + id, data = mixed_data, whichRandom = 'id')
+full_BF / null_BF  # The Bayes factor in favor of the full model
+`lmBF(formula, data, whichRandom = c('id', 'other_var', 'third_var'))`.
+
+#quasi-Bayesian statistics, such as Bayes factors or information criteria and Δ BIC 
+#The BIC approximation to the Bayes Factor he advocates for BF_01 is given by exp( (BIC_1 - BIC_0)/2 )  Wagenmakers (2007)
+x = AIC(mod1) 
+y = AIC(mod2) 
+exp( (test$BIC[1] - test$BIC[2])/2 ) 
 delta_BIC = test$BIC[1] -test$BIC[2] 
 delta_BIC
 
@@ -510,7 +549,7 @@ set.seed(1816)
 im <- influence(mod,maxfun=100,  group="id")
 
 infIndexPlot(im,col="steelblue",
-                   vars=c("cookd"))
+             vars=c("cookd"))
 
 
 
