@@ -82,6 +82,9 @@ df_PIT <- summarySEwithin(bsCg,
                          withinvars = c("condition", "group"), 
                          idvar = "id")
 
+df_PIT_o  <- subset(df_PIT, group == 'obese')
+df_PIT_c  <- subset(df_PIT, group == 'control')
+
 df_PIT_C  <- subset(df_PIT, condition == 'BL')
 df_PIT_Co  <- subset(df_PIT_C, group == 'obese')
 df_PIT_Cc  <- subset(df_PIT_C, group == 'control')
@@ -110,49 +113,49 @@ bsC_Mc  <- subset(bsC_M , group == 'control')
 plt1 <- ggplot(data = bsCg, aes(x = condition, y = gripFreq, color = group, fill = group)) +
   #left BL ob
   geom_left_violin(data = bsC_Co, alpha = .4, adjust = 1.5, trim = F, color = NA) + 
-  geom_point(data = df_PIT_Co, aes(x = as.numeric(condition)+0.15), shape = 18, color ="black") +
-  geom_errorbar(data=df_PIT_Co, aes(x = as.numeric(condition)+0.15, ymax = gripFreq + se, ymin = gripFreq - se), width=0.1,  alpha=1, size=0.4)+
+  geom_point(data = df_PIT_Co, aes(x = as.numeric(condition)+0.2), shape = 18, color ="black") +
+  geom_errorbar(data=df_PIT_Co, aes(x = as.numeric(condition)+0.2, ymax = gripFreq + se, ymin = gripFreq - se), width=0.1,  alpha=1, size=0.4)+
   
   #left BL co
   geom_left_violin(data = bsC_Cc, alpha = .4, adjust = 1.5, trim = F, color = NA) + 
-  geom_point(data = df_PIT_Cc,  aes(x = as.numeric(condition)+0.15), shape = 18, color ="black") +
-  geom_errorbar(data=df_PIT_Cc, aes(x = as.numeric(condition)+0.15, ymax = gripFreq + se, ymin = gripFreq - se), width=0.1,  alpha=1, size=0.4)+
+  geom_point(data = df_PIT_Cc,  aes(x = as.numeric(condition)+0.1), shape = 18, color ="black") +
+  geom_errorbar(data=df_PIT_Cc, aes(x = as.numeric(condition)+0.1, ymax = gripFreq + se, ymin = gripFreq - se), width=0.1,  alpha=1, size=0.4)+
   
   
   #right CS+ ob
   geom_right_violin(data = bsC_Ro, alpha = .4, position = position_nudge(x = +0.3, y = 0), adjust = 1.5, trim = F, color = NA) + 
-  geom_point(data = df_PIT_Ro, aes(x = as.numeric(condition)+0.15, y = gripFreq), color ="black", shape = 18) +
-  geom_errorbar(data=df_PIT_Ro, aes(x = as.numeric(condition)+0.15, y = gripFreq, ymax = gripFreq + se, ymin = gripFreq - se)
+  geom_point(data = df_PIT_Ro, aes(x = as.numeric(condition)+0.2, y = gripFreq), color ="black", shape = 18) +
+  geom_errorbar(data=df_PIT_Ro, aes(x = as.numeric(condition)+0.2, y = gripFreq, ymax = gripFreq + se, ymin = gripFreq - se)
                 , width=0.1, alpha=1, size=0.4)+
   
   #right CS+ co
   geom_right_violin(data = bsC_Rc, alpha = .4, position = position_nudge(x = +0.3, y = 0), adjust = 1.5, trim = F, color = NA) + 
-  geom_point(data = df_PIT_Rc, aes(x = as.numeric(condition)+0.15, y = gripFreq), shape = 18, color ="black") +
-  geom_errorbar(data=df_PIT_Rc, aes(x = as.numeric(condition)+0.15, y = gripFreq, ymax = gripFreq + se, ymin = gripFreq - se)
+  geom_point(data = df_PIT_Rc, aes(x = as.numeric(condition)+0.1, y = gripFreq), shape = 18, color ="black") +
+  geom_errorbar(data=df_PIT_Rc, aes(x = as.numeric(condition)+0.1, y = gripFreq, ymax = gripFreq + se, ymin = gripFreq - se)
                 , width=0.1, alpha=1, size=0.4)+
   
   #right CS- ob
   geom_right_violin(data = bsC_Mo, alpha = .4, position = position_nudge(x = +0.3, y = 0), adjust = 1.5, trim = F, color = NA) + 
-  geom_point(data = df_PIT_Mo, aes(x = as.numeric(condition)+0.15, y = gripFreq), color ="black", shape = 18) +
-  geom_errorbar(data=df_PIT_Mo, aes(x = as.numeric(condition)+0.15, y = gripFreq, ymax = gripFreq + se, ymin = gripFreq - se)
+  geom_point(data = df_PIT_Mo, aes(x = as.numeric(condition)+0.2, y = gripFreq), color ="black", shape = 18) +
+  geom_errorbar(data=df_PIT_Mo, aes(x = as.numeric(condition)+0.2, y = gripFreq, ymax = gripFreq + se, ymin = gripFreq - se)
                 , width=0.1, alpha=1, size=0.4)+
   
   #right CS- co
   geom_right_violin(data = bsC_Mc, alpha = .4, position = position_nudge(x = +0.3, y = 0), adjust = 1.5, trim = F, color = NA) + 
-  geom_point(data = df_PIT_Mc, aes(x = as.numeric(condition)+0.15, y = gripFreq), shape = 18, color ="black") +
-  geom_errorbar(data=df_PIT_Mc, aes(x = as.numeric(condition)+0.15, y = gripFreq, ymax = gripFreq + se, ymin = gripFreq - se)
+  geom_point(data = df_PIT_Mc, aes(x = as.numeric(condition)+0.1, y = gripFreq), shape = 18, color ="black") +
+  geom_errorbar(data=df_PIT_Mc, aes(x = as.numeric(condition)+0.1, y = gripFreq, ymax = gripFreq + se, ymin = gripFreq - se)
                 , width=0.1, alpha=1, size=0.4)+
   
   #make it raaiiin
   geom_point(data = bsCg, aes(x = as.numeric(condition) +0.15, y = gripFreq), alpha=0.5, size = 0.5, 
              position = position_jitter(width = 0.025, seed = 123)) +
-  geom_line(data = df_PIT, aes(x = as.numeric(condition) +0.15, y = gripFreq, group=group), alpha=0.4,  
-            position = position_jitter(width = 0.025, seed = 123)) +
+  geom_line(data = df_PIT_o, aes(x = as.numeric(condition) +0.2, y = gripFreq, group=group), alpha=0.4) +
+  geom_line(data = df_PIT_c, aes(x = as.numeric(condition) +0.1, y = gripFreq, group=group), alpha=0.4) +
   
   #details
   #scale_fill_manual(values = c("obese"="blue", "control"="black")) +
   #scale_color_manual(values = c("obese"="blue", "control"="black")) +
-  #scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) +
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,50, by = 10)), limits = c(0,50)) +
   guides(fill = guide_legend(override.aes = list(alpha = 0.3))) +
   theme_classic() +
   theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),
@@ -166,11 +169,11 @@ plt1 <- ggplot(data = bsCg, aes(x = condition, y = gripFreq, color = group, fill
         axis.line.x = element_blank()) + 
   labs( x = "Baseline                 CS-                CS+", 
         y = "Number of Grips",
-        caption = "Second session: nControl = 30, nObese = 62. \n Error bars represent standard error of measurement")
+        caption = "Second session: nControl = 30, nObese = 62 \n Error bars represent SEM for within-subject design using method from Morey (2008)")
 
 plot(plt1)
 
-pdf(file.path(figures_path,paste(task, '_PIT_ratings_ses2.pdf',  sep = "_")),
+pdf(file.path(figures_path,paste(task, 'grips_ses2.pdf',  sep = "_")),
     width     = 5.5,
     height    = 6)
 
@@ -185,19 +188,25 @@ df_PIT <- summarySEwithin(bsTCg,
                          withinvars = c("condition", "trialxcondition", "group"), 
                          idvar = "id")
 
-df_PIT$condition <- factor(df_PIT$condition, levels = rev(levels(df_PIT$condition)))
-
 df_PIT$trialxcondition =as.numeric(df_PIT$trialxcondition)
 
-plt2 <- ggplot(df_PIT, aes(x = trialxcondition, y = gripFreq, fill = condition, color=condition)) +
+df_PIT_csp  <- subset(df_PIT, condition == 'CSplus')
+df_PIT_csm  <- subset(df_PIT, condition == 'CSminus')
+#df_PIT_c  <- subset(df_PIT, group == 'control')
+
+#df_PIT$condition <- factor(df_PIT$condition, levels = rev(levels(df_PIT$condition)))
+
+
+
+plt2 <- ggplot(df_PIT_csp, aes(x = trialxcondition, y = gripFreq, fill = group, color=group)) +
   geom_line(alpha = .7, size = 1) +
   geom_point() +
-  geom_abline(slope= 0, intercept=50, linetype = "dasPIT", color = "black") +
+  #geom_abline(slope= 0, intercept=50, linetype = "dashed", color = "black") +
   geom_ribbon(aes(ymax = gripFreq +se, ymin = gripFreq -se), alpha=0.2, linetype = 0 ) +
-  scale_fill_manual(values = c("MilkShake"="blue",  "Empty"="black")) +
-  scale_color_manual(values = c("MilkShake"="blue",  "Empty"="black")) +
-  scale_y_continuous(expand = c(0, 0),  limits = c(30,80),  breaks=c(seq.int(30,80, by = 5))) +
-  scale_x_continuous(expand = c(0, 0), limits = c(0,20.25), breaks=c(seq.int(1,20, by = 1)))+ 
+  #scale_fill_manual(values = c("CSplus"="darkblue",  "CSminus"="darkred")) +
+  #scale_color_manual(values = c("MilkShake"="blue",  "Empty"="black")) +
+  scale_y_continuous(expand = c(0, 0),  limits = c(10,20),  breaks=c(seq.int(10,20, by = 2))) +
+  scale_x_continuous(expand = c(0, 0), limits = c(0,15.25), breaks=c(seq.int(1,15, by = 2)))+ 
   theme_classic() +
   theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"), 
         axis.text.y = element_text(size=12,  colour = "black"),
@@ -205,16 +214,43 @@ plt2 <- ggplot(df_PIT, aes(x = trialxcondition, y = gripFreq, fill = condition, 
         axis.title.x = element_text(size=16),
         axis.title.y = element_text(size=16), 
         legend.position = c(0.9, 0.9), legend.title=element_blank()) +
-  labs(x = "Trials",y = "Number of Grips")
+  labs(x = "Trial",y = "Number of Grips (CS+)")
 
 
-pdf(file.path(figures_path,paste(task, '_PIT_time_ses2.pdf',  sep = "_")),
+plt3 <- ggplot(df_PIT_csm, aes(x = trialxcondition, y = gripFreq, fill = group, color=group)) +
+  geom_line(alpha = .7, size = 1) +
+  geom_point() +
+  #geom_abline(slope= 0, intercept=50, linetype = "dashed", color = "black") +
+  geom_ribbon(aes(ymax = gripFreq +se, ymin = gripFreq -se), alpha=0.2, linetype = 0 ) +
+  #scale_fill_manual(values = c("CSplus"="darkblue",  "CSminus"="darkred")) +
+  #scale_color_manual(values = c("MilkShake"="blue",  "Empty"="black")) +
+  scale_y_continuous(expand = c(0, 0),  limits = c(10,20),  breaks=c(seq.int(10,20, by = 2))) +
+  scale_x_continuous(expand = c(0, 0), limits = c(0,15.25), breaks=c(seq.int(1,15, by = 2)))+ 
+  theme_classic() +
+  theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"), 
+        axis.text.y = element_text(size=12,  colour = "black"),
+        axis.text.x = element_text(size=11,  colour = "black"),
+        axis.title.x = element_text(size=16),
+        axis.title.y = element_text(size=16), 
+        legend.position = c(0.9, 0.9), legend.title=element_blank()) +
+  labs(x = "Trial",y = "Number of Grips (CS-)")
+
+
+pdf(file.path(figures_path,paste(task, 'time_ses2_CSp.pdf',  sep = "_")),
     width     = 7.5,
     height    = 6)
 
 plot(plt2)
 dev.off()
 plot(plt2)
+
+pdf(file.path(figures_path,paste(task, 'time_ses2_CSm.pdf',  sep = "_")),
+    width     = 7.5,
+    height    = 6)
+
+plot(plt3)
+dev.off()
+plot(plt3)
 
 
 

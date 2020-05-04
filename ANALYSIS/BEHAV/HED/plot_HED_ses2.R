@@ -29,6 +29,9 @@ OBIWAN_HED_control  <- subset(OBIWAN_HED, group == 'control')
 OBIWAN_HED_obese  <- subset(OBIWAN_HED, group == 'obese') 
 OBIWAN_HED_third  <- subset(OBIWAN_HED_full, session == 'third') #only session 2
 
+OBIWAN_HED$perceived_liking = OBIWAN_HED$perceived_liking -50
+OBIWAN_HED$perceived_intensity = OBIWAN_HED$perceived_intensity -50
+OBIWAN_HED$perceived_familiarity = OBIWAN_HED$perceived_familiarity -50
 
 # define factors
 OBIWAN_HED$id      <- factor(OBIWAN_HED$id)
@@ -130,7 +133,7 @@ plt1 <- ggplot(data = bsCg, aes(x = condition, y = perceived_liking, color = gro
   #details
   #scale_fill_manual(values = c("obese"="blue", "control"="black")) +
   #scale_color_manual(values = c("obese"="blue", "control"="black")) +
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) +
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-50,50, by = 25)), limits = c(-50,50)) +
   guides(fill = guide_legend(override.aes = list(alpha = 0.3))) +
   theme_classic() +
   theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),
@@ -144,7 +147,7 @@ plt1 <- ggplot(data = bsCg, aes(x = condition, y = perceived_liking, color = gro
         axis.line.x = element_blank()) + 
   labs( x = "Empty                  Milshake", 
         y = "Plesantness Ratings",
-        caption = "Second session: nControl = 27, nObese = 63. \n Error bars represent standard error of measurment")
+        caption = "Second session: nControl = 27, nObese = 63 \n Error bars represent SEM for within-subject design using method from Morey (2008)")
 
 plot(plt1)
 
@@ -167,15 +170,15 @@ dfLIK$condition <- factor(dfLIK$condition, levels = rev(levels(dfLIK$condition))
 
 dfLIK$trialxcondition =as.numeric(dfLIK$trialxcondition)
 
-plt2 <- ggplot(dfLIK, aes(x = trialxcondition, y = perceived_liking, fill = condition, color=condition)) +
+plt2 <- ggplot(dfLIK, aes(x = trialxcondition, y = perceived_liking, fill = group, color=condition)) +
   geom_line(alpha = .7, size = 1) +
   geom_point() +
   geom_abline(slope= 0, intercept=50, linetype = "dashed", color = "black") +
   geom_ribbon(aes(ymax = perceived_liking +se, ymin = perceived_liking -se), alpha=0.2, linetype = 0 ) +
-  scale_fill_manual(values = c("MilkShake"="blue",  "Empty"="black")) +
-  scale_color_manual(values = c("MilkShake"="blue",  "Empty"="black")) +
-  scale_y_continuous(expand = c(0, 0),  limits = c(30,80),  breaks=c(seq.int(30,80, by = 5))) +
-  scale_x_continuous(expand = c(0, 0), limits = c(0,20.25), breaks=c(seq.int(1,20, by = 1)))+ 
+  #scale_fill_manual(values = c("MilkShake"="blue",  "Empty"="black")) +
+  scale_color_manual(values = c("MilkShake"="purple",  "Empty"="black")) +
+  scale_y_continuous(expand = c(0, 0),  limits = c(-10,30),  breaks=c(seq.int(-10,30, by = 5))) +
+  scale_x_continuous(expand = c(0, 0), limits = c(0,21), breaks=c(seq.int(1,21, by = 2)))+ 
   theme_classic() +
   theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"), 
         axis.text.y = element_text(size=12,  colour = "black"),
@@ -183,7 +186,10 @@ plt2 <- ggplot(dfLIK, aes(x = trialxcondition, y = perceived_liking, fill = cond
         axis.title.x = element_text(size=16),
         axis.title.y = element_text(size=16), 
         legend.position = c(0.9, 0.9), legend.title=element_blank()) +
-  labs(x = "Trials",y = "Pleasantness Ratings")
+  labs(x = "Trial",
+       y = "Pleasantness Rating",
+       caption = "Second session: nControl = 27, nObese = 63 \n Error bars represent SEM for within-subject design using method from Morey (2008)")
+
 
 
 pdf(file.path(figures_path,paste(task, 'Liking_time_ses2.pdf',  sep = "_")),

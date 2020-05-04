@@ -63,13 +63,13 @@ for j = 1:length(session)
         %load behavioral file
         if strcmp(sessionX, 'third')
             
-%             %missing trials
-%             if strcmp(subjX(end-2:end), '214')  
-%                 continue
-%             end
-%             
+            %missing trials
+            if strcmp(subjX(end-2:end), '214')  
+                continue
+            end
+            
             %missing PAV sess
-            if  strcmp(subjX(end-2:end), '212')  || strcmp(subjX(end-2:end), '245') || strcmp(subjX(end-2:end), '249')
+            if  strcmp(subjX(end-2:end), '212') || strcmp(subjX(end-2:end), '245') || strcmp(subjX(end-2:end), '249')
                 continue
             end
            
@@ -235,6 +235,7 @@ for j = 1:length(session)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% save mat file
         func_dir = fullfile (homedir, 'DERIVATIVES', 'PREPROC', ['sub-' num2str(subjX)], ['ses-' sessionX], 'func');
+        bids_dir = fullfile (homedir, ['sub-' num2str(subjX)], ['ses-' sessionX], 'func');
         
         if ~exist(func_dir, 'dir')
             mkdir(func_dir)
@@ -287,7 +288,8 @@ for j = 1:length(session)
         eventfile = [events.onsets, events.durations, events.phase,...
             events.CSname, events.reactionTime,events.responseACC, events.rounds];
 
-
+        cd (bids_dir)
+        
         % open data base
         eventfile_name = ['sub-' num2str(subjX) '_ses-' sessionX '_task-' task '_run-01_events.tsv'];
         fid = fopen(eventfile_name,'wt');

@@ -5,8 +5,8 @@ if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(ggplot2, Rmisc, dplyr, ggplot2, lmerTest, lme4, car, r2glmm, optimx, visreg, MuMIn, BayesFactor, sjstats)
-
+pacman::p_load(ggplot2, Rmisc, dplyr, ggplot2, lmerTest, car, r2glmm, optimx, visreg, MuMIn, BayesFactor, sjstats)
+#lme4
 #Influence.ME,lmerTest, lme4, MBESS, afex, car, ggplot2, dplyr, plyr, tidyr, reshape, Hmisc, Rmisc,  ggpubr, gridExtra, plotrix, lsmeans, BayesFactor)
 
 #SETUP
@@ -21,7 +21,8 @@ figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV')
 
 # open dataset
 OBIWAN_HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
-
+info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
+info$id      <- factor(info$id)
 
 #subset
 OBIWAN_HED  <- subset(OBIWAN_HED_full, session == 'second') #only session 2
@@ -36,6 +37,8 @@ OBIWAN_HED$group    <- factor(OBIWAN_HED$group)
 OBIWAN_HED$condition <- factor(OBIWAN_HED$condition)
 
 OBIWAN_HED$trialxcondition <- factor(OBIWAN_HED$trialxcondition)
+
+OBIWAN_HED = full_join(OBIWAN_HED, info, by = "id")
 
 
 
@@ -73,6 +76,10 @@ control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 # (Moreover, they would often recommend to reduce the complexity even further, 
 # in order to increase the power.) Update: In contrast, Barr et al. recommend to reduce complexity 
 # ONLY if the model did not converge; they are willing to tolerate singular covariance matrices.
+
+#MCMCglmm and lmer are both functions that can be used for fitting linear mixed models. 
+#MCMCglmm takes a Bayesian approach where priors must be specified for fixed and random effects, 
+#enabling inference via Markov Chain Monte Carlo sampling, whereas lmer takes a likelihood approach within the frequentist paradigm. To
 
 
 
@@ -136,15 +143,20 @@ AIC(mod8) ; BIC(mod8)
 
 
 
-#mod7 <- lmer(perceived_liking ~  condition*group  +(condition|id) +  (condition|trialxcondition) , data = OBIWAN_HED,  REML=FALSE, control= control)
+#mod7 <- lmer(perceived_liking ~  condition*group  +(condition|id) +  (condition||trialxcondition) , data = OBIWAN_HED,  REML=FALSE, control= control)
 
 ## BEST MODEL
-model = mod7
+model = mod7 #cor = 1
 summary(model) #win #check cor is -1 ! #var is not 0 # not warnings #AIC and BIC are congruent!
+
 #All of these warnings generally point to a misspecification of your model, in particular the random effects. Most likely some random effects parameters are close to 0 (for variances), or -1/1 (for correlations), which creates for redundancies in the covariance matrix of the model's parameters (of which the so-called Hessian matrix is the inverse).
 #Usually, removing the redundant parameters solves the issue. However, it may happen that models with degenerate Hessians still achieve massively lower AIC/BIC than a competing simpler model. In this scenario, the degenerate model may sometimes be preferred to obtain suitably conservative degrees of freedom for inferential tests.
 #In fact, the fixed effects estimates and standard errors of a multilevel model are not always strongly impacted by misspecifications in the random effects part!
 
+#Doug Bates suggests using MCMC samples instead #https://stat.ethz.ch/pipermail/r-help/2006-May/094765.html
+library("languageR")
+
+pvals.fnc(model)
 
 ## TESTING THE RANDOM INTERCEPT
 modint <- lm(perceived_liking ~  condition*group + perceived_familiarity, data = OBIWAN_HED)
@@ -175,6 +187,11 @@ null.model.lik = lmer(perceived_liking ~ trialxcondition + perceived_familiarity
 
 test = anova(main.model.lik, null.model.lik, test = 'Chisq')
 test
+
+#MCMCglmm and lmer are both functions that can be used for fitting linear mixed models. 
+#MCMCglmm takes a Bayesian approach where priors must be specified for fixed and random effects, 
+#enabling inference via Markov Chain Monte Carlo sampling, whereas lmer takes a likelihood approach within the frequentist paradigm. To
+
 
 
 lik.BF = lmBF(

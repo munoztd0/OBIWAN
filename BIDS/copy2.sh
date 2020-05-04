@@ -3,12 +3,20 @@ home=$(eval echo ~$user)/OBIWAN
 
 #small function to move and copy files
 
-#subjID=$1
-#group=$2
+subjID=$1
+group=$2
 
+for taskID in hedonicreactivity PIT pavlovianlearning
+#cp ${home}/DATA/RAW/BIDS/sub-${group}${subjID}/ses-second/func/* ${home}/sub-${group}${subjID}/ses-second/func/
+  do
+  cp ${home}/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-second/func/sub-${group}${subjID}_ses-second_task-${taskID}_smoothBold.nii ${home}/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-second/func/sub-${group}${subjID}_ses-second_task-${taskID}_bold.nii
+done
+#funcDir=${home}/DATA/STUDY/DERIVED/ICA_ANTS/sub-${group}${subjID}/ses-second/func/task-${taskID}.ica/
+#anatDir=${home}/DATA/STUDY/DERIVED/ICA_ANTS/sub-${group}${subjID}/ses-first/anat/
+#outDir=${home}/DATA/STUDY/CLEAN/sub-${group}${subjID}/
 
-
-
+#funcImage=filtered_func_data_clean_unwarped_Coreg
+#funcImage=sub-${group}${subjID}_ses-${sessionID}_task-${taskID}_run-01_bold_reoriented_brain_unwarped_Coreg
 
 
 #for subjID in 01 02 03 04 05 06 07 09 10 11 12 13 14 15 16 17 18 20 21 22 23 24 25 26
@@ -19,20 +27,15 @@ home=$(eval echo ~$user)/OBIWAN
 # group='obese2'  
 # for subjID in	03	04	05	06	07	08	09	10	11	12	13	14	15 16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	44	45	46	47	48	49	50	51	52	53	54	56	58	59	61	62	63	64	65	66	67	68	69	70
 
-group='control1'
-for subjID in 00 #01	02	03	04	05	06	07	08	09	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33
-  do 
-    
+#group='control1'
+#for subjID in 00 #01	02	03	04	05	06	07	08	09	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33
+  #do 
+    #for taskID in hedonicreactivity PIT
+		    #do
 
     #cp -r -n ${home}/DATA/STUDY/DERIVED/PIT_HEDONIC/* ${home}/DERIVATIVES/PREPROC/
-    rm -r ${home}/DERIVATIVES/PREPROC/sub*/ses-third/fmap_old
-
-  
-
- done
-
-
-
+    #rm -r ${home}/DERIVATIVES/PREPROC/sub*/ses-third/fmap_old
+    
 
 
 # log:

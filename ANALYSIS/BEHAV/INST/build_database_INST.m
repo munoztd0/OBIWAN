@@ -42,6 +42,7 @@ session = {'second'; 'third'};
 % session = {'two';'two';'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'; 'two'};
 % 
 % ses = {'ses-second'};
+
 k = 0; %counter for database index
 
 for j = 1:length(session)
@@ -144,7 +145,7 @@ for j = 1:length(session)
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% save mat file
-        func_dir = fullfile (homedir, 'DERIVATIVES', 'PREPROC', ['sub-' num2str(subjX)], ['_ses-' sessionX], 'func');
+        func_dir = fullfile (homedir, 'DERIVATIVES', 'PREPROC', ['sub-' num2str(subjX)], ['ses-' sessionX], 'func');
         
         if ~exist(func_dir, 'dir')
             mkdir(func_dir)
@@ -262,19 +263,19 @@ if save_Rdatabase
     cd (R_dir)
 
     % concatenate
-    Rdatabase = [R.task, R.id, R.session, R.trial, R.behavior];
+    Rdatabase = [R.task, R.id, R.group, R.session, R.trial, R.behavior];
 
     % open database
     fid = fopen([analysis_name '.txt'], 'wt');
 
     % print heater
-    fprintf(fid,'%s %s %s %s %s \n',...
-        'task','id',  ...
+    fprintf(fid,'%s %s %s  %s %s %s \n',...
+        'task','id', 'group',  ...
         'session','trial', ...
         'grips');
 
     % print data
-    formatSpec ='%s %s %s %d %d \n';
+    formatSpec ='%s %s %s %s %d %d \n';
     [nrows,~] = size(Rdatabase);
     for row = 1:nrows
         fprintf(fid,formatSpec,Rdatabase{row,:});

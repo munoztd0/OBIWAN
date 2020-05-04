@@ -202,6 +202,7 @@ for j = 1:length(session)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% save mat file
         func_dir = fullfile (homedir, 'DERIVATIVES', 'PREPROC', ['sub-' num2str(subjX)], ['ses-' sessionX], 'func');
+        bids_dir = fullfile (homedir, ['sub-' num2str(subjX)], ['ses-' sessionX], 'func');
         
         if ~exist(func_dir, 'dir')
             mkdir(func_dir)
@@ -256,7 +257,8 @@ for j = 1:length(session)
 
          eventfile = [events.onsets, events.durations,events.phase,...
             events.CSname, events.grips];
-
+        
+        cd (bids_dir)
         % open data base
         eventfile_name = ['sub-' num2str(subjX) '_ses-' sessionX '_task-' task '_run-01_events.tsv'];
         fid = fopen(eventfile_name,'wt');

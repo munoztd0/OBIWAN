@@ -2,7 +2,7 @@
 % BUILD DATABASE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % created by Eva
-% last modified by David on JULY 2019
+% last modified by David on JULY 2020
 
 % note: this scripts works only on participants who followed the full
 % protocol 
@@ -11,7 +11,7 @@ dbstop if error
 clear all
 
 analysis_name = 'OBIWAN_HEDONIC';
-task          = 'hedonic';
+task          = 'hedonicreactivity';
 %% DEFINE WHAT WE WANT TO DO
 
 save_Rdatabase = 1; % leave 1 when saving all subjects
@@ -199,7 +199,8 @@ for j = 1:length(session)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% save mat file
         func_dir = fullfile (homedir, 'DERIVATIVES', 'PREPROC', ['sub-'  num2str(subjX)], ['ses-' sessionX], 'func');
-        
+        bids_dir = fullfile (homedir, ['sub-'  num2str(subjX)], ['ses-' sessionX], 'func');
+
         if ~exist(func_dir, 'dir')
             mkdir(func_dir)
         end 
@@ -257,7 +258,9 @@ for j = 1:length(session)
 
          eventfile = [events.onsets, events.durations, events.phase,...
             events.condition, events.liking, events.familiarity, events.intensity];
-
+        
+        cd (bids_dir)
+        
         % open data base
         eventfile_name = ['sub-'  num2str(subjX) '_ses-' sessionX '_task-' task '_run-01_events.tsv'];
         fid = fopen(eventfile_name,'wt');
