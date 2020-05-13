@@ -5,9 +5,7 @@ if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(tidyverse, ggplot2, Rmisc, dplyr, lmerTest, car, r2glmm, optimx, visreg, MuMIn,  pbkrtest, bootpredictlme4, sjPlot)
-#lme4
-#Influence.ME,lmerTest, lme4, MBESS, afex, car, ggplot2, dplyr, plyr, tidyr, reshape, Hmisc, Rmisc,  ggpubr, gridExtra, plotrix, lsmeans, Bayesas.factor)
+pacman::p_load(tidyverse, ggplot2, Rmisc, dplyr, lmerTest, car, r2glmm, optimx, visreg, MuMIn,  pbkrtest, bootpredictlme4, sjPlot, bayestestR)
 
 #SETUP
 task = 'HED'
@@ -31,17 +29,13 @@ OBIWAN_HED  <- subset(OBIWAN_HED_full, session == 'second') #only session 2
 OBIWAN_HED$id      <- as.factor(OBIWAN_HED$id)
 OBIWAN_HED$trial    <- as.factor(OBIWAN_HED$trial)
 OBIWAN_HED$group    <- as.factor(OBIWAN_HED$group)
-OBIWAN_HED$gender   <- as.factor(OBIWAN_HED$gender) #M=0
-
-#OBIWAN_HED$condition[OBIWAN_HED$condition== 'MilkShake']     <- 'Reward'
-#OBIWAN_HED$condition[OBIWAN_HED$condition== 'Empty']     <- 'Control'
 OBIWAN_HED$condition <- as.factor(OBIWAN_HED$condition)
-
 OBIWAN_HED$trialxcondition <- as.factor(OBIWAN_HED$trialxcondition)
 
 OBIWAN_HED = full_join(OBIWAN_HED, info, by = "id")
-
 OBIWAN_HED <-OBIWAN_HED %>% drop_na("condition")
+OBIWAN_HED$gender   <- as.factor(OBIWAN_HED$gender) #M=0
+
 
 
 # get means by condition 
@@ -67,7 +61,7 @@ bsTCg = ddply(OBIWAN_HED, .(id, group, trialxcondition, condition), summarise, p
 #"Hated (>20) Milkshake": 109, 114, 253, 259, 203, 210
 
 #take out participants with corrupted data (missing trials or problem during the passation)
-OBIWAN_PIT_out  <- subset(OBIWAN_PIT, id != 242 & id != 256)
+OBIWAN_HED  <- subset(OBIWAN_HED, id != 242 & id != 256)
 
 n = length(unique(OBIWAN_HED$id))
 
@@ -84,8 +78,8 @@ source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful fun
 OBIWAN_HED$perceived_liking= scale(OBIWAN_HED$perceived_liking)
 OBIWAN_HED$perceived_familiarity = scale(OBIWAN_HED$perceived_familiarity)
 OBIWAN_HED$perceived_intensity = scale(OBIWAN_HED$perceived_intensity)
-OBIWAN_HED$bmi = hscale(OBIWAN_HED$BMI_t1, OBIWAN_HED$id) #agragate by subj and then scale 
-OBIWAN_HED$ageZ = hscale(OBIWAN_HED$age, OBIWAN_HED$id) #agragate by subj and then scale 
+OBIWAN_HED$bmi = hscale(OBIWAN_HED$BMI_t1, OBIWAN_HED$id) #agregate by subj and then scale 
+OBIWAN_HED$ageZ = hscale(OBIWAN_HED$age, OBIWAN_HED$id) #agregate by subj and then scale 
 
 
 #************************************************** test
@@ -544,36 +538,36 @@ infIndexPlot(im,col="steelblue",
              vars=c("cookd"))
 
 
-#SAME FOR SESSION 3 -> 238 & 227 & ~206
-
-OBIWAN_HED  <- subset(OBIWAN_HED_full, session == 'third') #only session 3
-
-# define as.factors
-OBIWAN_HED$id      <- as.factor(OBIWAN_HED$id)
-OBIWAN_HED$trial    <- as.factor(OBIWAN_HED$trial)
-OBIWAN_HED$group    <- as.factor(OBIWAN_HED$group)
-OBIWAN_HED$gender   <- as.factor(OBIWAN_HED$gender) #M=0
-
-OBIWAN_HED$condition <- as.factor(OBIWAN_HED$condition)
-
-OBIWAN_HED$trialxcondition <- as.factor(OBIWAN_HED$trialxcondition)
-
-OBIWAN_HED = full_join(OBIWAN_HED, info, by = "id")
-
-OBIWAN_HED <-OBIWAN_HED %>% drop_na("condition")
-
-OBIWAN_HED$perceived_liking= scale(OBIWAN_HED$perceived_liking)
-OBIWAN_HED$perceived_familiarity = scale(OBIWAN_HED$perceived_familiarity)
-OBIWAN_HED$perceived_intensity = scale(OBIWAN_HED$perceived_intensity)
-OBIWAN_HED$bmi = hscale(OBIWAN_HED$BMI_t1, OBIWAN_HED$id) #agragate by subj and then scale 
-OBIWAN_HED$ageZ = hscale(OBIWAN_HED$age, OBIWAN_HED$id) #agragate by subj and then scale 
-
-mod = lmer(perceived_liking ~  condition*bmi + trialxcondition + perceived_familiarity + (condition|id) , data = OBIWAN_HED)
-
-
-#disgnostic plots -> Cook's distance
-set.seed(101)
-im <- influence(mod,maxfun=100,  group="id")
-
-infIndexPlot(im,col="steelblue",
-             vars=c("cookd"))
+# #SAME FOR SESSION 3 -> 238 & 227 & ~206
+# 
+# OBIWAN_HED  <- subset(OBIWAN_HED_full, session == 'third') #only session 3
+# 
+# # define as.factors
+# OBIWAN_HED$id      <- as.factor(OBIWAN_HED$id)
+# OBIWAN_HED$trial    <- as.factor(OBIWAN_HED$trial)
+# OBIWAN_HED$group    <- as.factor(OBIWAN_HED$group)
+# OBIWAN_HED$gender   <- as.factor(OBIWAN_HED$gender) #M=0
+# 
+# OBIWAN_HED$condition <- as.factor(OBIWAN_HED$condition)
+# 
+# OBIWAN_HED$trialxcondition <- as.factor(OBIWAN_HED$trialxcondition)
+# 
+# OBIWAN_HED = full_join(OBIWAN_HED, info, by = "id")
+# 
+# OBIWAN_HED <-OBIWAN_HED %>% drop_na("condition")
+# 
+# OBIWAN_HED$perceived_liking= scale(OBIWAN_HED$perceived_liking)
+# OBIWAN_HED$perceived_familiarity = scale(OBIWAN_HED$perceived_familiarity)
+# OBIWAN_HED$perceived_intensity = scale(OBIWAN_HED$perceived_intensity)
+# OBIWAN_HED$bmi = hscale(OBIWAN_HED$BMI_t1, OBIWAN_HED$id) #agragate by subj and then scale 
+# OBIWAN_HED$ageZ = hscale(OBIWAN_HED$age, OBIWAN_HED$id) #agragate by subj and then scale 
+# 
+# mod = lmer(perceived_liking ~  condition*bmi + trialxcondition + perceived_familiarity + (condition|id) , data = OBIWAN_HED)
+# 
+# 
+# #disgnostic plots -> Cook's distance
+# set.seed(101)
+# im <- influence(mod,maxfun=100,  group="id")
+# 
+# infIndexPlot(im,col="steelblue",
+#              vars=c("cookd"))

@@ -616,7 +616,6 @@ infIndexPlot(im,col="steelblue",
 # pR_C 
 # 
 # # Neutral VS Control (so we do that to be less bias and more conservator)
-# # playing against ourselvees
 # cont = emmeans(main.model.lik, ~ condition)
 # contr_mat <- coef(pairs(cont))[c("c.3")]
 # emmeans(main.model.lik, ~ condition, contr = contr_mat, adjust = "none")$contrasts

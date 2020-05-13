@@ -50,7 +50,6 @@ btc = ddply(OBIWAN_PIT, .(condition, trialxcondition), summarise,   gripFreq = m
 btcg = ddply(OBIWAN_PIT, .(group, condition, trialxcondition), summarise,   gripFreq = mean( gripFreq, na.rm = TRUE))
 
 # get means by participant 
-bsT = ddply(OBIWAN_PIT, .(id, trialxcondition), summarise,  gripFreq = mean( gripFreq, na.rm = TRUE))
 bsC= ddply(OBIWAN_PIT, .(id, condition), summarise,  gripFreq = mean( gripFreq, na.rm = TRUE))
 bsTC = ddply(OBIWAN_PIT, .(id, trialxcondition, condition), summarise,  gripFreq = mean( gripFreq, na.rm = TRUE))
 
@@ -89,6 +88,9 @@ OBIWAN_PIT$bmi = hscale(OBIWAN_PIT$BMI_t1, OBIWAN_PIT$id) #agragate by subj and 
 OBIWAN_PIT$ageZ = hscale(OBIWAN_PIT$age, OBIWAN_PIT$id) #agragate by subj and then scale 
 
 
+#keep only cs+ vs cs- #so we can have similar analysis than for HED in fMRI later on
+OBIWAN_PIT = subset(OBIWAN_PIT, condition != 'BL')
+
 #************************************************** test
 mdl.force = lmer(gripFreq ~ condition*bmi*trialxcondition+ gender + ageZ + (condition|id), data = OBIWAN_PIT, REML=FALSE)
 anova(mdl.force)
@@ -112,7 +114,7 @@ control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
 ## COMPARING RANDOM EFFECTS MODELS #REML = TRUE (commented out to run faster) -------------------
 # mod1 <- lmer( gripFreq ~  condition*bmi +trialxcondition  + gender+ (1|id) , data = OBIWAN_PIT)
-mod2 <- lmer( gripFreq ~  condition*bmi +trialxcondition  + gender + (condition|id) , data = OBIWAN_PIT)
+mod2 <- lmer( gripFreq ~  condition*bmi*trialxcondition  + ageZ + gender + (condition|id) , data = OBIWAN_PIT)
 # mod3 <- lmer( gripFreq ~  condition*bmi +trialxcondition  + gender+ (1|trialxcondition) , data = OBIWAN_PIT)
 # mod4 <-  lmer( gripFreq ~  condition*bmi +trialxcondition  + gender+(1|id) +  (1|trialxcondition) , data = OBIWAN_PIT)
 # mod5 <-  lmer( gripFreq ~  condition*bmi +trialxcondition  + gender+(condition|id) +  (1|trialxcondition) , data = OBIWAN_PIT)
@@ -153,36 +155,38 @@ summary(rslope) #win #cor is Not 1 #var is not 0  # no warnings #AIC and BIC are
 
 
 ## COMPARE FIXED #ML (or REML = FALSE) ####
-mod1 <- lmer( gripFreq ~  condition*bmi + trialxcondition  + gender + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
-mod2 <- lmer( gripFreq ~  condition*bmi + trialxcondition  + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
-mod3 <- lmer( gripFreq ~  condition*bmi  + gender + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
-mod4 <- lmer( gripFreq ~  condition*bmi + (condition|id), data = OBIWAN_PIT,  REML=FALSE, control= control)
-mod5 <- lmer( gripFreq ~  condition*bmi + trialxcondition  + ageZ + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
+# mod1 <- lmer( gripFreq ~  condition*bmi*trialxcondition  + ageZ + gender + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
+# mod2 <- lmer( gripFreq ~  condition*bmi*trialxcondition  + ageZ+ (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
+# mod3 <- lmer( gripFreq ~  condition*bmi + ageZ + gender + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
+# mod4 <- lmer( gripFreq ~  condition*bmi + ageZ + (condition|id), data = OBIWAN_PIT,  REML=FALSE, control= control)
+# mod5 <- lmer( gripFreq ~  condition*bmi*trialxcondition  + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
+# mod11 <- lmer( gripFreq ~  condition*bmi*trialxcondition   + gender + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
+mod21 <- lmer( gripFreq ~  condition*bmi*trialxcondition  + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control) #
+# mod31 <- lmer( gripFreq ~  condition*bmi + gender + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
+# mod41 <- lmer( gripFreq ~  condition*bmi + (condition|id), data = OBIWAN_PIT,  REML=FALSE, control= control)
+
 
 
 #doesnt chnage anything BMI or group here..
-# mod6 <- lmer( gripFreq ~  condition*bmi + trialxcondition  + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
-# mod7 <- lmer( gripFreq ~  condition*group + trialxcondition  + (condition|id)  , data = OBIWAN_PIT,  REML=FALSE, control= control)
 
 
-
-AIC(mod1) ; BIC(mod1)
-AIC(mod2) ; BIC(mod2) #
-AIC(mod3) ; BIC(mod3)
-AIC(mod4) ; BIC(mod4)
-
-AIC(mod5) ; BIC(mod5) 
-AIC(mod6) ; BIC(mod6)
-#AIC(mod7) ; BIC(mod7) 
-#AIC(mod8) ; BIC(mod8)
-# AIC(mod9) ; BIC(mod9)
-# AIC(mod10) ; BIC(mod10)
+# AIC(mod1) ; BIC(mod1)
+# AIC(mod2) ; BIC(mod2)
+# AIC(mod3) ; BIC(mod3)
+# AIC(mod4) ; BIC(mod4)
+# AIC(mod5) ; BIC(mod5) 
+# 
 # AIC(mod11) ; BIC(mod11)
+AIC(mod21) ; BIC(mod21) #
+# AIC(mod31) ; BIC(mod31)
+# AIC(mod41) ; BIC(mod41)
+# AIC(mod51) ; BIC(mod51) 
+
 
 
 
 ## BEST MODEL ####
-model = mod2 
+model = mod21 
 summary(model) #win #cor is not 1 ! #var is not 0 # no warnings #AIC and BIC are congruent!
 
 #All of these warnings generally point to a misspecification of your model, in particular the random effects. Most likely some random effects parameters are close to 0 (for variances), or -1/1 (for correlations), which creates for redundancies in the covariance matrix of the model's parameters (of which the so-called Hessian matrix is the inverse).
@@ -191,7 +195,7 @@ summary(model) #win #cor is not 1 ! #var is not 0 # no warnings #AIC and BIC are
 
 
 ## TESTING THE RANDOM INTERCEPT
-modint <- lm( gripFreq ~  condition*bmi + trialxcondition, data = OBIWAN_PIT)
+modint <- lm( gripFreq ~  condition*bmi*trialxcondition, data = OBIWAN_PIT)
 
 AIC(model) ; BIC(model) # largely better !
 AIC(modint) ; BIC(modint)
@@ -203,28 +207,28 @@ AIC(modint) ; BIC(modint)
 #K-R Kenward and Roger (2009) is probably the most reliable option Stroup (2013)
 
 ### test CONDITION without interact ####
-main.model.lik = lmer( gripFreq ~ condition +  bmi  + trialxcondition + (condition|id) , data = OBIWAN_PIT,  REML=FALSE, control= control)
+main.model.lik = lmer( gripFreq ~ condition +  bmi*trialxcondition + (condition|id) , data = OBIWAN_PIT,  REML=FALSE, control= control)
 
 #only remove fixed ef cond #double check that "It is non-sensical to remove the fixed deprivation effect without removing the random deprivation effect!"
-null.model.lik = lmer( gripFreq ~ bmi  + trialxcondition + (condition|id) , data = OBIWAN_PIT,  REML=FALSE, control= control)
+null.model.lik = lmer( gripFreq ~ bmi*trialxcondition + (condition|id) , data = OBIWAN_PIT,  REML=FALSE, control= control)
 
 test = anova(main.model.lik, null.model.lik, test = 'Chisq')
 
-#Δ BIC = -10.38354 -> evidence for model with condition
-delta_BIC = test$BIC[1] -test$BIC[2] 
-delta_BIC
+#Δ AIC = 3.5195 -> evidence for model without condition 
+delta_AIC = test$AIC[1] - test$AIC[2] 
+delta_AIC
 
 #BOOOTSTAPING /  Parametric Bootstrap Methods for Tests in Linear Mixed Models #PBmodcomp the bootstrapped p-values is in the PBtest line, 
 #the LRT line report the standard p-value assuming a chi-square distribution for the LRT value
 #Approximate null–distribution by a kernel density estimate. The p–value is then calculated from the kernel density estimate.
 
 #commented out because #takes a whiiiiiiiile time: 5010.19 sec
-#PBtest.cond = PBmodcomp(main.model.lik,null.model.lik,nsim=5000, seed = 101, details = 10) 
+#PBtest.cond = PBmodcomp(main.model.lik,null.model.lik,nsim=5000, seed = 101, details = 10)
 #PBtest.cond
 
 #   stat    df        p.value    
-# LRT    6.2734  2 0.04343 *
-# PBtest 6.2734    0.04196 *
+#LRT    5.5195  1 0.01881 *
+#PBtest 5.5195    0.02398 *
 
 
 
@@ -233,29 +237,30 @@ delta_BIC
 r2beta(rslope,method="nsj")
 
 #drop the condition random slope because its condtional we want
-mod1 <- lmer( gripFreq ~  bmi + trialxcondition +  (1|id) , data = OBIWAN_PIT,  REML=FALSE)
+mod1 <- lmer( gripFreq ~  bmi*trialxcondition +  (1|id) , data = OBIWAN_PIT,  REML=FALSE)
 
 r1 = r.squaredGLMM(model)
 r2 = r.squaredGLMM(mod1)
-r1[2] -  r2[2]   #this value thus reflects the conditional R2 for the condition effect # R2c = ]
+r1[2] -  r2[2]   #this value thus reflects the conditional R2 for the condition effect # R2c = 0.06]
 
 
 #### test BMI effect ####
-null.model.lik = lmer( gripFreq ~ condition  + trialxcondition + (condition|id) , data = OBIWAN_PIT,  REML=FALSE, control= control)
+main.model.lik = lmer( gripFreq ~ condition*trialxcondition+bmi + (condition|id) , data = OBIWAN_PIT,  REML=FALSE, control= control)
+null.model.lik = lmer( gripFreq ~ condition*trialxcondition + (condition|id) , data = OBIWAN_PIT,  REML=FALSE, control= control)
 
 test = anova(main.model.lik, null.model.lik, test = 'Chisq')
 
-#Δ BIC -> evidence for model without BMI = 
-delta_BIC = test$BIC[1] -test$BIC[2] 
-delta_BIC
+#Δ BIC -> evidence for model without BMI =  -1.03
+delta_AIC = test$AIC[1] -test$AIC[2] 
+delta_AIC
 
 #commented out because #takes a whiiiiiiiile time: 5014.71 sec
-# PBtest.bmi = PBmodcomp(main.model.lik,null.model.lik,nsim=5000, seed = 101, details = 10) #takes a whiiiiiiiile
+# PBtest.bmi = PBmodcomp(main.model.lik,null.model.lik,nsim=500, seed = 101, details = 10) #takes a whiiiiiiiile
 # PBtest.bmi
 
 # stat df p.value
-# LRT    0.7964  1  0.3722
-# PBtest 0.7964     0.3366
+# LRT    0.9615  1  0.3268
+# PBtest 0.9615     0.3553
 
 
 # EFFECT SIZES
@@ -266,16 +271,16 @@ mod1 <- lmer( gripFreq ~  condition + trialxcondition +  (condition|id) , data =
 
 r1 = r.squaredGLMM(model)
 r2 = r.squaredGLMM(mod1)
-r1[2] -  r2[2] #this value thus reflects the conditional R2 for the condition effect # R2c = #0.00047
+r1[2] -  r2[2] #this value thus reflects the conditional R2 for the condition effect # R2c = #0.0039
 
 
 #### test INTER effect ####
-main.model.lik = lmer( gripFreq ~ condition *  bmi  + trialxcondition + (condition|id) , data = OBIWAN_PIT,  REML=FALSE, control= control)
-null.model.lik = lmer( gripFreq ~ condition + bmi + trialxcondition + (condition|id) , data = OBIWAN_PIT,  REML=FALSE, control= control)
+main.model.lik = lmer( gripFreq ~ condition *  bmi * trialxcondition + (condition|id) , data = OBIWAN_PIT,  REML=FALSE, control= control)
+null.model.lik = lmer( gripFreq ~ condition + bmi * trialxcondition + (condition|id) , data = OBIWAN_PIT,  REML=FALSE, control= control)
 
 test = anova(main.model.lik, null.model.lik, test = 'Chisq')
 
-#Δ BIC = -7.52 -> evidence for model without BMI
+#Δ BIC = -179.79 -> evidence for model without BMI
 delta_BIC = test$BIC[1] -test$BIC[2] 
 delta_BIC
 
@@ -294,7 +299,7 @@ delta_BIC
 
 r1 = r.squaredGLMM(main.model.lik)
 r2 = r.squaredGLMM(null.model.lik)
-r1[2] -  r2[2] #this value thus reflects the conditional R2 for the condition effect # R2c = #0.000686
+r1[2] -  r2[2] #this value thus reflects the conditional R2 for the condition effect # R2c = #0.0035
 
 
 # PLOTTING -------------------------------------------------------
@@ -307,7 +312,7 @@ n = 2 # 2 condition
 cols = gg_color_hue(n)
 
 ## SIMPLE PLOTTING MODEL ## 
-model <- lmer( gripFreq ~ condition*BMI_t1 + trialxcondition  + (condition|id) , data = OBIWAN_PIT)
+model <- lmer( gripFreq ~ condition+BMI_t1+trialxcondition  + (condition|id) , data = OBIWAN_PIT)
 
 
 #show predicted values for liking
@@ -319,10 +324,10 @@ plot_model(model,  type = "pred", show.data = T)
 #no we take out the big guns
 
 #get CI via bootstrap
-options(bootnsim = 100)
+options(bootnsim = 5000)
 
 #commented out bc takesss a whilllleee
-#predict(model, newdata=OBIWAN_PIT, re.form=NA, se.fit=TRUE, nsim = 5000) #or options(bootnsim = 500)
+model = predict(model, newdata=OBIWAN_PIT, re.form=NA, se.fit=TRUE, nsim = 500) #or options(bootnsim = 500)
 
 
 #useful plot functions 
@@ -341,35 +346,44 @@ dat <- ggeffects::ggpredict(
 
 raw = attr(dat, "rawdata")
 
-raw$x[raw$x== 2]     <- 'MilkShake'
-raw$x[raw$x== 1]     <- 'Empty'
+raw$x[raw$x== 2]     <- 'CSplus'
+raw$x[raw$x== 1]     <- 'CSminus'
+#raw$x[raw$x== 1]     <- 'BL'
 
 raw$x = as.factor(raw$x)
 raw$predicted =raw$response
 
+#dat  <- subset(dat, x != 'BL')
+dat$x  <- factor(dat$x)
 
+#raw  <- subset(raw, x != 'BL')
+raw$x  <- factor(raw$x)
 
 #RATINGS
 
-dfLIK_C  <- subset(dat, x == 'Empty')
+#dfLIK_C  <- subset(dat, x == 'BL')
 #dfLIK_Co  <- subset(dfLIK_C, group == 'obese')
 #dfLIK_Cc  <- subset(dfLIK_C, group == 'control')
-dfLIK_R  <- subset(dat, x == 'MilkShake')
+dfLIK_R  <- subset(dat, x == 'CSplus')
 #dfLIK_Ro  <- subset(dfLIK_R, group == 'obese')
 #dfLIK_Rc  <- subset(dfLIK_R, group == 'control')
+dfLIK_M  <- subset(dat, x == 'CSminus')
 
-bsC_C  <- subset(raw, x == 'Empty')
+#bsC_C  <- subset(raw, x == 'BL')
 #bsC_Co  <- subset(bsC_C , group == 'obese')
 #bsC_Cc  <- subset(bsC_C , group == 'control')
-bsC_R  <- subset(raw, x == 'MilkShake')
+bsC_R  <- subset(raw, x == 'CSplus')
 #bsC_Ro  <- subset(bsC_R , group == 'obese')
 #bsC_Rc  <- subset(bsC_R , group == 'control')
+bsC_M  <- subset(raw, x == 'CSminus')
+
+
 
 plt1 <- ggplot(data = dat, aes(x = x, y = predicted, color = x, fill = x)) +
   #left 
-  geom_left_violin(data = bsC_C, alpha = .4, adjust = 1.5, trim = F, color = NA) + 
-  geom_point(data = dfLIK_C, aes(x = as.numeric(x)+0.15), shape = 18, color ="black") +
-  geom_errorbar(data=dfLIK_C, aes(x = as.numeric(x)+0.15, ymax = conf.high, ymin =conf.low), width=0.05,  alpha=1, size=0.4)+
+  geom_left_violin(data = bsC_M, alpha = .4, adjust = 1.5, trim = F, color = NA) + 
+  geom_point(data = dfLIK_M, aes(x = as.numeric(x)+0.15), shape = 18, color ="black") +
+  geom_errorbar(data=dfLIK_M, aes(x = as.numeric(x)+0.15, ymax = conf.high, ymin =conf.low), width=0.05,  alpha=1, size=0.4)+
   
   #right 
   geom_right_violin(data = bsC_R, aes(x= x, y = response), alpha = .4, position = position_nudge(x = +0.3, y = 0), adjust = 1.5, trim = F, color = NA) + 
@@ -380,12 +394,11 @@ plt1 <- ggplot(data = dat, aes(x = x, y = predicted, color = x, fill = x)) +
              position = position_jitter(width = 0.05, seed = 123), color ="lightgrey") +
   #geom_line(data = dat, aes(x = as.numeric(x) +0.15, y = predicted), alpha=0.4) +
   
+  
   #details
-  #scale_fill_manual(values = c("Empty"="blue", "Milkshake"="red")) +
-  #scale_color_manual(values = c("Empty"="blue", "Milkshake"="red")) +
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-3,2, by = 1)), limits = c(-3,2)) +
-  #scale_x_discrete(expand = c(0, 2)) +
-  theme_classic() +
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-2,4, by = 1)), limits = c(-2,4)) +
+  scale_x_discrete(expand = c(0, 0.8)) +
+  theme_bw() +
   theme(plot.margin = unit(c(1, 1, 2, 1), units = "cm"),
         axis.text.x = element_blank(), 
         axis.text.y = element_text(size=12,  colour = "black"),
@@ -398,17 +411,17 @@ plt1 <- ggplot(data = dat, aes(x = x, y = predicted, color = x, fill = x)) +
         axis.ticks.x = element_blank(), 
         axis.line.x = element_blank()) + 
   labs( x = "    Empty                  Milshake", 
-        y = "Plesantness Ratings (z)",
+        y = "Number of Grips (z)",
         caption = "Marginal Effect Condition\n 
-        ajusted for BMI, Trial, Familiarity & Subject \n 
-        Plesantness ~ Condition*BMI + Trial + Familiarity  + (Condition|Subject) \n 
-        Control (BMI < 30) n = 27, Obese (BMI > 30) n = 63 \n  
+        ajusted for BMI, Trial & Subject \n 
+        Number of Grips ~ Condition*BMI + Trial  + (Condition|Subject) \n 
+        Control (BMI < 25) n =30, Obese (BMI > 30) n = 62 \n  
         Bootstrapped (i = 5000) p-values & 95% CI \n 
-        Condition effect (p < 0.001, \u0394 BIC = 15.36, R\u00B2c = 0.16)") 
+        Condition effect (p = 0.041, \u0394 BIC = -10.38, R\u00B2c = 0.050)") 
 
 plot(plt1)
 
-pdf(file.path(figures_path,paste(task, 'Liking_condition_ses2.pdf',  sep = "_")),
+pdf(file.path(figures_path,paste(task, 'condition_ses2.pdf',  sep = "_")),
     width     = 5.5,
     height    = 6)
 

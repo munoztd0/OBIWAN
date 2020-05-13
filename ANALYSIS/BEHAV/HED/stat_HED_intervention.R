@@ -31,7 +31,7 @@ OBIWAN_HED  <- subset(OBIWAN_HED_full, group == 'obese') #only group obese
 OBIWAN_HED$id      <- as.factor(OBIWAN_HED$id)
 OBIWAN_HED$trial    <- as.factor(OBIWAN_HED$trial)
 OBIWAN_HED$group    <- as.factor(OBIWAN_HED$group)
-OBIWAN_HED$intervention <- as.factor(OBIWAN_HED$intervention)
+
 
 #OBIWAN_HED$condition[OBIWAN_HED$condition== 'MilkShake']     <- 'Reward'
 #OBIWAN_HED$condition[OBIWAN_HED$condition== 'Empty']     <- 'Control'
@@ -42,6 +42,13 @@ OBIWAN_HED$trialxcondition <- as.factor(OBIWAN_HED$trialxcondition)
 OBIWAN_HED = full_join(OBIWAN_HED, info, by = "id")
 
 OBIWAN_HED <-OBIWAN_HED %>% drop_na("condition")
+
+OBIWAN_HED  <- subset(OBIWAN_HED, id != 242 & id != 256)
+
+OBIWAN_HED$gender   <- as.factor(OBIWAN_HED$gender) #M=0
+OBIWAN_HED$intervention   <- as.factor(OBIWAN_HED$intervention) #blind
+
+
 
 n_tot = length(unique(OBIWAN_HED$id))
 
@@ -87,25 +94,22 @@ OBIWAN_HED$perceived_familiarity = scale(OBIWAN_HED$perceived_familiarity)
 OBIWAN_HED$perceived_intensity = scale(OBIWAN_HED$perceived_intensity)
 OBIWAN_HED$ageZ = hscale(OBIWAN_HED$age, OBIWAN_HED$id) #agragate by subj and then scale 
 
-#create BMI diff
+#create BMI diff #double check
 OBIWAN_HED$bmi_diff = OBIWAN_HED$BMI_t1 - OBIWAN_HED$BMI_t2 
 OBIWAN_HED$bmi_diff_z = hscale(OBIWAN_HED$bmi_diff , OBIWAN_HED$id) #agregate by subj and then scale 
 
 
-
 #************************************************** test
-mdl.liking = lmer(perceived_liking ~ condition*session*intervention*trialxcondition + bmi_diff_z + gender + ageZ + (condition|id)+ (condition|trialxcondition), data = OBIWAN_HED, REML=FALSE)
+mdl.liking = lmer(perceived_liking ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + (condition|id)+ (condition|trialxcondition), data = OBIWAN_HED, REML=FALSE)
 anova(mdl.liking)
 
 #************************************************** test
-mdl.intensity = lmer(perceived_intensity ~ condition*session*intervention*trialxcondition+ gender + ageZ+(condition|id)+ (condition|trialxcondition), data = OBIWAN_HED, REML=FALSE)
+mdl.intensity = lmer(perceived_intensity ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ+(condition|id)+ (condition|trialxcondition), data = OBIWAN_HED, REML=FALSE)
 anova(mdl.intensity)
 
 #************************************************** test
-mdl.familiarity= lmer(perceived_familiarity ~ condition*intervention*trialxcondition+ gender + ageZ+(condition|id)+ (condition|trialxcondition), data = OBIWAN_HED, REML=FALSE)
+mdl.familiarity= lmer(perceived_familiarity ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ+(condition|id)+ (condition|trialxcondition), data = OBIWAN_HED, REML=FALSE)
 anova(mdl.familiarity)
-
-
 
 
 # STATS LMM -------------------------------------------------------------------
@@ -122,48 +126,68 @@ control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 # in order to increase the power.) Update: In contrast, Barr et al. recommend to reduce complexity 
 # ONLY if the model did not converge; they are willing to tolerate singular covariance matrices.
 
+drop1(update(bac_lmer, REML = F), test = "Chisq")
 
-mod1 <- lmer(perceived_liking ~  condition*intervention*bmi_diff_z +  trialxcondition + perceived_familiarity + perceived_intensity + gender+ (1|id) , data = OBIWAN_HED)
+#then 
+confint(bac_lmer, level = 0.97)
 
 ## add bmi and session as a ranodm
 ## COMPARING RANDOM EFFECTS MODELS #REML = TRUE (commented out to run faster) -------------------
-mod1 <- lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender + (1|id) , data = OBIWAN_HED)
-mod2 <- lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender + (condition|id) , data = OBIWAN_HED)
-mod3 <- lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender + (1|trialxcondition) , data = OBIWAN_HED)
-mod4 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender +(1|id) +  (1|trialxcondition) , data = OBIWAN_HED)
-mod5 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender +(condition|id) +  (1|trialxcondition) , data = OBIWAN_HED)
-mod6 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender +(condition|id) +  (condition|trialxcondition) , data = OBIWAN_HED)
-mod7 <- lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender + (1|intervention) , data = OBIWAN_HED)
-mod8 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender +(1|id) +  (1|intervention) , data = OBIWAN_HED)
-mod9 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender +(intervention|id), data = OBIWAN_HED)
-mod10 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender +(intervention*condition|id), data = OBIWAN_HED)
-mod11 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender +(1|id) +   (1|intervention) + (1|trialxcondition) , data = OBIWAN_HED)
-mod12 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender +(condition|id) +   (1|intervention) + (1|trialxcondition) , data = OBIWAN_HED)
-# mod7 <- lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender+ (1|gender) , data = OBIWAN_HED)
-# mod8 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender+(1|id) +  (1|gender) , data = OBIWAN_HED)
-# mod9 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender+(gender|id), data = OBIWAN_HED)
-# mod10 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender+(gender*condition|id), data = OBIWAN_HED)
-# mod11 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender+(1|id) +   (1|gender) + (1|trialxcondition) , data = OBIWAN_HED)
-# mod12 <-  lmer(perceived_liking ~  condition*intervention*bmi_diff_z +trialxcondition + perceived_familiarity + perceived_intensity + gender+(condition|id) +   (1|gender) + (1|trialxcondition) , data = OBIWAN_HED)
+mod1 <- lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + perceived_familiarity + perceived_intensity + gender + (1|id) , data = OBIWAN_HED)
+mod2 <- lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (condition|id) , data = OBIWAN_HED)
+mod3 <- lmer(perceived_liking ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity +  (1|trialxcondition) , data = OBIWAN_HED)
+mod4 <-  lmer(perceived_liking ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (1|id) +  (1|trialxcondition) , data = OBIWAN_HED)
+mod5 <-  lmer(perceived_liking ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (condition|id) +  (1|trialxcondition) , data = OBIWAN_HED)
+mod6 <-  lmer(perceived_liking ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (condition|id) +  (condition|trialxcondition) , data = OBIWAN_HED)
+
+# mod7 <- lmer(perceived_liking ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity +  (1|intervention) , data = OBIWAN_HED)
+# mod8 <-  lmer(perceived_liking ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (1|id) +  (1|intervention) , data = OBIWAN_HED)
+# mod9 <-  lmer(perceived_liking ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (intervention|id), data = OBIWAN_HED)
+# mod10 <-  lmer(perceived_liking ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (intervention*condition|id), data = OBIWAN_HED)
+# mod11 <-  lmer(perceived_liking ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (1|id) +   (1|intervention) + (1|trialxcondition) , data = OBIWAN_HED)
+# mod12 <-  lmer(perceived_liking ~ condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (condition|id) +   (1|intervention) + (1|trialxcondition) , data = OBIWAN_HED)
+
+# mod7 <- lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity +  (1|gender) , data = OBIWAN_HED)
+# mod8 <-  lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (1|id) +  (1|gender) , data = OBIWAN_HED)
+# mod9 <-  lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (gender|id), data = OBIWAN_HED)
+# mod10 <-  lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (gender*condition|id), data = OBIWAN_HED)
+# mod11 <-  lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (1|id) +   (1|gender) + (1|trialxcondition) , data = OBIWAN_HED)
+# mod12 <-  lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (condition|id) +   (1|gender) + (1|trialxcondition) , data = OBIWAN_HED)
+
+mod7 <- lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity +  (1|session) , data = OBIWAN_HED)
+mod8 <-  lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (1|id) +  (1|session) , data = OBIWAN_HED)
+mod9 <-  lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (session|id), data = OBIWAN_HED)
+mod10 <-  lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (session+condition|id), data = OBIWAN_HED)
+mod11 <-  lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (1|id) +   (1|session) + (1|trialxcondition) , data = OBIWAN_HED)
+mod12 <-  lmer(perceived_liking ~  condition*session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (condition|id) +   (1|session) + (1|trialxcondition) , data = OBIWAN_HED)
+
+
+main.model.lik = lmer(perceived_liking ~  condition + session*intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (session+condition|id), data = OBIWAN_HED,  REML=FALSE, control= control)
+
+#only remove fixed ef cond #double check that "It is non-sensical to remove the fixed deprivation effect without removing the random deprivation effect!"
+null.model.lik = lmer(perceived_liking ~  condition + session + intervention + trialxcondition + bmi_diff_z + gender + ageZ + perceived_familiarity + perceived_intensity + (session+condition|id), data = OBIWAN_HED, REML=FALSE, control= control)
+
+test = anova(main.model.lik, null.model.lik, test = 'Chisq')
 
 
 
-# AIC(mod1) ; BIC(mod1)
+AIC(mod1) ; BIC(mod1)
 AIC(mod2) ; BIC(mod2) # AIC
-# AIC(mod3) ; BIC(mod3)
-# AIC(mod4) ; BIC(mod4)
-# AIC(mod5) ; BIC(mod5) # BIC
-# AIC(mod6) ; BIC(mod6) #degenerate hession with 4 negative eigenvalues (not good)
-# AIC(mod7) ; BIC(mod7)
-# AIC(mod8) ; BIC(mod8)
-# AIC(mod9) ; BIC(mod9)
-# AIC(mod10) ; BIC(mod10)
-# AIC(mod11) ; BIC(mod11)
-# AIC(mod12) ; BIC(mod12)
+AIC(mod3) ; BIC(mod3)
+AIC(mod4) ; BIC(mod4)
+AIC(mod5) ; BIC(mod5) # BIC
+AIC(mod6) ; BIC(mod6) #degenerate hession with 4 negative eigenvalues (not good)
+
+AIC(mod7) ; BIC(mod7)
+AIC(mod8) ; BIC(mod8)
+AIC(mod9) ; BIC(mod9)
+AIC(mod10) ; BIC(mod10)
+AIC(mod11) ; BIC(mod11)
+AIC(mod12) ; BIC(mod12)
 
 
 ## BEST RANDOM SLOPE MODEL ####
-rslope = mod2
+rslope = mod10
 summary(rslope) #win #cor is Not 1 #var is not 0  # no warnings #AIC and BIC are not totally congruent but keep 2 because of congruency (and bc 5 is degerate)
 
 
@@ -250,9 +274,6 @@ test = anova(main.model.lik, null.model.lik, test = 'Chisq')
 delta_BIC = test$BIC[1] -test$BIC[2] 
 delta_BIC
 
-#BOOOTSTAPING /  Parametric Bootstrap Methods for Tests in Linear Mixed Models #PBmodcomp the bootstrapped p-values is in the PBtest line, 
-#the LRT line report the standard p-value assuming a chi-square distribution for the LRT value
-#Approximate null–distribution by a kernel density estimate. The p–value is then calculated from the kernel density estimate.
 
 #commented out because #takes a whiiiiiiiile time: 5010.19 sec
 # PBtest.cond = PBmodcomp(main.model.lik,null.model.lik,nsim=500, seed = 101, details = 10)
