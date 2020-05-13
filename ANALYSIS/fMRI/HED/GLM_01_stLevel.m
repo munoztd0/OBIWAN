@@ -1,111 +1,107 @@
-function GLM_01_stLevel(subID) 
+function GLM_01_stLevel(subID)
+
+% get onsets for first control model (reward vs neutral)
+% Stick functions
+% Simplified model on ONSETs 7 (STARTTRIAL, 2*TASTE with modulator (liking
+% ratings) 3*questions 1 RINSE)
+% last modified on MARCH 2020
+
+% on swallowing signal w/ stick function; parametric modulators liking, intensity and familiarity w/ more accurate model of events of non-interest
 
 
-% intended for REWOD HED
-% get onsets for control model
-% Durations =0 (stick function)
-% Simplified model on ONSETs (start, 3*odor + 2*questions)
-% No modulators
-% 1 contrasts (Presence Odor)
-% last modified on JULY 2019  by David MUNOZ
+dbstop if error
 
+%% define experiment setting parameters
+%subj       =   %subID;
+param.task = {'hedonicreactivity'};
+group = 'control';
 
-
-%% What to do
-firstLevel    = 1;
-contrasts    = 1;
-copycontrasts = 1;
-
-%% define task variable
-%sessionX = 'second';
-task = 'hedonic';
-
-%% define path
+%% DEFINE PATH
 
 cd ~
 home = pwd;
-homedir = [home '/REWOD/'];
+homedir = [home '/OBIWAN'];
 
+%% What to do
+firstLevel    = 1;
+constrasts    = 1;
+copycontrasts = 1;
 
-mdldir   = fullfile(homedir, '/DERIVATIVES/ANALYSIS/GLM/', task);% mdl directory (timing and outputs of the analysis)
+%% define task variable
+sessionX = 'second';
+task = 'hedonicreactivity';
+
 funcdir  = fullfile(homedir, '/DERIVATIVES/PREPROC');% directory with  post processed functional scans
-name_ana = 'GLM-01'; % output folder for this analysis
+mdldir   = fullfile (homedir, '/DERIVATIVES/GLM', task);% mdl directory (timing and outputs of the analysis)
+name_ana = 'GLM-01-control'; % output folder for this analysis
 groupdir = fullfile (mdldir,name_ana, 'group/');
 
 addpath('/usr/local/external_toolboxes/spm12/');
-%addpath /usr/local/MATLAB/R2018a/spm12 ;
-
 
 %% specify fMRI parameters
-param.TR = 2.4;
-param.im_format = 'smoothBold.nii'; 
-param.ons_unit = 'secs'; 
+param.TR = 2;
+param.im_format = 'nii'; %'img' or 'nii';
+param.ons_unit = 'secs'; % 'scans' or 'secs';
 spm('Defaults','fMRI');
 spm_jobman('initcfg');
 
-%% define experiment setting parameters
-subj       =  {'01'}; %subID; %{'01';'02';'03';'04';'05';'06';'07';'09';'10';'11';'12';'13';'14';'15';'16';'17';'18';'20';'21';'22';'23';'24';'25';'26';}; %subID;
-param.task = {'hedonic'}; 
+
 
 %% define experimental design parameters
 param.Cnam     = cell (length(param.task), 1);
 param.duration = cell (length(param.task), 1);
-param.onset = cell (length(param.task), 1);
+
+subj          = {'100'    ;'102'    ;'105'    ;'106'    ;'107'    ;'108'    ;'109'    ;'110'    ;'112'    ;'113'    ;'114'    ;'115'    ;'116'    ;'118'    ;'119'    ;'120'    ;'121'    ;'122'    ;'125'    ;'126'    ;'127'    ;'128'    ;'129'    ;'130'    ;'131'    ;'132'    ;'133'    };     % subject ID
 
 for i = 1:length(param.task)
     
     % Specify each conditions of your desing matrix separately for each session. The sessions
     % represent a line in Cnam, and the conditions correspond to a item in the line
     % these names must correspond identically to the names from your ONS*mat.
-    param.Cnam{i} = {'start',... %1
-        'reward',...%2
-        'control',...%3
-        'neutral',...%4
-        'liking',...%5 
-        'intensity'};%6
-
-        
-     param.onset{i} = {'ONS.onsets.trialstart',... %1
-        'ONS.onsets.odor.reward',...%2
-        'ONS.onsets.odor.control',...%3
-        'ONS.onsets.odor.neutral',...%4
-        'ONS.onsets.liking',...%5
-        'ONS.onsets.intensity'};%6
-
+    param.Cnam{i} = {'ONS.onsets.trialstart',... %1
+        'ONS.onsets.taste.reward',...%2
+        'ONS.onsets.taste.control',...%3
+        'ONS.onsets.liking',...%4
+        'ONS.onsets.intensity',...%5
+        'ONS.onsets.familiarity',...%6
+        'ONS.onsets.rinse'};%7
     
     % duration of the blocks (if events, put '0'). Specify it for each condition of each session
     % the values must be included in your onsets in seconds
     param.duration{i} = {'ONS.durations.trialstart',...
-        'ONS.durations.odor.reward',...
-        'ONS.durations.odor.control',...
-        'ONS.durations.odor.neutral',...  
+        'ONS.durations.taste.reward',...
+        'ONS.durations.taste.control',...
         'ONS.durations.liking',...
-        'ONS.durations.intensity'};
-
+        'ONS.durations.intensity',...
+        'ONS.durations.familiarity',...
+        'ONS.durations.rinse'};
     
     % parametric modulation of your events or blocks (ex: linear time, or emotional value, or pupillary size, ...)
     % If you have a parametric modulation
     param.modulName{i} = {'none',...%1
-        'none',...%2
-        'none',...%3
-        'none',...%4 
+        'liking',...%2
+        'liking',...%3
+        'none',...%4
         'none',...%5
-        'none'}; %6
+        'none',...
+        'none'};
     
     param.modul{i} = {'none',...%1
-        'none',... %2
-        'none',... %3
+        'ONS.modulators.taste.reward',... %2
+        'ONS.modulators.taste.control',... %3
         'none',... %4
         'none',... %5
-        'none'}; %6
+        'none',...
+        'none'};
     
     % value of the modulators, If you have a parametric modulation
     param.time{i} = {'0',... %1
-        '0',... %2
-        '0',... %3
+        '1',... %2
+        '1',... %3
         '0',... %4
         '0',... %5
-        '0'};%6
+        '0',...
+        '0'};
     
     
 end
@@ -114,205 +110,218 @@ end
 
 for i = 1:length(subj)
     
+    subjT       =  [group subj{i}];
+
     % participant's specifics
-    subjX = char(subj(i));
+    subjX = char(subjT);
     subjoutdir =fullfile(mdldir,name_ana, [ 'sub-' subjX]); % subj{i,1}
-    subjfuncdir=fullfile(funcdir, [ 'sub-' subjX], 'ses-second'); % subj{i,1}
+    subjanatdir=fullfile(funcdir, [ 'sub-' subjX], 'ses-first/anat/');
+    subjfuncdir=fullfile(funcdir, [ 'sub-' subjX], ['ses-' sessionX]); % subj{i,1}
     fprintf('participant number: %s \n', subj{i});
     cd (subjoutdir)
-    
+
     if ~exist('output','dir');
         mkdir ('output');
     end
-    
+
     %%%%%%%%%%%%%%%%%%%%% DO FIRST LEVEL ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%%%
     if firstLevel == 1
-        [SPM] = doFirstLevel(subjoutdir,subjfuncdir,name_ana,param,subjX);
+        [SPM] = doFirstLevel(subjoutdir,subjfuncdir,subjanatdir,name_ana,param,subjX);
     else
         cd (fullfile(subjoutdir,'output'));
         load SPM
     end
-    
-    %%%%%%%%%%%%%%%%%%%%%%%  DO CONTRASTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if contrasts == 1
+
+    %%%%%%%%%%%%%%%%%%%%%%%  DO CONSTRASTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if constrasts == 1
         doContrasts(subjoutdir,param, SPM);
     end
-    
-    %%%%%%%%%%%%%%%%%%%%% COPY CONTRASTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   if copycontrasts == 1
-        
+
+    %%%%%%%%%%%%%%%%%%%%% COPY CONSTRASTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if copycontrasts == 1
+
         mkdir (groupdir); % make the group directory where contrasts will be copied
+
         cd (fullfile(subjoutdir,'output'))
-        
-        list_dir = dir(fullfile(subjoutdir,'output', 'con*'));
-        list_files = '';
-        for ii = 1:length(list_dir)
-            copyfile(list_dir(ii).name, [groupdir, 'sub-' subjX '_' list_dir(ii).name])
+
+        % copy images T
+        Timages = ['01'; '02'; '03'; '04'];% constrasts of interest
+        for y =1:size(Timages,1)
+            copyfile(['con_00' (Timages(y,:)) '.nii'],[groupdir, 'sub-' subjX '_con-00' (Timages(y,:)) '.nii'])
         end
-        
-        
-        list_dir = dir(fullfile(subjoutdir,'output', 'ess*'));
-        list_files = '';
-        for iii = 1:length(list_dir)
-            copyfile(list_dir(iii).name, [groupdir, 'sub-' subjX '_' list_dir(iii).name])
+
+        % copy images F
+        Fimages = '05';% constrasts of interest
+        for y =1:size(Fimages,1)
+            copyfile(['ess_00' (Fimages(y,:)) '.nii'],[groupdir, 'sub-' subjX '_ess-00' (Timages(y,:)) '.nii'])
         end
-        
+
         display('contrasts copied!');
     end
-    
+
 end
 
 %% function section
-    function [SPM] = doFirstLevel(subjoutdir,subjfuncdir, name_ana, param, subjX)
-        
+    function [SPM] = doFirstLevel(subjoutdir,subjfuncdir,subjanatdir, name_ana, param, subjX)
+
         % variable initialization
         ntask = size(param.task,1);
-        im_style = 'sub';
+        im_style = 'swar'; % this is only for the old pipeline
         nscans = [];
         scanID = [];
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+
         %-----------------------------
         % select post processed images for each Session
-        
-        ses = 1:ntask;
+        for ses = 1:ntask
 
-        taskX = char(param.task(ses));
-        smoothfolder       = [subjfuncdir '/func'];
-        targetscan         = dir (fullfile(smoothfolder, [im_style '*' taskX '*' param.im_format]));
-        tmp{ses}           = spm_select('List',smoothfolder,targetscan.name);
+            taskX = char(param.task(ses));
+            smoothfolder       = [subjfuncdir '/func'];
+            %targetscan         = dir (fullfile(smoothfolder, [im_style '*' taskX '*' param.im_format]));
+            targetscan         = dir (fullfile(smoothfolder, ['*' taskX '*smoothBold*' param.im_format]));
 
-        % get the number of EPI for each session
-        cd (smoothfolder);
-        V         = dir(fullfile(smoothfolder, targetscan.name));
-        [p,n,e]   = spm_fileparts(V(1).name);
-        Vn        = spm_vol(fullfile(p,[n e]));
-        nscans    = [nscans numel(Vn)];
+            tmp{ses}           = spm_select('List',smoothfolder,targetscan.name);
 
-        for j = 1:nscans(ses)
-            scanID    = [scanID; {[smoothfolder,'/', V.name, ',', num2str(j)]}];
+            % get the number of EPI for each session
+            cd (smoothfolder);
+            V         = dir(fullfile(smoothfolder, targetscan.name));
+            [p,n,e]   = spm_fileparts(V(1).name);
+            Vn        = spm_vol(fullfile(p,[n e]));
+            nscans    = [nscans numel(Vn)];
+
+            for j = 1:nscans(ses)
+                scanID    = [scanID; {[smoothfolder,'/', V.name, ',', num2str(j)]}];
+            end
+
         end
 
-        %end
-        
         SPM.xY.P    = char(scanID);
         SPM.nscan   = nscans;
-        
-        
+
+
         %-----------------------------
         % building matrix
         for ses = 1:ntask
-            
+
             taskX = char(param.task(ses));
-            
+
             ONSname = spm_select('List',[subjoutdir '/timing/'],[name_ana '_task-' taskX '_onsets.mat']);
             cd([subjoutdir '/timing/']) % path
             ONS = load(ONSname);
             cd([subjoutdir '/output/'])
-            
+
             nconds=length(param.Cnam{ses});
-            
-            
+
+
             %%%%%%%%%%%%%%%%%%%%%% !!!!!!!!!!!!!!!! %%%%%%%%%%%%%%%%%%%%%%%
             % ATTENTION HERE WE NEED TO INITALIZE c for every new session
-            
+
             c = 0; % we need a counter because we include only condition that are non empty
-            
+
             for cc=1:nconds
-                
-                if ~ std(eval(param.onset{ses}{cc}))== 0 % only if the onsets are not all 0
-                    
+
+                if ~ isempty(eval(param.Cnam{ses}{cc})) % only if the onsets are not all 0
+
                     c = c+1; % update counter
-                    
+
                     SPM.Sess(ses).U(c).name      = {param.Cnam{ses}{cc}};
-                    SPM.Sess(ses).U(c).ons       = eval(param.onset{ses}{cc});
+                    SPM.Sess(ses).U(c).ons       = eval(param.Cnam{ses}{cc});
                     SPM.Sess(ses).U(c).dur       = eval(param.duration{ses}{cc});
-                    
+                    SPM.Sess(ses).U(c).orth      = 1; % orthogonalization
+%                    on
+
                     SPM.Sess(ses).U(c).P(1).name = 'none';
-                    SPM.Sess(ses).U(c).orth = 0; %no ortho!!
-                    
+
                     if isfield (param, 'modul') % this parameters are specified only if modulators are defined in the design
-                        
+
                         if ~ strcmp (param.modul{ses}{cc}, 'none')
-                            
+
                             if isstruct (eval(param.modul{ses}{cc}))
-                                
+
                                 mod_names = fieldnames (eval(param.modul{ses}{cc}));
                                 nc = 0; % intialize the modulators count
-                                
+
                                 for nmod = 1:length(mod_names)
-                                    
+
                                     nc = nc+1;
                                     mod_name = char(mod_names(nmod));
-                                    
+
                                     SPM.Sess(ses).U(c).P(nc).name  = mod_name;
                                     SPM.Sess(ses).U(c).P(nc).P     = eval([param.modul{ses}{cc} '.' mod_name]);
                                     SPM.Sess(ses).U(c).P(nc).h     = 1;
-                                    
 
-                                end
-                                
-                                
-                             else
-                                if std(eval(param.modul{ses}{cc}))== 0  %if std deviation = 0 no variability so we have to take ou P or else it will ruin contrasts
-                                    SPM.Sess(ses).U(c).P(1).name  = [];
-                                    SPM.Sess(ses).U(c).P(1).P     = [];
-                                    SPM.Sess(ses).U(c).P(1).h     = [];   
-                                    
-                                else    
-                                    SPM.Sess(ses).U(c).P(1).name  = char(param.modulName{ses}{cc});
-                                    SPM.Sess(ses).U(c).P(1).P     = eval(param.modul{ses}{cc});
-                                    SPM.Sess(ses).U(c).P(1).h     = 1;
-                                
+                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).name       = {param.Cnam{ses}{cc}};
+                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).onset      = eval(param.Cnam{ses}{cc});
+                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).duration   = eval(param.duration{ses}{cc});
+                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).tmod       = 0;
 
+                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod(nc).name  = mod_name;
+                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod(nc).param = eval([param.modul{ses}{cc} '.' mod_name]);
+                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod(nc).poly  = 1;
+                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).orth = 0;
                                 end
+
+
+                            else
+                                SPM.Sess(ses).U(c).P(1).name  = char(param.modulName{ses}{cc});
+                                SPM.Sess(ses).U(c).P(1).P     = eval(param.modul{ses}{cc});
+                                SPM.Sess(ses).U(c).P(1).h     = 1;
+
+                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).name       = {param.Cnam{ses}{cc}};
+                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).onset      = eval(param.Cnam{ses}{cc});
+                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).duration   = eval(param.duration{ses}{cc});
+                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).tmod       = 0;
+
+                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod.name  = char(param.modulName{ses}{cc});
+                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod.param = eval(param.modul{ses}{cc});
+                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod.poly  = 1;
+
                             end
                         end
                     end
                 end
             end
         end
-        
-        %-----------------------------
 
+        %-----------------------------
+        %multiple regressors for mvts parameters ( no movement regressor
+        %after ICA)
+
+        rnam = {'X','Y','Z','x','y','z'};
         for ses=1:ntask
-            
+
             SPM.Sess(ses).C.C = [];
             SPM.Sess(ses).C.name = {};
-            
-           %multiple regressors for mvts parameters ( BUT no movement regressor after FIX denoising)
-        
-           %rnam = {'X','Y','Z','x','y','z'};
-            
-           %movement
-                        %targetfile         = dir (fullfile(smoothfolder, ['rp_*' taskX '*.txt']));
 
-                        %fn = spm_select('List',smoothfolder,targetfile.name);% path
-                        %[r1,r2,r3,r4,r5,r6] = textread([smoothfolder '/' fn(1,:)],'%f%f%f%f%f%f'); % path
-                        %SPM.Sess(ses).C.C = [r1 r2 r3 r4 r5 r6];
-                        %SPM.Sess(ses).C.name = rnam;
+            %movement
+%                         targetfile         = dir (fullfile(smoothfolder, ['rp_*' taskX '*.txt']));
+%
+%                         fn = spm_select('List',smoothfolder,targetfile.name);% path
+%                         [r1,r2,r3,r4,r5,r6] = textread([smoothfolder '/' fn(1,:)],'%f%f%f%f%f%f'); % path
+%                         SPM.Sess(ses).C.C = [r1 r2 r3 r4 r5 r6];
+%                         SPM.Sess(ses).C.name = rnam;
         end
-        
-        
+
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % basis functions and timing parameters
-        
+
         % OPTIONS: TR in seconds
         %--------------------------------------------------------------------------
         SPM.xY.RT          = param.TR;
-        
+
         % OPTIONS: % 'hrf (with time derivative)'
         %--------------------------------------------------------------------------
         SPM.xBF.name       = 'hrf';
-        
+
         % OPTIONS: % 2 = hrf (with time derivative)
         %--------------------------------------------------------------------------
         SPM.xBF.order      = 1;
-        
+
         % OPTIONS: % length in seconds
         %--------------------------------------------------------------------------
         SPM.xBF.length     = 0;
-        
+
         % OPTIONS: microtime time resolution and microtime onsets (this paramter
         % should not be change according to the spm 12 manual (unless very long TR)
         %-------------------------------------------------------------------------
@@ -329,90 +338,114 @@ end
         % OPTIONS: 'scans'|'secs' for onsets
         %--------------------------------------------------------------------------
         SPM.xBF.UNITS      = param.ons_unit;
-        
+
         % % OPTIONS: 1|2 = order of convolution: du haut--> bas t?te ou l'inverse
         %--------------------------------------------------------------------------
         SPM.xBF.Volterra   = 1;
-        
+
         % global normalization: OPTIONS:'Scaling'|'None'
         %--------------------------------------------------------------------------
         SPM.xGX.iGXcalc    = 'None';
-        
+
         % low frequency confound: high-pass cutoff (secs) [Inf = no filtering]
         %--------------------------------------------------------------------------
         SPM.xX.K(1).HParam = 128;
-        
+
         % intrinsic autocorrelations: OPTIONS: 'none'|'AR(1) + w'
         %--------------------------------------------------------------------------
-        SPM.xVi.form       = 'AR(1)'; 
-        
+        SPM.xVi.form       = 'AR(1)'; %AR(0.2)???? SOSART
+
         % specify SPM working dir for this sub
         %==========================================================================
         SPM.swd = pwd;
-        
-        % set threshold of mask!!
+
+        % set threshold of mask
         %==========================================================================
-        SPM.xM.gMT = -Inf;% !!set -inf if we want to use explicit masking 0.8 is the spm default
-        
+        SPM.xM.gMT = -Inf;% set -inf if we want to use explicit masking 0.8 is the spm default
+
+
         % Configure design matrix
         %==========================================================================
         SPM = spm_fmri_spm_ui(SPM);
-        
+
+        % *After* configuration but before *estimation* we need to specify the explicit mask
+        %--------------------------------------------------------------------------
+        SPM.xM.VM  = spm_vol(char({[subjanatdir '/sub-' subjX '_ses-first_acq-ANTsNorm_T2w.nii']})); % here enter the mask based on the subject anatomical
+
+
         % Estimate parameters
         %==========================================================================
         disp ('estimating model')
         SPM = spm_spm(SPM);
-        
+
         disp ('first level done');
     end
 
 
     function [] = doContrasts(subjoutdir, param, SPM)
-        
+
         % define the SPM.mat that contains the design of the first level analysis
         %------------------------------------------------------------------
         path_ana = fullfile(subjoutdir, 'output'); % path for the first level analysis
         [files]=spm_select('List',path_ana,'SPM.mat');
         jobs{1}.stats{1}.con.spmmat = {fullfile(path_ana,files)};
-        
-        % define  T contrasts in a human friendly readable way
+
+        % define  T constrasts in a human friendly readable way
         %------------------------------------------------------------------
-        
+
         % | GET THE NAMES FROM THE ONSETS PARAMETERS OF THE SPM MODEL
         ncondition = size(SPM.xX.name,2);
-         
+
         for j = 1:ncondition
-            
-            %taskN = SPM.xX.name{j} (4);
-            task  = 'task-hed.'; %taskN in the middle
-            conditionName{j} = strcat(task,SPM.xX.name{j} (7:end-6)); %this cuts off the useless parts of the names
-            
+
+            taskN = SPM.xX.name{j} (4);
+            task  = ['task' taskN '.'];
+            conditionName{j} = strcat(task,SPM.xX.name{j} (18:end-6));
+
         end
-        conditionName{ncondition} = strcat(task,'constant'); %just for the last condition
-        
-         Ct = []; Ctnames = []; ntask = size(param.task,1);
-        
-        % | contrasts FOR T-TESTS
-        
-        % con1 
-        Ctnames{1} = 'odor_presence';
-        weightPos  = ismember(conditionName, {'task-hed.reward', 'task-hed.neutral'}) * 1;
-        Ct(1,:)    = weightPos;
-        
 
+        Ct = []; Ctnames = []; ntask = size(param.task,1);
+     
+        % | CONSTRASTS FOR T-TESTS
         
-
-        % define F contrasts
+        % con1
+        Ctnames{1} = 'reward-control';
+        weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 1;
+        weightNeg  = ismember(conditionName, {'task1.taste.control'})* -1;
+        Ct(1,:)    = weightPos+weightNeg;
+        
+        % con2
+        Ctnames{2} = 'overaLiquid';
+        weightPos  = ismember(conditionName, {'task1.taste.reward', 'task1.taste.control', 'task1.rinse'}) * 1;
+        Ct(2,:)    = weightPos;
+        
+        % con3
+        Ctnames{3} = 'mod.reward-mod.control';
+        weightPos  = ismember(conditionName, {'task1.taste.rewardxliking^1'}) * 1;
+        weightNeg  = ismember(conditionName, {'task1.taste.controlxliking^1'})* -1;
+        Ct(3,:)    = weightPos+weightNeg;
+        
+        % con4 
+        Ctnames{4} = 'question_presence';
+        weightPos  = ismember(conditionName, {'task1.liking', 'task1.intensity', 'task1.familiarity'}) * 1;
+        Ct(4,:)    = weightPos;
+        
+        % define F constrasts
         %------------------------------------------------------------------
         Cf = []; Cfnames = [];
         
-        Cfnames{end+1} = 'F_HED';
+        Cfnames{end+1} = 'F_task1';
+        Ftask1 = [1 0 0 0 0 0 0 0 0 0 0 0 0    %1 CS.plus
+            0 1 0 0 0 0 0 0 0 0 0 0 0    %2 CS.minus
+            0 0 1 0 0 0 0 0 0 0 0 0 0    %3 ANT.plus
+            0 0 0 1 0 0 0 0 0 0 0 0 0    %4 ANT.minus
+            0 0 0 0 1 0 0 0 0 0 0 0 0   %5 US
+            0 0 0 0 0 1 0 0 0 0 0 0 0    %6 reward presnece
+            0 0 0 0 0 0 1 0 0 0 0 0 0];   %7 right modulator
         
-        %create a identidy matrix (nconditionXncondition) 
-        F_hedonic = eye(ncondition);
-  
         
-        Cf = repmat(F_hedonic,1,ntask);
+        
+        Cf = repmat(Ftask1,1,ntask);
         
         % put the contrast matrix
         %------------------------------------------------------------------
@@ -423,14 +456,14 @@ end
             jobs{1}.stats{1}.con.consess{icon}.tcon.convec = Ct(icon,:);
         end
         
-         % F contrats
-         for iconf = 1:1 % until the number of F contrast computed
-             jobs{1}.stats{1}.con.consess{iconf+icon}.fcon.name = Cfnames{iconf};
-             jobs{1}.stats{1}.con.consess{iconf+icon}.fcon.convec = Cf(iconf);
-         end
+        % F constrats
+        for iconf = 1:1 % until the number of F constrast computed
+            jobs{1}.stats{1}.con.consess{iconf+icon}.fcon.name = Cfnames{iconf};
+            jobs{1}.stats{1}.con.consess{iconf+icon}.fcon.convec = Cf(iconf);
+        end
         
         
-        % run the job
+        % task the job
         spm_jobman('run',jobs)
         
         disp ('contrasts created!')

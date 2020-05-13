@@ -31,12 +31,12 @@ addpath (genpath(fullfile(homedir, 'CODE/ANALYSIS/BEHAV/matlab_functions')));
 %% DEFINE POPULATION
 
 control = [homedir '/SOURCEDATA/behav/control*'];
-obese = [homedir '/SOURCEDATA/behav/obese*'];
+%obese = [homedir '/SOURCEDATA/behav/obese*'];
 
 controlX = dir(control);
-obeseX = dir(obese);
+%obeseX = dir(obese);
 
-subj = vertcat(controlX, obeseX);
+subj = controlX; %vertcat(controlX, obeseX);
 
 session = {'second'; 'third'};
 
@@ -206,7 +206,7 @@ for j = 1:length(session)
         end 
         
         cd (func_dir)
-        matfile_name = ['sub-'  num2str(subjX) '_ses-' sessionX '_task-' task '_run-01_events.mat'];
+        matfile_name = ['sub-'  num2str(subjX) '_ses-' sessionX '_task-' task '_events.mat'];
         %cd (behavior_dir)
         save(matfile_name, 'ONSETS', 'DURATIONS', 'BEHAVIOR', 'CONDITIONS') %, 'ODOR', 'TRIAL', 'DRIFT', 'PHYSIO' )
 

@@ -209,7 +209,7 @@ for j = 1:length(session)
         end
         
         cd (func_dir)
-        matfile_name = ['sub-' num2str(subjX) '_ses-' sessionX  '_task-' task '_run-01_events.mat'];
+        matfile_name = ['sub-' num2str(subjX) '_ses-' sessionX  '_task-' task '_events.mat'];
 
 
         save(matfile_name, 'ONSETS', 'DURATIONS',  'BEHAVIOR', 'CONDITIONS') %, 'REWARD', 'TRIAL', 'RIM', 'PE', 'PIT')
@@ -260,7 +260,7 @@ for j = 1:length(session)
         
         cd (bids_dir)
         % open data base
-        eventfile_name = ['sub-' num2str(subjX) '_ses-' sessionX '_task-' task '_run-01_events.tsv'];
+        eventfile_name = ['sub-' num2str(subjX) '_ses-' sessionX '_task-' task '_events.tsv'];
         fid = fopen(eventfile_name,'wt');
 
         % print heater
