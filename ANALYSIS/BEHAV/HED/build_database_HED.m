@@ -31,12 +31,12 @@ addpath (genpath(fullfile(homedir, 'CODE/ANALYSIS/BEHAV/matlab_functions')));
 %% DEFINE POPULATION
 
 control = [homedir '/SOURCEDATA/behav/control*'];
-%obese = [homedir '/SOURCEDATA/behav/obese*'];
+obese = [homedir '/SOURCEDATA/behav/obese*'];
 
 controlX = dir(control);
-%obeseX = dir(obese);
+obeseX = dir(obese);
 
-subj = controlX; %vertcat(controlX, obeseX);
+subj = vertcat(controlX, obeseX);
 
 session = {'second'; 'third'};
 

@@ -7,7 +7,7 @@
 ##########################################################################
 
 
-# LAST UPDATED ON: 27.09.19 by YS
+# FROM Yoann STUSSI , LAST UPDATED ON: 27.03.20 by David MUNOZ TORD
 
 # Based on:
 # Lakens, D. (2013). Calculating and reporting effect sizes to facilitate cumulative science: A practical primer for t-tests and ANOVAs. 
@@ -30,9 +30,10 @@
 # anova.type = type of sum of squares used in list("II", "III", 2, 3)
 #              - "II" or 2: use type II sum of squares (hierarchical or partially sequential)
 #              - "III" or 3: use type III sum of squares (marginal or orthogonal) [default] 
+#   added observed and factorize arguments
 #------------------------------------------------------------------------------------------------------------------------#
 
-pes_ci <- function(formula, data, conf.level, epsilon, anova.type)
+pes_ci <- function(formula, data, conf.level, epsilon, anova.type, observed=NULL, factorize=afex_options("factorize"))
 {
   
   #----------------------------------------------------------------------------------------------#
@@ -62,7 +63,9 @@ pes_ci <- function(formula, data, conf.level, epsilon, anova.type)
   aov     <- aov_car(formula = formula, 
                      data = data, 
                      anova_table = list(es = "pes"),
-                     type = anova.type)
+                     type = anova.type,
+                     observed = observed,
+                     factorize = factorize)
   aov.sum <- summary(aov)
   
   

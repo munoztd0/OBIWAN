@@ -1,11 +1,11 @@
-## R code for FOR OBIWAN_HED Obese
-# last modified on April by David
+## R code for FOR HED Obese
+# last modified on April 2020 by David MUNOZ
 # -----------------------  PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(tidyverse, ggplot2, Rmisc, dplyr, lmerTest, car, r2glmm, optimx, visreg, MuMIn,  pbkrtest, bootpredictlme4, sjPlot, emmeans, bayestestR)
+pacman::p_load(tidyverse, ggplot2, Rmisc, dplyr, lmerTest, car, afex, r2glmm, optimx, visreg, MuMIn,  pbkrtest, bootpredictlme4, sjPlot, emmeans, bayestestR)
 
 #SETUP
 task = 'HED'
@@ -18,54 +18,74 @@ figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV')
 
 
 # open dataset
-OBIWAN_HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
+HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
 info$id      <- as.factor(info$id)
 
 #subset
-OBIWAN_HED  <- subset(OBIWAN_HED_full, group == 'obese') #only group obese 
+HED  <- subset(HED_full, group == 'obese') #only group obese 
 
 # define as.factors
-OBIWAN_HED$id      <- as.factor(OBIWAN_HED$id)
-OBIWAN_HED$trial    <- as.factor(OBIWAN_HED$trial)
-OBIWAN_HED$group    <- as.factor(OBIWAN_HED$group)
-OBIWAN_HED$condition <- as.factor(OBIWAN_HED$condition)
-OBIWAN_HED$time    <- as.factor(OBIWAN_HED$session)
+HED$id      <- as.factor(HED$id)
+HED$trial    <- as.factor(HED$trial)
+HED$group    <- as.factor(HED$group)
+HED$condition <- as.factor(HED$condition)
+HED$time    <- as.factor(HED$session)
 
-OBIWAN_HED$trialxcondition <- as.factor(OBIWAN_HED$trialxcondition)
+HED$trialxcondition <- as.factor(HED$trialxcondition)
 
-OBIWAN_HED = full_join(OBIWAN_HED, info, by = "id")
+HED = full_join(HED, info, by = "id")
 
-OBIWAN_HED <-OBIWAN_HED %>% drop_na("condition")
+HED <-HED %>% drop_na("condition")
 
-OBIWAN_HED  <- subset(OBIWAN_HED, id != 242 & id != 256 & id != 234) #234 only have third session
+HED  <- subset(HED, id != 242 & id != 256 & id != 234) #234 only have third session
 
-OBIWAN_HED$gender   <- as.factor(OBIWAN_HED$gender) #M=0
-OBIWAN_HED$intervention   <- as.factor(OBIWAN_HED$intervention) #blind
+HED$gender   <- as.factor(HED$gender) #M=0
+HED$intervention   <- as.factor(HED$intervention) #blind
 
-n_tot = length(unique(OBIWAN_HED$id))
+n_tot = length(unique(HED$id))
 
 #check
-bs = ddply(OBIWAN_HED, .(id, session), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
+bs = ddply(HED, .(id, session), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
 
 
 # QUICK STATS -------------------------------------------------------------------
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful functions from Ben Meulman
 
 #scale everything
-OBIWAN_HED$perceived_liking= scale(OBIWAN_HED$perceived_liking)
-OBIWAN_HED$perceived_familiarity = scale(OBIWAN_HED$perceived_familiarity)
-OBIWAN_HED$perceived_intensity = scale(OBIWAN_HED$perceived_intensity)
-OBIWAN_HED$ageZ = hscale(OBIWAN_HED$age, OBIWAN_HED$id) #agragate by subj and then scale 
+HED$likZ= scale(HED$perceived_liking)
+HED$famZ = scale(HED$perceived_familiarity)
+HED$intZ = scale(HED$perceived_intensity)
+HED$ageZ = hscale(HED$age, HED$id) #agragate by subj and then scale 
 
 #create BMI diff #double check
-OBIWAN_HED$bmi_diff = OBIWAN_HED$BMI_t1 - OBIWAN_HED$BMI_t2 
+HED$diff_Z = hscale(HED$BMI_t1 - HED$BMI_t2, HED$id)
+HED$bmi_T0 = hscale(HED$BMI_t1, HED$id)
 
 
+#************************************************** quick anova test (BAD) aov_4 only allows one random effect term
+#remove Missing values for following ID(s):
+#c(201, 208, 210, 214, 216, 219, 222, 223, 233, 240, 245, 247, 249, 258, 263, 267)
+HED_test <-  HED[!HED$id %in% c("201", "208", "210", "214", "216", "219", "222", "223", "233", "240", "245", "247", "249", "258", "263", "267"), ] #, 208, "210", "214", "216", "219", "222", "223", "233", "240", "245", "247", "249", "258", "263", "267")) #all  that didnt have Post test
 
-#************************************************** test (BAD)
-mdl.liking = lmer(perceived_liking ~ condition*time*intervention + trialxcondition + bmi_diff + gender + ageZ + (condition|id)+ (condition|trialxcondition), data = OBIWAN_HED, REML=FALSE)
-anova(mdl.liking)
+#scale everything
+HED_test$likZ= scale(HED_test$perceived_liking)
+HED_test$famZ = scale(HED_test$perceived_familiarity)
+HED_test$intZ = scale(HED_test$perceived_intensity)
+HED_test$ageZ = hscale(HED_test$age, HED_test$id) #agragate by subj and then scale 
+
+#create BMI diff #double check
+HED_test$diff_Z = hscale(HED_test$BMI_t1 - HED_test$BMI_t2, HED_test$id)
+HED_test$bmi_T0 = hscale(HED_test$BMI_t1, HED_test$id)
+
+mdl.aov = aov_4(likZ ~ condition*time*intervention + gender + ageZ + bmi_T0 + (time*condition|id) , 
+                   data = HED_test, observed = c("gender", "ageZ", "bmi_T0"), factorize = FALSE, fun_aggregate = mean)
+summary(mdl.aov)
+
+#VS LMER
+mdl.lmm = mixed(likZ ~ condition*time*intervention + gender + ageZ + bmi_T0 + (time*condition|id) , 
+                data = HED_test, method = "PB", args.test = list(nsim = 100))
+summary(mdl.lmm)
 
 
 # STATS LMM -------------------------------------------------------------------
@@ -76,27 +96,39 @@ control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
 # new ---------------------------------------------------------------------
 
+#scale everything
+HED_test$likZ= scale(HED_test$perceived_liking)
+HED_test$famZ = scale(HED_test$perceived_familiarity)
+HED_test$intZ = scale(HED_test$perceived_intensity)
+HED_test$ageZ = hscale(HED_test$age, HED_test$id) #agragate by subj and then scale 
+
+#create BMI diff #double check
+HED_test$diff_Z = hscale(HED_test$BMI_t1 - HED_test$BMI_t2, HED_test$id)
+HED_test$bmi_T0 = hscale(HED_test$BMI_t1, HED_test$id)
+
+
+
 #model selection #already tried the combination for trialxcondition in another script (we dont have enought to estimate variance)
 
-#OUT bc degenerated hessian mod1 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*intervention*condition|id), data = OBIWAN_HED)
-#OUT bc degenerated hessian mod2 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*intervention+condition|id), data = OBIWAN_HED)
-#OUT bc degenerated hessian mod3 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time+intervention*condition|id), data = OBIWAN_HED)
-#OUT bc degenerated hessian  mod4 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+intervention|id)  + (1|trialxcondition), data = OBIWAN_HED, control=control)
-# mod5 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition|id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
-# mod6 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time:condition + condition + intervention|id) + (1|trialxcondition), data = OBIWAN_HED , control=control)
-# mod7 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time:condition + time + intervention|id) + (1|trialxcondition), data = OBIWAN_HED , control=control)
-# mod8 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time:condition + condition |id) + (1|trialxcondition), data = OBIWAN_HED , control=control)
-# mod9 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time:condition + time |id) + (1|trialxcondition), data = OBIWAN_HED , control=control)
-#OUT bc degenerated hessian mod10 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time:condition |id) + (1|trialxcondition), data = OBIWAN_HED , control=control)
-# mod11 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time+condition |id) + (1|trialxcondition), data = OBIWAN_HED , control=control)
-# mod12 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (condition |id) + (1|trialxcondition), data = OBIWAN_HED , control=control)
-# mod13 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time |id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
-# mod14 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (1 |id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
-# mod15 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
-# mod16 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
-# mod17 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
-mod18 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
-#mod19 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity*condition|id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
+#OUT bc degenerated hessian mod1 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*intervention*condition|id), data = HED)
+#OUT bc degenerated hessian mod2 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*intervention+condition|id), data = HED)
+#OUT bc degenerated hessian mod3 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time+intervention*condition|id), data = HED)
+#OUT bc degenerated hessian  mod4 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+intervention|id)  + (1|trialxcondition), data = HED, control=control)
+# mod5 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition|id) + (1|trialxcondition), data = HED, control=control)
+# mod6 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time:condition + condition + intervention|id) + (1|trialxcondition), data = HED , control=control)
+# mod7 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time:condition + time + intervention|id) + (1|trialxcondition), data = HED , control=control)
+# mod8 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time:condition + condition |id) + (1|trialxcondition), data = HED , control=control)
+# mod9 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time:condition + time |id) + (1|trialxcondition), data = HED , control=control)
+#OUT bc degenerated hessian mod10 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time:condition |id) + (1|trialxcondition), data = HED , control=control)
+# mod11 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time+condition |id) + (1|trialxcondition), data = HED , control=control)
+# mod12 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (condition |id) + (1|trialxcondition), data = HED , control=control)
+# mod13 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time |id) + (1|trialxcondition), data = HED, control=control)
+# mod14 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (1 |id) + (1|trialxcondition), data = HED, control=control)
+# mod15 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity|id) + (1|trialxcondition), data = HED, control=control)
+# mod16 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_intensity|id) + (1|trialxcondition), data = HED, control=control)
+# mod17 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control)
+mod18 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control)
+#mod19 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity*condition|id) + (1|trialxcondition), data = HED, control=control)
 
 #after it doesnt converge anymore
 
@@ -118,8 +150,8 @@ AIC(mod18) ; BIC(mod18) # keep it max
 #AIC(mod19) ; BIC(mod19) 
 
 
-slope.model = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (1|id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
-random.slope.model = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
+slope.model = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (1|id) + (1|trialxcondition), data = HED, control=control)
+random.slope.model = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control)
 ranova(random.slope.model)
 #there is statistically significant variation in slopes between individuals and trials, using the likelihood ratio test:
 
@@ -171,12 +203,12 @@ VarCorr(random.slope.model)
 # #model selection #fixed REML FALSE sequential drop --------------------------------------
 
 
-# mod1 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
-# mod2 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + ageZ + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
-# mod3 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
-# mod4 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity + gender + ageZ  + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+# mod1 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
+# mod2 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + ageZ + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
+# mod3 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
+# mod4 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity + gender + ageZ  + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 
-mod7 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity   + perceived_intensity +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+mod7 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity   + perceived_intensity +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 
 # AIC(mod1) ; BIC(mod1)
 # AIC(mod2) ; BIC(mod2)
@@ -219,7 +251,7 @@ set.seed(101)
 ##TEST condition:intervetion:time
 full = mod7
 #drop inter
-null = lmer(perceived_liking ~ condition + time + intervention  + condition:time + condition:intervention + time:intervention + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+null = lmer(perceived_liking ~ condition + time + intervention  + condition:time + condition:intervention + time:intervention + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 
 #LR test for condition inter p = 0.73
 test = anova(full, null, test = "Chisq")
@@ -230,9 +262,9 @@ delta_AIC = test$AIC[1] - test$AIC[2]
 delta_AIC
 
 ##TEST time:intervention 
-full = lmer(perceived_liking ~ condition + time + intervention  + condition:time + condition:intervention + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+full = lmer(perceived_liking ~ condition + time + intervention  + condition:time + condition:intervention + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 #drop inter
-null = lmer(perceived_liking ~ condition + time + intervention  + condition:time + condition:intervention + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+null = lmer(perceived_liking ~ condition + time + intervention  + condition:time + condition:intervention + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 
 #LR test for condition inter p = 0.06
 test = anova(full, null, test = "Chisq")
@@ -244,9 +276,9 @@ delta_AIC
 
 
 ##TEST  condition:intervention
-full = lmer(perceived_liking ~ condition + time + intervention   + condition:time + condition:intervention + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+full = lmer(perceived_liking ~ condition + time + intervention   + condition:time + condition:intervention + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 #drop inter
-null = lmer(perceived_liking ~ condition + time + intervention   + condition:time + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+null = lmer(perceived_liking ~ condition + time + intervention   + condition:time + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 
 #LR test for condition inter p = 0.39
 test = anova(full, null, test = "Chisq")
@@ -258,9 +290,9 @@ delta_AIC
 
 
 ##TEST  + condition:time
-full = lmer(perceived_liking ~ condition + time + intervention   + condition:time + condition:intervention + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+full = lmer(perceived_liking ~ condition + time + intervention   + condition:time + condition:intervention + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 #drop inter
-null = lmer(perceived_liking ~ condition + time + intervention   + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+null = lmer(perceived_liking ~ condition + time + intervention   + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 
 #LR test for condition inter p = 0.13
 test = anova(full, null, test = "Chisq")
@@ -272,9 +304,9 @@ delta_AIC
 
 
 ##TEST  intervention drop inter
-full = lmer(perceived_liking ~ condition + time + intervention   + condition:time  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+full = lmer(perceived_liking ~ condition + time + intervention   + condition:time  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 #drop main
-null = lmer(perceived_liking ~ condition + time + condition:time   + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+null = lmer(perceived_liking ~ condition + time + condition:time   + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 
 #LR test for condition inter p = 0.97
 test = anova(full, null, test = "Chisq")
@@ -287,9 +319,9 @@ delta_AIC
 
 
 ##TEST  time drop inter
-full = lmer(perceived_liking ~ condition + time + intervention  + condition:intervention + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+full = lmer(perceived_liking ~ condition + time + intervention  + condition:intervention + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 #drop main
-null = lmer(perceived_liking ~ condition + intervention   + condition:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+null = lmer(perceived_liking ~ condition + intervention   + condition:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 
 #LR test for condition inter p = 0.14
 test = anova(full, null, test = "Chisq")
@@ -301,9 +333,9 @@ delta_AIC
 
 
 ##TEST  condition drop inter
-full = lmer(perceived_liking ~ condition + time + intervention  + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+full = lmer(perceived_liking ~ condition + time + intervention  + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 #drop main
-null = lmer(perceived_liking ~  time + intervention  + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control, REML = FALSE)
+null = lmer(perceived_liking ~  time + intervention  + time:intervention  + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control, REML = FALSE)
 
 #LR test for condition inter p < 0.0001
 test = anova(full, null, test = "Chisq")
@@ -328,10 +360,10 @@ summary(mod)
 
 
 #get observed by ID
-df.observed = ddply(OBIWAN_HED, .(id, condition), summarise, fit = mean(perceived_liking, na.rm = TRUE)) 
+df.observed = ddply(HED, .(id, condition), summarise, fit = mean(perceived_liking, na.rm = TRUE)) 
 
 #drop inter so the bootstrpping is faster but doesnt change CI
-model = lmer(perceived_liking ~ condition + time + intervention   + perceived_familiarity  +  bmi_diff + (time*condition+perceived_familiarity*condition|id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
+model = lmer(perceived_liking ~ condition + time + intervention   + perceived_familiarity  +  bmi_diff + (time*condition+perceived_familiarity*condition|id) + (1|trialxcondition), data = HED, control=control)
 
 #set options 
 emm_options(pbkrtest.limit = 5000)
@@ -406,7 +438,7 @@ dev.off()
 
 
 # intervention X condition ------------------------------------------------------------
-model = lmer(perceived_liking ~ condition + time + intervention   + perceived_familiarity + perceived_intensity  +  bmi_diff + intervention:condition + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
+model = lmer(perceived_liking ~ condition + time + intervention   + perceived_familiarity + perceived_intensity  +  bmi_diff + intervention:condition + (time*condition+perceived_familiarity*perceived_intensity|id) + (1|trialxcondition), data = HED, control=control)
 
 #pred CI #takes aaa whiiile!
 pred2 = confint(emmeans(model,list(pairwise ~ intervention:condition)), level = .95, type = "response")
@@ -446,8 +478,8 @@ plt2 = plt +  #details
 
 plot(plt2)
 
-# plac = subset(OBIWAN_HED, intervention == '0')
-# lira = subset(OBIWAN_HED, intervention == '1')
+# plac = subset(HED, intervention == '0')
+# lira = subset(HED, intervention == '1')
 # n_plac = length(unique(plac$id))
 # n_lira = length(unique(lira$id))
 
@@ -463,7 +495,7 @@ dev.off()
 
 # interventionxconditionxtime ---------------------------------------------
 
-model = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition|id) + (1|trialxcondition), data = OBIWAN_HED, control=control)
+model = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity  +  bmi_diff + (time*condition|id) + (1|trialxcondition), data = HED, control=control)
 
 #pred CI #takes aaa whiiile!
 pred3 = confint(emmeans(model,list(pairwise ~ intervention:condition:time)), level = .95, type = "response")
