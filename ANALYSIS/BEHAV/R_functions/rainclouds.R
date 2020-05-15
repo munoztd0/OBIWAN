@@ -3,7 +3,6 @@
 ### It relies largely on code previously written by David Robinson
 ### (https://gist.github.com/dgrtwo/eb7750e74997891d7c20)
 ### and the package ggplot2 by Hadley Wickham
-
 ### DAVID munoz -> added left plot 
 
 # Check if required packages are installed ----

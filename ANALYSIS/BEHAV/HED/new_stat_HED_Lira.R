@@ -110,6 +110,53 @@ HED_test$bmi_T0 = hscale(HED_test$BMI_t1, HED_test$id)
 
 #model selection #already tried the combination for trialxcondition in another script (we dont have enought to estimate variance)
 
+
+
+mod1 = lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ * intZ +(time*condition|id) , 
+            data = HED, control = control)
+
+mod2 = lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ*intZ +(time*condition+famZ|id) , 
+            data = HED, control = control)
+
+mod3 = lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ*intZ +(time*condition+intZ|id) , 
+            data = HED, control = control)
+
+mod4 = lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ*intZ +(time*condition+famz+intZ|id) , 
+            data = HED, control = control)
+
+mod5 = lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ*intZ +(time*condition+famZ*intZ|id) , 
+            data = HED, control = control)
+
+mod6 = lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ*intZ +(time*condition+famZ*intZ|id) + (1|trialxcondition), 
+            data = HED, control = control) #were are hiting the singular fit already 
+
+#mod7 = lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ*intZ +(time*condition*famZ*intZ|id) + (1|trialxcondition), 
+            #data = HED, control = control) #here its a mess
+
+
+
+AIC(mod1) ; BIC(mod1)
+AIC(mod2) ; BIC(mod2)
+AIC(mod3) ; BIC(mod3)
+AIC(mod4) ; BIC(mod4)
+AIC(mod5) ; BIC(mod5) 
+AIC(mod6) ; BIC(mod6) # keep it max
+
+#---
+
+mod11 = lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ*intZ +(time*condition+famZ*intZ|id) + (1|trialxcondition), 
+            data = HED, control = control, REML = FALSE) 
+
+mod21 = lmer(likZ ~ condition*time*intervention*famZ*intZ + gender + ageZ + diff_bmiZ +(time*condition+famZ*intZ|id) + (1|trialxcondition), 
+            data = HED, control = control, REML = FALSE) 
+
+mod31 = lmer(likZ ~ condition*time*intervention*famZ + intZ + famZ:intZ + gender + ageZ + diff_bmiZ +(time*condition+famZ*intZ|id) + (1|trialxcondition), 
+             data = HED, control = control, REML = FALSE) 
+
+AIC(mod11) ; BIC(mod11)  #largely the best BIC
+AIC(mod21) ; BIC(mod21)
+AIC(mod31) ; BIC(mod31)
+
 #OUT bc degenerated hessian mod1 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*intervention*condition|id), data = HED)
 #OUT bc degenerated hessian mod2 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time*intervention+condition|id), data = HED)
 #OUT bc degenerated hessian mod3 = lmer(perceived_liking ~ condition*time*intervention + perceived_familiarity + perceived_intensity +  bmi_diff + gender + ageZ + (time+intervention*condition|id), data = HED)
