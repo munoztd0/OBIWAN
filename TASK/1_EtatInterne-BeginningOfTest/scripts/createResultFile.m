@@ -1,9 +1,9 @@
-    function [resultFile, participantID] = createResultFile(var) %% modified on the 21.03
+    function [resultFile, participantID] = createResultFile(var) %% modified on the 23.02.2015
         % Ask the participand ID
         participantID = str2double(inputdlg('Enter subject ID','Input required'));
         
         % Create the participant results file
-        resultFile = (['internal1_' num2str(participantID) '.mat']);
+        resultFile = (['hedonic' num2str(participantID) '.mat']);
         
         % Check that the file does not already exist to avoid overwriting
         cd(var.filepath.data); %go and check in the data file

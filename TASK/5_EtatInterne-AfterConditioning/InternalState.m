@@ -1,4 +1,4 @@
-function InternalState() %Modifica 17/01/2018 DOCE
+ function InternalState() %Modifica 17/01/2018 DOCE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Preliminary stuff %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 PsychDefaultSetup(1);
 AssertOpenGL;

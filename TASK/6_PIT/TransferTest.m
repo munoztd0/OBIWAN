@@ -78,8 +78,8 @@ save(var.resultFile,'data');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Instructions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if var.instruction == 1
-    var.instruction1 = 'Dans cette partie de l''étude, nous vous demanderons\n\n à nouveau de presser le capteur de force afin d''obtenir du milkshake\n\n\n\n Appuyez sur un bouton pour continuer';
-    var.instruction2 = 'Les images vont vous être présentées à nouveau. À chaque présentation, nous vous \n\n demanderons de faire des ‘bonnes pressions’. Celles-ci détermineront la quantité \n\n de milkshake que vous recevrez à la fin de l''expérience. \n\n\n\n Appuyez sur un bouton pour continuer';
+    var.instruction1 = 'Dans cette partie de l''étude, nous vous demanderons à nouveau de presser le capteur de force\n\n afin d''obtenir du milkshake\n\n\n\n Appuyez sur un bouton pour continuer';
+    var.instruction2 = 'Les images vont vous être présentes à nouveau. À chaque présentation, nous vous demanderons\n\n de faire des ‘bonnes pressions’. Celles-ci détermineront la quantité de milkshake que vous recevrez à la fin de l''expérience. \n\n\n\n Appuyez sur un bouton pour continuer';
     var.instructionA = 'Tout d''abord, nous devons calibrer le capteur de force. Pour ce faire, nous vous demanderons \n\n de tenir le capteur de force sans excercer aucune pression. \n\n Appuyez sur un bouton pour continuer';
     var.instructionB = 'Ensuite, nous vous demanderons \n\n de presser avec votre force maximale sur le capteur de force \n\n Appuyez sur un bouton pour continuer';
     var.pressez = ' PRESSEZ AVEC VOTRE FORCE MAXIMALE MAITENANT !!! \n ';

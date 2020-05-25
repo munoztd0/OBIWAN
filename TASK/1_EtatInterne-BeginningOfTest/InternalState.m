@@ -1,4 +1,4 @@
-function InternalState() %Modifica 17/01/2018 DOCE
+3  function InternalState() %Modifica 17/01/2018 DOCE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Preliminary stuff %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 PsychDefaultSetup(1);
 AssertOpenGL;
@@ -12,7 +12,7 @@ rng('shuffle');
 var.filepath = MakePathStruct();
 cd(var.filepath.scripts);
 var.instruction = 1;
-
+ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Collect Participant and Day %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 data.SubDate= datestr(now, 24);
 data.SubHour= datestr(now, 13);
@@ -42,9 +42,9 @@ if var.instruction == 1
     var.howThirsty = 'A quel point avez-vous soif?';
     var.anchorMinThirsty = 'pas soif\ndu tout';
     var.anchorMaxThirsty = 'très soif';
-    var.howPiss = 'A3 quel point avez-vous envie d''uriner?';
+    var.howPiss = 'A quel point avez-vous envie d''uriner?';
     var.anchorMinPiss = 'pas du tout';
-    var.anchorMaxPiss = 'très forte\nenvie';
+    var.anchorMaxPiss = ' très forte\nenvie';
     var.pressToContinue = 'Bouton du milieu pour continuer';
     var.tooLong = 'Réponse trop lente';
 elseif var.instruction == 2

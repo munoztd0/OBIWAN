@@ -3,7 +3,7 @@
         participantID = str2double(inputdlg('Enter subject ID','Input required'));
         
         % Create the participant results file
-        resultFile = (['internal5_' num2str(participantID) '.mat']);
+        resultFile = (['hedonic' num2str(participantID) '.mat']);
         
         % Check that the file does not already exist to avoid overwriting
         cd(var.filepath.data); %go and check in the data file

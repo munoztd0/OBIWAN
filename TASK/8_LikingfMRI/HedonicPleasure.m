@@ -89,14 +89,14 @@ if var.instruction == 1
     End = 'Cette partie de l''étude est terminée, merci !';
     attention = 'Attention !!';
     var.howPleasant = 'A quel point avez-vous trouvé ce liquide agréable?';
-    var.anchorMinPleasant = 'Extrêmement\ndésagréable';
-    var.anchorMaxPleasant = 'Extrêmement\nagréable';
+    var.anchorMinPleasant = 'extrêmement\ndésagréable';
+    var.anchorMaxPleasant = 'extrêmement\nagréable';
     var.howIntense = 'A quel point avez-vous trouvé ce liquide intense?';
-    var.anchorMinIntense = 'Pas\nperçu';
-    var.anchorMaxIntense = 'Extrêmement\nfort';
+    var.anchorMinIntense = 'pas\nperçu';
+    var.anchorMaxIntense = 'extrêmement\nfort';
     var.howFamiliar = 'A quel point avez-vous trouvé ce liquide familier?';
-    var.anchorMinFamiliar = 'Pas\nfamilier';
-    var.anchorMaxFamiliar = 'Extrêmement\nfamilier';
+    var.anchorMinFamiliar = 'pas\nfamilier';
+    var.anchorMaxFamiliar = 'extrêmement\nfamilier';
     var.pressToContinue = 'Bouton du milieu pour continuer';
     var.tooLong = 'Réponse trop lente';
 elseif var.instruction == 2

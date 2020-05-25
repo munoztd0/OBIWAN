@@ -3,7 +3,7 @@ function [resultFile, participantID] = createResultFile (var) %% modified on the
         participantID = str2double(inputdlg('Enter subject ID','Input required'));
         
         % Create the participant results file
-        resultFile = (['conditioning_' num2str(participantID) '.mat']);
+        resultFile = (['conditioning' num2str(participantID) '.mat']);
         
         % Check that the file does not already exist to avoid overwriting
         cd(var.filepath.data); %go and check in the data file
