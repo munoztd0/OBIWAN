@@ -49,7 +49,9 @@ k = 0; %counter for database index
 for j = 1:length(session)
     
     for i = 1:length(subj)
-
+        
+        %i = 45
+        
         %subjX=subj(i,1);
         subjX = subj(i).name;
         subjX=char(subjX);
@@ -160,21 +162,60 @@ for j = 1:length(session)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% get the mobilized effort
 
-        % concatenate the mobilized effort
+        % concatenate the mobilized effort %dernier code = 20180315-CodeBBL
         mobilized_effort = reshape(data.PIT.mobilizedforce,a,ntrials);
-
-
-        % compute the treshold to determine what we consider as a response (50% of the maximal force)
-        treshold = data.minimalforce+((data.maximalforce-data.minimalforce)/100*50);% value
-
-        % extract the number of grips
-        nlines = size(mobilized_effort,1);
-        ncolons = size(mobilized_effort,2);
-        BEHAVIOR.gripFreq = countgrips(treshold,nlines,ncolons,mobilized_effort);
+        
+        %convert to vector
+        ForceVector = data.PIT.mobilizedforce(:);
+        TimeVector = data.PIT.Time(:);
+        
+        % compute the threshold to determine what we consider as a response (50% of the maximal force)
+        threshold_calib = data.minimalforce+((data.maximalforce-data.minimalforce)/100*50);% value
+        threshold = min(ForceVector)+((max(ForceVector)-min(ForceVector))/100*50);% value
+        
+        % extract the number of grips surpassing theshold
+        BEHAVIOR.gripFreq = countgrips(threshold,a,ntrials,mobilized_effort);
+        BEHAVIOR.gripFreq_calib = countgrips(threshold_calib,a,ntrials,mobilized_effort);
+        
+        % extract the number of peaks
+        
+        %sort by time
+        [TimeSort, idxSort] = sort(TimeVector);
+        ForceSort(idxSort) = ForceVector;
+        idxForce = 1:length(ForceVector);
+        
+        %plot
+        plot(TimeSort, ForceSort)
+        yline(threshold_calib,'--','threshold calibra','LineWidth',3);
+        yline(threshold,'--','threshold analytical','LineWidth',2);
+        
+        %Donato normalized before[pks50Normalized,locs50Normalized] = findpeaks(trialNORMALIZED, 'MinPeakDistance',5,'MinPeakHeight',threshold,'MinPeakProminence', (data.maximalforce-data.minimalforce)/4);
+        [pks50,locs50] = findpeaks(ForceSort, 'MinPeakDistance',5,'MinPeakHeight',threshold,'MinPeakProminence', (data.maximalforce-data.minimalforce)/4);
+        [pks_calib,locs_calib] = findpeaks(ForceSort, 'MinPeakDistance',5,'MinPeakHeight',threshold_calib,'MinPeakProminence', (data.maximalforce-data.minimalforce)/4);
+        
+        peak_idx(1:length(ForceVector)) = ismember(1:length(ForceSort),locs50);
+        peak_idx_calib(1:length(ForceVector)) = ismember(1:length(ForceSort),locs_calib);
+       
+        %unsort & reshape into trials
+        peak_idx = peak_idx(idxForce);
+        peak_idx = reshape(peak_idx,a,ntrials);        
+        
+        BEHAVIOR.peak = sum(peak_idx);
+        
+        peak_idx_calib = peak_idx_calib(idxForce);
+        peak_idx_calib = reshape(peak_idx_calib,a,ntrials);        
+        
+        BEHAVIOR.peak_calib = sum(peak_idx_calib);
+        
+        % extract the area under the curve
+        BEHAVIOR.AUC_thr = trapz(mobilized_effort>threshold);
+        BEHAVIOR.AUC_calib = trapz(mobilized_effort>threshold_calib);
 
         % extract the onset of each grip
-        ONSETS.grips = gripsOnsets (treshold,nlines,ncolons,mobilized_effort,ONSETS.trial);
-
+        ONSETS.grips = gripsOnsets(threshold,a,ntrials,mobilized_effort,ONSETS.trial);
+        ONSETS.peaks = peaksOnsets(a,ntrials,peak_idx,ONSETS.trial);
+        ONSETS.peaks_calib = peaksOnsets(a,ntrials,peak_idx_calib,ONSETS.trial);
+   
         % item by condition
         itemxc          = nan  (length(ntrials/3),1);
         count_CSp       = 0;
@@ -196,9 +237,6 @@ for j = 1:length(session)
         
         end
 
-
-
-
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% save mat file
         func_dir = fullfile (homedir, 'DERIVATIVES', 'PREPROC', ['sub-' num2str(subjX)], ['ses-' sessionX], 'func');
@@ -211,10 +249,7 @@ for j = 1:length(session)
         cd (func_dir)
         matfile_name = ['sub-' num2str(subjX) '_ses-' sessionX  '_task-' task '_events.mat'];
 
-
         save(matfile_name, 'ONSETS', 'DURATIONS',  'BEHAVIOR', 'CONDITIONS') %, 'REWARD', 'TRIAL', 'RIM', 'PE', 'PIT')
-
-
 
 
         %dir_dir = fullfile (homedir, ['sub-' num2str(subjX)], 'ses-second', 'func');
@@ -231,7 +266,8 @@ for j = 1:length(session)
         events.durations    = zeros(nevents,1);
         events.phase        = cell (nevents,1);
         events.CSname       = cell (nevents,1);
-        events.grips        = nan (nevents,1);
+        events.peaks        = nan (nevents,1);
+        %events.grips        = nan (nevents,1); need to choose between both
 
         cmpt = 0;
         for ii = 1:ntrials
@@ -245,7 +281,7 @@ for j = 1:length(session)
                 events.durations(cmpt)  = DURATIONS.(phaseX) (ii);
                 events.phase(cmpt)      = phase (iii);
                 events.CSname(cmpt)     = CONDITIONS.CS(ii);
-                events.grips(cmpt)      = BEHAVIOR.gripFreq(ii);
+                events.peaks(cmpt)      = BEHAVIOR.gripFreq(ii);
 
             end
 
@@ -253,10 +289,10 @@ for j = 1:length(session)
 
         events.onsets       = num2cell(events.onsets);
         events.durations    = num2cell(events.durations);
-        events.grips        = num2cell(events.grips);
+        events.peaks        = num2cell(events.peaks);
 
          eventfile = [events.onsets, events.durations,events.phase,...
-            events.CSname, events.grips];
+            events.CSname, events.peaks];
         
         cd (bids_dir)
         % open data base
@@ -266,7 +302,7 @@ for j = 1:length(session)
         % print heater
         fprintf (fid, '%s   %s   %s   %s   %s\n',...
             'onset', 'duration', 'trialPhase',...
-            'CSname','grips');
+            'CSname','grips'); %i still call them grips but i know its from peaks
     
         % print data
         formatSpec = '%d   %d   %s   %s  %d \n';
@@ -289,6 +325,11 @@ for j = 1:length(session)
         db.condition(:,k) = CONDITIONS.CS;
         db.itemxc(:,k)    = itemxc;
         db.gripFreq (:,k) = BEHAVIOR.gripFreq;
+        db.peak (:,k)     = BEHAVIOR.peak;
+        db.AUC (:,k)      = BEHAVIOR.AUC;
+        db.gripFreq_calib (:,k) = BEHAVIOR.gripFreq_calib;
+        db.peak_calib (:,k)     = BEHAVIOR.peak_calib;
+        db.AUC_calib (:,k)      = BEHAVIOR.AUC_calib;
 
     end
 end
@@ -310,8 +351,12 @@ R.itemxc     = num2cell(db.itemxc(:));
 
 % dependent variable
 R.gripFreq  = num2cell(db.gripFreq(:));
+R.peak  = num2cell(db.peak(:));
+R.AUC  = num2cell(db.AUC(:));
 
-
+R.gripFreq_calib  = num2cell(db.gripFreq_calib(:));
+R.peak_calib  = num2cell(db.peak_calib(:));
+R.AUC_calib  = num2cell(db.AUC_calib(:));
 
 
 %% print the database
@@ -319,19 +364,19 @@ if save_Rdatabase
     cd (R_dir)
 
     % concatenate
-    Rdatabase = [R.task, R.id, R.group, R.session, R.trial,R.condition, R.itemxc, R.gripFreq];
+    Rdatabase = [R.task, R.id, R.group, R.session, R.trial,R.condition, R.itemxc, R.gripFreq, R.peak, R.AUC, R.gripFreq_calib, R.peak_calib, R.AUC_calib];
 
     % open database
     fid = fopen([analysis_name '.txt'], 'wt');
 
     % print heater
-    fprintf(fid,'%s   %s   %s   %s   %s   %s   %s   %s\n',...
+    fprintf(fid,'%s   %s   %s   %s   %s   %s   %s   %s   %s   %s   %s   %s   %s\n',...
         'task','id', 'group', ...
         'session','trial', 'condition',...
-        'trialxcondition','gripFreq');
+        'trialxcondition','gripFreq', 'peak', 'AUC','gripFreq_calib', 'peak_calib', 'AUC_calib');
 
     % print data
-    formatSpec ='%s   %s   %s   %s   %d    %s   %d   %d\n';
+    formatSpec ='%s   %s   %s   %s   %d    %s   %d   %d   %d   %d   %d   %d   %d\n';
     [nrows,~] = size(Rdatabase);
     for row = 1:nrows
         fprintf(fid,formatSpec,Rdatabase{row,:});

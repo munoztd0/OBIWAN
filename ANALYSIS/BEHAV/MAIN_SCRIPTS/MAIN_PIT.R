@@ -6,7 +6,7 @@ if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, ggplot2, sjPlot, influence.ME, emmeans)
+pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, ggplot2, sjPlot, emmeans)
 
 # SETUP ------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ PIT  <- subset(PIT_full, group == 'obese')
 PIT = merge(PIT, info, by = "id")
 
 #take out incomplete data ##218 only have the third ? influence -> 238 & 234 & 232 & 254
-PIT <-  PIT[which(PIT$id != c(242, 256)),] #, "218"
+PIT <-  PIT[which(PIT$id != c(242, 256, 106)),] #, "218"
 
 # define as.factors
 fac <- c("id", "trial", "condition", "session", "trialxcondition", "gender", "intervention")
@@ -38,7 +38,7 @@ PIT[fac] <- lapply(PIT[fac], factor)
 
 #check demo
 n_tot = length(unique(PIT$id))
-bs = ddply(PIT, .(id, session), summarise, gripFreq = mean(gripFreq, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
+bs = ddply(PIT, .(id, session), summarise, gripFreq = mean(gripFreq, na.rm = TRUE), peak = mean(peak, na.rm = TRUE), AUC = mean(AUC, na.rm = TRUE)) 
 
 n_pre = length(which(bs$session == "second"))
 n_post = length(which(bs$session == "third"))
@@ -53,7 +53,7 @@ GENDER = ddply(PIT, .(id, session), summarise, gender=mean(as.numeric(gender))) 
 PIT = subset(PIT, condition != 'BL')
 
 #scale everything
-PIT$gripZ = scale(PIT$gripFreq)
+#PIT$gripZ = scale(PIT$gripFreq)
 
 #agragate by subj and then scale 
 PIT <- PIT %>% 
@@ -66,8 +66,7 @@ PIT <- PIT %>%
   mutate(diff_bmiZ = scale(BMI_t1 - BMI_t2))
 
 #change value of sessions
-PIT$time = revalue(PIT$session, c(second="0", third="1"))
-
+PIT$time = as.factor(revalue(PIT$session, c(second="0", third="1")))
 
 # STATS # LINEAR MIXED EFFECTS : REML = FALSE -------------------------------------------------------------------
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful functions from Ben Meulman
@@ -85,43 +84,28 @@ save.image(file = "PIT.RData", version = NULL, ascii = FALSE,
 # PB calculates Nsim samples of the likelihood ratio test statistic (LRT) 
 
 #takes ages even on the cluster!
-#model = mixed(likZ ~ condition*time*intervention + gender + ageZ +  diff_bmiZ + famZ * intZ +(time*condition +famZ*intZ|id) + (1|trialxcondition) , 
-#data = PIT, method = "PB", control = control, REML = FALSE, args_test = list(nsim = 10))
+# method = "PB", control = control, REML = FALSE, args_test = list(nsim = 10))
 
-model = mixed(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ * intZ +(time*condition +famZ*intZ|id) + (1|trialxcondition) , 
+PIT$gripZ = scale(PIT$gripFreq)
+
+mdl.aov = aov_4(gripZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + (time*condition|id) , 
+                data = PIT, observed = c("gender", "ageZ", "diff_bmiZ"), factorize = FALSE, fun_aggregate = mean)
+
+summary(mdl.aov)
+
+model = mixed(gripZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + (time*condition|id) + (1|trialxcondition), 
               data = PIT, method = "LRT", control = control, REML = FALSE)
 
 summary(model) #The ‘intercept’ of the lmer model is the mean liking rate in Empty coniditon for an average subject. 
 
 # Mixed Model Anova Table (Type 3 tests, LRT-method)
-# 
-# Model: likZ ~ condition * time * intervention + gender + ageZ + diff_bmiZ + 
-#   Model:     famZ * intZ + (time * condition + famZ * intZ | id) + (1 | 
-#                                                                       Model:     trialxcondition)
-# Data: PIT
-# Df full model: 44
-# Effect df     Chisq p.value
-# 1                    condition  1 22.61 ***   <.001
-# 2                         time  1    4.05 *    .044
-# 3                 intervention  1      0.32    .570
-# 4                       gender  1      1.01    .315
-# 5                         ageZ  1      0.37    .541
-# 6                    diff_bmiZ  1      0.01    .906
-# 7                         famZ  1 30.71 ***   <.001
-# 8                         intZ  1      0.05    .820
-# 9               condition:time  1    4.96 *    .026
-# 10      condition:intervention  1      0.29    .590
-# 11           time:intervention  1      1.59    .208
-# 12                   famZ:intZ  1      1.85    .173
-# 13 condition:time:intervention  1      0.40    .529
-
 
 # COMPUTE EFFECT SIZES (COMPUTE R Squared For Mixed Models VIA NAKAGAWA ESTIMATE)
-mod <- lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ * intZ +(time*condition +famZ*intZ|id) + (1|trialxcondition) , 
+mod <- lmer(gripZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ  +(time*condition |id) + (1|trialxcondition) , 
             data = PIT, control = control) #need to be fitted using ML so here I just use lmer function so its faster
 
 R2 = r2beta(mod,method="nsj") #R(m)2, the proportion of variance explained by the fixed predictors 
-
+R2
 
 # PLOT --------------------------------------------------------------------
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R') #helpful plot functions
@@ -174,14 +158,14 @@ plt3 = plt +  #details to make it look good
         axis.ticks.x = element_blank(), 
         axis.line.x = element_blank(),
         strip.background = element_rect(fill="white"))+ 
-  labs( y = "Plesantness Ratings (z)",
-        caption = "\n \n \n \n \nThree-way interaction, p = 0.73, \u0394 AIC = -1.88\n
-        Post-hoc test -> No differences found\n
-        Main effect of condition, p < 0.0001, \u0394 AIC = 23.02, R\u00B2 = 0.030\n
-        Error bars represent 95% CI for the estimated marginal means\n
-        Placebo (N = 29), Liraglutide (N = 32)\n
-        LMM : Pleasantness ~ Condition*Time*Treatment + (Time*Condition|Id) + (1|Trial)\n
-        Controling for Intensity, Familiarity, Age, Gender & Weight Loss (BMI pre - BMI post)")
+  labs( y = "Mobilized Effort (z)") #,
+        #caption = "\n \n \n \n \nThree-way interaction, p = 0.73, \u0394 AIC = -1.88\n
+        #Post-hoc test -> No differences found\n
+        #Main effect of condition, p < 0.0001, \u0394 AIC = 23.02, R\u00B2 = 0.030\n
+        #Error bars represent 95% CI for the estimated marginal means\n
+        #Placebo (N = 29), Liraglutide (N = 32)\n
+        #LMM : Pleasantness ~ Condition*Time*Treatment + (Time*Condition|Id) + (1|Trial)\n
+        #Controling for Intensity, Familiarity, Age, Gender & Weight Loss (BMI pre - BMI post)")
 
 plot(plt3)
 
