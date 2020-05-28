@@ -8,9 +8,9 @@ data_out = var.odorTrigger; % trigger signaling when the odor is relased
 
 if var.experimentalSetup % variable define in the main function
     
-    outp(57392, data_out);
+    outp(53240, data_out);
     oCommit(); % release odor
-    outp(57392, 0);
+    outp(53240, 0);
     
 end
 

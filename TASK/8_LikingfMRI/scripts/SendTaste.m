@@ -6,7 +6,7 @@ tPumpStart = GetSecs - var.time_MRI; % time_MRI is define in the main function
 % Send taste and trigger
 data_out = trigger; % trigger signaling when the odor is relased
 if var.experimentalSetup
-    outp(57392, data_out);
+    outp(53240, data_out);
 end
 send(pumps,cfg,pumpNum,quantity);
 

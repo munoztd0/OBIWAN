@@ -6,7 +6,7 @@ tValveClose = GetSecs - var.time_MRI; % time_MRI is define in the main function
 % Stop taste
 data_out = 0; % trigger signaling when the odor is relased
 if var.experimentalSetup
-    outp(57392, data_out);
+    outp(53240, data_out);
 end
 pumps(pumpNum).stop;
 

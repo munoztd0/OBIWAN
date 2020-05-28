@@ -1,4 +1,4 @@
-3  function InternalState() %Modifica 17/01/2018 DOCE
+function InternalState() %Modifica 17/01/2018 DOCE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Preliminary stuff %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 PsychDefaultSetup(1);
 AssertOpenGL;
@@ -8,11 +8,11 @@ WaitSecs(0.1);
 GetSecs;
 rng('shuffle');
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% prepare experiment structure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%% prepare experiment structure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 var.filepath = MakePathStruct();
 cd(var.filepath.scripts);
 var.instruction = 1;
- 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Collect Participant and Day %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 data.SubDate= datestr(now, 24);
 data.SubHour= datestr(now, 13);
@@ -28,7 +28,7 @@ save(var.resultFile,'data');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Instructions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if var.instruction == 1
     instruction1 = 'Nous vous proposons maintenant de répondre à quelques questions\n\n\n\n\n\n\n\n Appuyez sur un bouton pour continuer';
-    wait = 'L''étude va commencer...';
+    wait = 'Voici les questions...';
     asterix = '*';
     cross = '+';
     one = '1';
@@ -37,14 +37,14 @@ if var.instruction == 1
     End = 'Cette partie de l''étude est terminée, merci !';
     attention = 'Attention !';
     var.howHungry = 'A quel point avez-vous faim?';
-    var.anchorMinHungry = 'pas faim\ndu tout';
-    var.anchorMaxHungry = 'très faim';
+    var.anchorMinHungry = 'Pas faim\ndu tout';
+    var.anchorMaxHungry = 'Très faim';
     var.howThirsty = 'A quel point avez-vous soif?';
-    var.anchorMinThirsty = 'pas soif\ndu tout';
-    var.anchorMaxThirsty = 'très soif';
+    var.anchorMinThirsty = 'Pas soif\ndu tout';
+    var.anchorMaxThirsty = 'Très soif';
     var.howPiss = 'A quel point avez-vous envie d''uriner?';
-    var.anchorMinPiss = 'pas du tout';
-    var.anchorMaxPiss = ' très forte\nenvie';
+    var.anchorMinPiss = 'Pas du tout';
+    var.anchorMaxPiss = 'Très forte\nenvie';
     var.pressToContinue = 'Bouton du milieu pour continuer';
     var.tooLong = 'Réponse trop lente';
 elseif var.instruction == 2

@@ -17,7 +17,7 @@ var.instruction = 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Set the comunication with physiological se4 up %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if var.experimentalSetup
     config_io;
-    outp(57392, 0);
+    outp(53240, 0);
     openDevice(); %Open device for handgrip     5
     configureAD(0,1); % configure devie for hand grip
     % Are we in simulation mode ?
@@ -135,7 +135,7 @@ var.Rinse = Water;
 %                               OPEN PST
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 HideCursor;
-PsychDefaultSetup(1);
+PsychDefaultSetup(0);   %1
 screenNumber = max(Screen('Screens'));
 %[wPtr,rect]=Screen('OpenWindow',screenNumber, [200 200 200], [20 20 800 800]);
 [wPtr,rect]=Screen('OpenWindow',screenNumber, [200 200 200]);
@@ -153,7 +153,7 @@ var.fl = width/18.5;
 ft = var.hight/3.02;
 var.tr = width/12.5;
 var.tb = var.hight/1.1477;
-var.Twidth = width/7.5;
+var.Twidth = width/7.5; % 15 with old PC Windows7
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% Task Instruction %%%%%%%%%%%%%%%%%%%%%%%%%%
 showInstructionSimple(wPtr, var.instruction1);
