@@ -26,7 +26,7 @@ n = 24
 
 # open dataset 
 OBIWAN_HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
-OBIWAN_PIT_full <- read.delim(file.path(analysis_path,'OBIWAN_PIT.txt'), header = T, sep ='') # read in dataset
+OBIWAN_INST_full <- read.delim(file.path(analysis_path,'OBIWAN_PIT.txt'), header = T, sep ='') # read in dataset
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
 
 OBIWAN_HED  <- subset(OBIWAN_HED_full, intervention == '0' & group == 'obese' & session == 'second') #only group obese 

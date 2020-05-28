@@ -1,4 +1,87 @@
-atte
+## R code for FOR HEDONIC OBIWAN
+# last modified on April 2020 by David MUNOZ TORD
+
+# PRELIMINARY STUFF ----------------------------------------
+if(!require(pacman)) {
+  install.packages("pacman")
+  library(pacman)
+}
+pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, ggplot2, sjPlot, emmeans)
+
+# SETUP ------------------------------------------------------------------
+
+task = 'HED'
+
+# Set working directory
+setwd(analysis_path)
+analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV') 
+figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV') 
+
+load('HED.RData')
+
+
+# open dataset
+HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
+info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
+
+#subset #only group obese 
+HED  <- subset(HED_full, group == 'obese') 
+
+#merge with info
+HED = merge(HED, info, by = "id")
+
+#take out incomplete data #234 only have third session?
+HED <-  HED[which(HED$id != c(242, 256)),] #, "234"
+
+# define as.factors
+fac <- c("id", "trial", "condition", "session", "trialxcondition", "gender", "intervention")
+HED[fac] <- lapply(HED[fac], factor)
+
+
+#check demo
+n_tot = length(unique(HED$id))
+bs = ddply(HED, .(id, session), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
+
+n_pre = length(which(bs$session == "second"))
+n_post = length(which(bs$session == "third"))
+
+AGE = ddply(HED,~session,summarise,mean=mean(age),sd=sd(age), min = min(age), max = max(age))
+BMI = ddply(HED,~session,summarise,mean=mean(BMI_t1),sd=sd(BMI_t1), min = min(BMI_t1), max = max(BMI_t1))
+GENDER = ddply(HED, .(id, session), summarise, gender=mean(as.numeric(gender)))  %>%
+  group_by(gender, session) %>%
+  tally() #2 = female
+
+
+#scale everything
+HED$likZ = scale(HED$perceived_liking)
+HED$famZ = scale(HED$perceived_familiarity)
+HED$intZ = scale(HED$perceived_intensity)
+
+#agragate by subj and then scale 
+HED <- HED %>% 
+  group_by(id) %>% 
+  mutate(ageZ = scale(HED$age))
+
+#create BMI diff (I have still NAN because missing data)
+HED <- HED %>% 
+  group_by(id) %>% 
+  mutate(diff_bmiZ = scale(HED$BMI_t1 - HED$BMI_t2))
+
+#change value of sessions
+HED$time = revalue(HED$session, c(second="0", third="1"))
+
+
+# STATS # LINEAR MIXED EFFECTS : REML = FALSE -------------------------------------------------------------------
+source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful functions from Ben Meulman
+
+#FOR MODEL SELECTION we followed Barr et al. (2013) approach SEE --> CODE/ANALYSIS/BEHAV/MODEL_SELECTION/MS_HED.R
+
+#set "better" lmer optimizer #nolimit # yoloptimizer
+control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
+
+#save RData for cluster computing
+save.image(file = "HED.RData", version = NULL, ascii = FALSE,
+           compress = FALSE, safe = TRUE)
 #Calculates p-values using parametric bootstrap takes forever #set to method LRT to quick check
 # PB calculates Nsim samples of the likelihood ratio test statistic (LRT) 
 

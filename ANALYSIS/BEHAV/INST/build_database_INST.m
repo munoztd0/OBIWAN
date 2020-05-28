@@ -133,9 +133,10 @@ for j = 1:length(session)
         %%% get the mobilized effort
         % concatenate the mobilized effort
         mobilized_effort = reshape(data.mobilizedforce,A,ntrials);
-        maxForce = PIT.data.maximalforce;
         force = data.mobilizedforce;
-        threshold = maxForce/100*50;% value
+        threshold = PIT.data.minimalforce+((PIT.data.maximalforce-PIT.data.minimalforce)/100*50);% value
+        
+        %threshold = maxForce/100*50;% value
         [nlines ncolons] = size(force);
         gripsFrequence (1,:) = countgrips(threshold,nlines,ncolons,force);
         REWARD = data.RewardedResponses;

@@ -2,7 +2,9 @@
 #2: Missing values for following ID(s):
 #c(201, 208, 210, 214, 216, 219, 222, 223, 233, 240, 245, 247, 249, 258, 263, 267)
 HED_test <-  HED[!HED$id %in% c("201", "208", "210", "214", "216", "219", "222", "223", "233", "240", "245", "247", "249", "258", "263", "267"), ] #, 208, "210", "214", "216", "219", "222", "223", "233", "240", "245", "247", "249", "258", "263", "267")) #all  that didnt have Post test
-
+mdl.aov = aov_4(likZ ~ condition*time*intervention + gender + ageZ + bmi_T0 + (time*condition|id) , 
+                data = HED_test, observed = c("gender", "ageZ", "bmi_T0"), factorize = FALSE, fun_aggregate = mean)
+summary(mdl.aov)               
 HED_test$perceived_familiarity = ddply(HED, .(id, con), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
 
 #scale everything
