@@ -8,7 +8,7 @@ echo "Preparing subject ${subjectID}, ${sessionID} session, ${taskID} task"
 
 # directory containing scripts and templates
 codeDir=/home/OBIWAN/ANALYSIS/fsl_scripts/preproc/fsl_ANTS/02-MELODIC_ICA/
-# directory containing prepped nifti data (bet already done on functionals)
+# directory containing prepped nifti data
 dataDir=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${subjectID}/ses-${sessionID}/func/
 # output directory for preprocessed files
 outDir=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${subjectID}/ses-${sessionID}/func/

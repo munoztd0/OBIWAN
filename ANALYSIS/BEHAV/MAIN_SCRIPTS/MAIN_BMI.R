@@ -75,10 +75,14 @@ PES = pes_ci(diffZ ~ intervention + gender + ageZ + intervention:gender + interv
                     conf.level = .90, anova.type = 2, observed = c("gender", "ageZ", "bmi_T0"), factorize = FALSE) #type 2 because inter no sign
 
 #drop inter so the bootstrpping is faster but doesnt change CI
+mdl.weight = aov_4(bmi_diff ~ intervention + gender + ageZ + intervention:gender + intervention:ageZ + bmi_pre + (1|id), 
+                   data = info, observed = c("gender", "ageZ", "bmi_pre"), factorize = FALSE, afex_options(type = 2)) # bc interaction are not sign
+
+
 model = mdl.weight
 
 #get observed by ID and call it $fit so its easier to plot
-df.observed = ddply(info, .(id, intervention), summarise, fit = mean(diffZ, na.rm = TRUE)) 
+df.observed = ddply(info, .(id, intervention), summarise, fit = mean(bmi_diff, na.rm = TRUE)) 
 
 emm_options(pbkrtest.limit = 5000) #set options 
 
@@ -98,6 +102,7 @@ df_obs_LI  <- subset(df.observed, intervention == '1')
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R') #helpful [plotting functions
 
 plt <-  ggplot(df.predicted, aes(x = intervention, y = fit, color = intervention, fill = intervention)) +
+  geom_hline(yintercept=0, linetype="dashed", size=0.4, alpha=0.7) + 
   #left = PL
   geom_left_violin(data = df_obs_PL, alpha = .4, adjust = 1.5, trim = F, color = NA) + 
   geom_errorbar(data= df_pred_PL, aes(x = as.numeric(intervention)+0.1, ymax = lowCI, ymin = uppCI), width=0.1,  alpha=1, size=0.4)+
@@ -112,12 +117,13 @@ plt <-  ggplot(df.predicted, aes(x = intervention, y = fit, color = intervention
 
 
 plt1 =  plt +   #details to make it look good
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-2,3, by = 1)), limits = c(-2,3)) +
-  scale_fill_discrete(name = "intervention", labels = c("Placebo", "Liraglutide (3.0 mg) ")) +
-  scale_color_discrete(name = "intervention", labels = c("Placebo", "Liraglutide (3.0 mg) ")) + 
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-2.5,7.5, by = 2.5)), limits = c(-2.5,7.5)) +
+  scale_fill_manual(name = "intervention", labels = c("Placebo", "Liraglutide (3.0 mg) "), values=c("seagreen1", "royalblue")) +
+  scale_color_manual(name = "intervention", labels = c("Placebo", "Liraglutide (3.0 mg) "), values=c("seagreen1", "royalblue")) +
   guides(fill = guide_legend(override.aes = list(alpha = 0))) +
   theme_classic() +
   theme(plot.margin = unit(c(1, 1, 1.2, 1), units = "cm"),
+        plot.title = element_text(hjust = 0.5),
         panel.grid.major.x = element_blank() ,
         panel.grid.major.y = element_line( size=.2, color="lightgrey") ,
         axis.text.x = element_blank(),
@@ -131,12 +137,14 @@ plt1 =  plt +   #details to make it look good
         legend.spacing.x = unit(0.7, 'cm'),
         axis.ticks.x = element_blank(), 
         axis.line.x = element_blank()) + 
-  labs(  y = "\u0394 BMI (z)",
-         caption = "\n \n \n \nMain effect of Treatment, p < 0.0001\n
-         Effect size, \u03B7p\u00B2 = 0.51, 90%CI [0.33,0.62]\n
-         Error bars represent 95% CI for the estimated marginal means\n
-         Placebo (N = 31), Liraglutide (N = 25)\n
-         Controling for Age, Gender & Baseline BMI")
+  labs(  title = "Effect of Treatment on Weight Loss", 
+         y = "Reduction from Baseline BMI",
+         caption = "\n \n \n \n \np < 0.0001, \u03B7p\u00B2 = 0.51") #,
+         #caption = "\n \n \n \nMain effect of Treatment, p < 0.0001\n
+         #Effect size, \u03B7p\u00B2 = 0.51, 90%CI [0.33,0.62]\n
+         #Error bars represent 95% CI for the estimated marginal means\n
+         #Placebo (N = 31), Liraglutide (N = 25)\n
+         #Controling for Age, Gender & Baseline BMI")
 
 
 plot(plt1)
@@ -149,8 +157,34 @@ cairo_pdf(file.path(figures_path,'WeightXTreat.pdf'),
 plot(plt1)
 dev.off()
 
-# pla  <- subset(info, intervention == '0')
-# length(unique(pla$id))
-# lir  <- subset(info, intervention == '1')
-# length(unique(lir$id))
 
+
+info$group1 = c(1:length(info$gender))
+info$group1[info$BMI_t1 < 30 ] <- 0 # control BMI = 22.25636 -> 1.03
+info$group1[info$BMI_t1 >= 30 & info$BMI_t1 < 35] <- 1 # Class I obesity: BMI = 30 to 35. -> - 0.22
+info$group1[info$BMI_t1 >= 35 & info$BMI_t1 < 40] <- 2 # Class II obesity: BMI = 35 to 40. -> 0.89
+info$group1[info$BMI_t1 > 40] <- 3 # Class III obesity: BMI 40 or higher -> 1.89
+
+T1 = ddply(info, .(id, group1), summarise, group=mean(as.numeric(group1)))
+N_group1 = ddply(info, .(id, group1), summarise, group=mean(as.numeric(group1)))  %>%
+  group_by(group) %>% tally()
+
+info$group2 = c(1:length(info$gender))
+info$group2[info$BMI_t2 < 30 ] <- 0 # control BMI = 22.25636 -> 1.03
+info$group2[info$BMI_t2 >= 30 & info$BMI_t2 < 35] <- 1 # Class I obesity: BMI = 30 to 35. -> - 0.22
+info$group2[info$BMI_t2 >= 35 & info$BMI_t2 < 40] <- 2 # Class II obesity: BMI = 35 to 40. -> 0.89
+info$group2[info$BMI_t2 > 40] <- 3 # Class III obesity: BMI 40 or higher -> 1.89
+
+T2 = ddply(info, .(id, group2), summarise, group=mean(as.numeric(group2)))
+N_group2 = ddply(info, .(id, group2), summarise, group=mean(as.numeric(group2)))  %>%
+  group_by(group) %>% tally()
+
+inter = ddply(info, .(id, intervention), summarise, group=mean(as.numeric(intervention)))
+T2$inter = inter$intervention
+T2$group = T1$group1
+T2$diff = T2$group - T2$group2
+
+N_diff = ddply(T2, .(inter, diff), summarise, group=sum(as.numeric(diff))) 
+
+N_int = ddply(info, .(id, intervention), summarise, group=mean(as.numeric(intervention)))  %>%
+  group_by(group) %>% tally()

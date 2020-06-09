@@ -1,6 +1,6 @@
 function GLM_01_stLevel(subID)
 
-% intended for OBIWAN PITtask
+% intended for OBIWAN PIT task
 
 % get onsets for first control model (CSp vs CSm)
 % Stick functions
@@ -403,6 +403,19 @@ end
         Ctnames{5} = 'grips';
         weightPos  = ismember(conditionName, {'task1.grips'}) * 1;
         Ct(5,:)    = weightPos;
+        
+        
+        % con6
+        Ctnames{6} = 'CSp_Baseline';
+        weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
+        weightNeg  = ismember(conditionName, {'task1.CS.Baseline'})* -1;
+        Ct(6,:)    = weightPos+weightNeg;
+        
+        % con7
+        Ctnames{7} = 'CSm_Baseline';
+        weightPos  = ismember(conditionName, {'task1.CS.CSm'}) * 1;
+        weightNeg  = ismember(conditionName, {'task1.CS.Baseline'})* -1;
+        Ct(7,:)    = weightPos+weightNeg;
         
         % define F constrasts
         %------------------------------------------------------------------

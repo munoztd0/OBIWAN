@@ -1,0 +1,139 @@
+
+# set this to the directory containing antsRegistration
+ANTSPATH=/usr/local/ANTs/build/bin/
+
+# ITK thread count
+ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
+export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS
+
+# Check args
+sbj=01
+ses=03
+
+echo Sbject: $sbj
+echo Session: $ses
+
+
+# path to afine transform tool
+c3d_affine_tool=/usr/local/c3d/c3d-1.0.0-Linux-x86_64/bin/c3d_affine_tool
+# path to the warp tool
+warpTool=/usr/local/ANTs/build/bin/WarpImageMultiTransform
+# path to the subject's anatomicals
+subAnatDir=/home/evapool/PAVMOD/DATA/brain/ICA_ANTS/${sbj}/
+# Directory with run-specific files
+runDir=/home/evapool/PAVMOD/DATA/brain/ICA_ANTS/${sbj}/RUN_${ses}/
+# directory with ICA cleaned data
+icaDir=/home/evapool/PAVMOD/DATA/brain/ICA_ANTS/${sbj}/RUN_${ses}.ica/
+# path to standard space images
+standardAnatDir=/home/evapool/PAVMOD/DATA/brain/ICA_ANTS/
+
+
+#############
+# Define target space (fixed) T1/T2 & masks file names
+fixed_T1=${standardAnatDir}CIT168_T1w_MNI.nii.gz
+fixed_T2=${standardAnatDir}CIT168_T2w_MNI
+fixed_T2lowres=${standardAnatDir}CIT168_T2w_MNI_lowres
+fixed_mask=${standardAnatDir}`basename ${fixed_T1} .nii.gz`_mask.nii.gz
+# Define subject images (moving) T1/T2 & masks file names 
+moving_T1=${subAnatDir}T1_reoriented_brain
+moving_T2=${subAnatDir}T2_reoriented_brain_aligned_T1
+# moving_mask=${subAnatDir}`basename ${moving_T1} .nii.gz`_mask.nii.gz
+# Prefix for output transform files
+# outPrefix=${moving_T1%%.nii.gz}
+outPrefix=${moving_T1}
+
+echo "out prefix: ${outPrefix}"
+
+
+###############
+# first co-register the reference scan for QA
+refImage=${runDir}RUN_SB_${ses}_reoriented_brain_restore
+refImageUnwarp=${runDir}RUN_SB_${ses}_reoriented_brain_restore_unwarped
+
+# get the reference into alignment with the T2 (which has already been aligned to the T1)
+echo "Running reference alignment for Subject ${sbj} Run ${ses} $(date +"%T")"
+
+flirt -in ${refImageUnwarp} -ref ${moving_T2} -out ${refImageUnwarp}_alignT2 -omat ${runDir}tmp_Ref_To_T2.mat
+
+$c3d_affine_tool -src ${refImageUnwarp} -ref ${moving_T2} ${runDir}tmp_Ref_To_T2.mat -fsl2ras -oitk ${runDir}itk_transform_Ref_To_T2.txt
+
+echo "Done reference alignment for Subject ${sbj} Run ${ses} $(date +"%T")"
+
+# apply warp to the reference scan
+echo "Applying warp to high-res reference scan"
+${warpTool} 3 ${refImageUnwarp}.nii.gz ${refImageUnwarp}_ANTsCoreg.nii.gz \
+	-R ${fixed_T2lowres}.nii.gz \
+	${outPrefix}_xfm1Warp.nii.gz ${outPrefix}_xfm0GenericAffine.mat \
+        ${runDir}itk_transform_Ref_To_T2.txt   
+  	
+# resample the original to allow comparison 
+flirt -in ${refImageUnwarp} -ref ${fixed_T2lowres}.nii.gz -dof 7 -out ${refImageUnwarp}_alignT2
+
+
+
+###############
+# co-register the functional scan for QA
+rawFuncImage=${icaDir}filtered_func_data_clean
+funcImage=${icaDir}filtered_func_data_clean_unwarped
+
+# extract a sample to speed up processing, and bias correct
+echo "Extracting single volume to speed processing at $(date +"%T")"
+fslroi ${funcImage} ${icaDir}func_sample 0 1
+/usr/local/ANTs/build/bin/N4BiasFieldCorrection -i ${icaDir}func_sample.nii.gz -o ${icaDir}func_sample_bias.nii.gz --convergence [50x50x30x20,0.0] -d 3
+
+# bring the functional into alignment with the reference, and convert to RAS
+echo "Running Flirt Sbj func to reference $(date +"%T")"
+flirt -in ${icaDir}func_sample_bias -ref ${refImageUnwarp} -out ${icaDir}tmp_Func_to_Ref -omat ${icaDir}tmp_Func_to_Ref.mat
+
+$c3d_affine_tool -src ${icaDir}func_sample_bias -ref ${refImageUnwarp} ${icaDir}tmp_Func_to_Ref.mat -fsl2ras -oitk ${icaDir}itk_transform_Func_To_Ref.txt
+
+# bring the functional into alignment with the T2, and convert to RAS
+echo "Running Flirt Sbj func to T2 $(date +"%T")"
+flirt -in ${icaDir}func_sample_bias -ref ${moving_T2} -out ${icaDir}tmp_Func_to_T2 -omat ${icaDir}tmp_Func_to_T2.mat
+
+$c3d_affine_tool -src ${icaDir}func_sample_bias -ref ${moving_T2} ${icaDir}tmp_Func_to_T2.mat -fsl2ras -oitk ${icaDir}itk_transform_Func_To_T2.txt
+
+# apply warp to the sample to check quality (wolfi said the -R arguments are inverted in this example)
+# echo "Applying warp to functional sample scan"
+# ${warpTool} 3 ${icaDir}func_sample.nii.gz ${icaDir}func_sample_ANTsFuncT2.nii.gz \
+#	-R ${fixed_T2lowres}.nii.gz \
+#	${icaDir}itk_transform_Func_To_T2.txt \
+#	${outPrefix}_xfm1Warp.nii.gz ${outPrefix}_xfm0GenericAffine.mat
+# echo "done sample ANTs at $(date +"%T")"
+
+
+# apply warp to the sample to check quality CORRECTION                                                             
+echo "Applying warp to functional sample scan"
+${warpTool} 3 ${icaDir}func_sample.nii.gz ${icaDir}func_sample_ANTsFuncT2.nii.gz \
+        -R ${fixed_T2lowres}.nii.gz \
+        ${outPrefix}_xfm1Warp.nii.gz ${outPrefix}_xfm0GenericAffine.mat \
+        ${icaDir}itk_transform_Func_To_T2.txt
+echo "done sample ANTs at $(date +"%T")"# apply warp to the sample to check quality                                                                          
+
+# for multi-volume transform
+
+# use this if you want to include the reference scan in the warp 
+# use this if you want to include go from functional ->  functional -> reference -> anatomical
+
+#echo "Apply series of transformations all the way from func to lowres atlas (in MNI space)"
+#/usr/local/ANTs/build/bin/WarpTimeSeriesImageMultiTransform 4 ${icaDir}filtered_func_data_clean_unwarped.nii.gz ${icaDir}filtered_func_data_clean_unwarped_Coreg.nii.gz \
+#	-R ${fixed_T2lowres}.nii.gz \
+#       ${outPrefix}_xfm1Warp.nii.gz ${outPrefix}_xfm0GenericAffine.mat \
+#	${runDir}itk_transform_Ref_To_T2.txt \
+#	${icaDir}itk_transform_Func_To_Ref.txt 
+#       
+#echo "done ants (in MNI space) at $(date +"%T")"
+
+# use this if you want to include go from functional -> anatomical as the warp
+# for multi-volume transform
+echo "Apply series of transformations all the way from func to lowres atlas (in MNI space: test with 10 images only)"
+fslroi ${icaDir}filtered_func_data_clean_unwarped.nii.gz ${icaDir}func_firstTenTest 0 10
+
+/usr/local/ANTs/build/bin/WarpTimeSeriesImageMultiTransform 4 ${icaDir}func_firstTenTest.nii.gz ${icaDir}filtered_func_data_clean_unwarped_Coreg.nii.gz \
+	-R ${fixed_T2lowres}.nii.gz \
+        ${outPrefix}_xfm1Warp.nii.gz ${outPrefix}_xfm0GenericAffine.mat \
+	${icaDir}itk_transform_Func_To_T2.txt 
+
+echo "done ants (in MNI space) at $(date +"%T")"
+# resample the original to allow comparison 
+flirt -in ${icaDir}func_sample_bias -ref ${fixed_T2lowres}.nii.gz -dof 7 -out ${icaDir}func_sample_bias_alignT2

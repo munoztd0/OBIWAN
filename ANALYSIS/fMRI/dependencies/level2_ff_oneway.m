@@ -1,8 +1,5 @@
 function matlabbatch = level2_ff_oneway(condirpat, factors, varargin)
 
-
-
-
 def =   { ...
     'covariates',   [],                     ...
     'conpat',       'con*nii',              ...
@@ -33,7 +30,7 @@ end
 
 
 % | GET CONS 
-conidx = sort(factors(1).idx2con(:));
+conidx = factors(1).idx2con;
 
 for i = 1:length(conidx)
     conImageX = conidx{i};

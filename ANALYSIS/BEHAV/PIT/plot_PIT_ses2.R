@@ -74,6 +74,7 @@ tot_obese_third = length(unique(OBIWAN_PIT_third$id))
 #********************************** PLOT 1 main effect by subject ########### rainplot _PITing
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R')
 
+bsCg= ddply(PIT, .(id, group, condition), summarise, gripFreq = mean(gripZ, na.rm = TRUE)  ) 
 
 #ratings
 
@@ -82,45 +83,35 @@ df_PIT <- summarySEwithin(bsCg,
                          withinvars = c("condition", "group"), 
                          idvar = "id")
 
-df_PIT_o  <- subset(df_PIT, group == 'obese')
-df_PIT_c  <- subset(df_PIT, group == 'control')
+df_PIT_o  <- subset(df_PIT, group == '1')
+df_PIT_c  <- subset(df_PIT, group == '0')
 
-df_PIT_C  <- subset(df_PIT, condition == 'BL')
-df_PIT_Co  <- subset(df_PIT_C, group == 'obese')
-df_PIT_Cc  <- subset(df_PIT_C, group == 'control')
+# df_PIT_C  <- subset(df_PIT, condition == 'BL')
+# df_PIT_Co  <- subset(df_PIT_C, group == 'obese')
+# df_PIT_Cc  <- subset(df_PIT_C, group == 'control')
 
-df_PIT_R  <- subset(df_PIT, condition == 'CSplus')
-df_PIT_Ro  <- subset(df_PIT_R, group == 'obese')
-df_PIT_Rc  <- subset(df_PIT_R, group == 'control')
+df_PIT_R  <- subset(df_PIT, condition == '1')
+df_PIT_Ro  <- subset(df_PIT_R, group == '1')
+df_PIT_Rc  <- subset(df_PIT_R, group == '0')
 
-df_PIT_M  <- subset(df_PIT, condition == 'CSminus')
-df_PIT_Mo  <- subset(df_PIT_M, group == 'obese')
-df_PIT_Mc  <- subset(df_PIT_M, group == 'control')
+df_PIT_M  <- subset(df_PIT, condition == '-1')
+df_PIT_Mo  <- subset(df_PIT_M, group == '1')
+df_PIT_Mc  <- subset(df_PIT_M, group == '0')
 
-bsC_C  <- subset(bsCg, condition == 'BL')
-bsC_Co  <- subset(bsC_C , group == 'obese')
-bsC_Cc  <- subset(bsC_C , group == 'control')
+# bsC_C  <- subset(bsCg, condition == 'BL')
+# bsC_Co  <- subset(bsC_C , group == 'obese')
+# bsC_Cc  <- subset(bsC_C , group == 'control')
 
-bsC_R  <- subset(bsCg, condition == 'CSplus')
-bsC_Ro  <- subset(bsC_R , group == 'obese')
-bsC_Rc  <- subset(bsC_R , group == 'control')
+bsC_R  <- subset(bsCg, condition == '1')
+bsC_Ro  <- subset(bsC_R , group == '1')
+bsC_Rc  <- subset(bsC_R , group == '0')
 
-bsC_M  <- subset(bsCg, condition == 'CSminus')
-bsC_Mo  <- subset(bsC_M , group == 'obese')
-bsC_Mc  <- subset(bsC_M , group == 'control')
+bsC_M  <- subset(bsCg, condition == '-1')
+bsC_Mo  <- subset(bsC_M , group == '1')
+bsC_Mc  <- subset(bsC_M , group == '0')
 
 
 plt1 <- ggplot(data = bsCg, aes(x = condition, y = gripFreq, color = group, fill = group)) +
-  #left BL ob
-  geom_left_violin(data = bsC_Co, alpha = .4, adjust = 1.5, trim = F, color = NA) + 
-  geom_point(data = df_PIT_Co, aes(x = as.numeric(condition)+0.2), shape = 18, color ="black") +
-  geom_errorbar(data=df_PIT_Co, aes(x = as.numeric(condition)+0.2, ymax = gripFreq + se, ymin = gripFreq - se), width=0.1,  alpha=1, size=0.4)+
-  
-  #left BL co
-  geom_left_violin(data = bsC_Cc, alpha = .4, adjust = 1.5, trim = F, color = NA) + 
-  geom_point(data = df_PIT_Cc,  aes(x = as.numeric(condition)+0.1), shape = 18, color ="black") +
-  geom_errorbar(data=df_PIT_Cc, aes(x = as.numeric(condition)+0.1, ymax = gripFreq + se, ymin = gripFreq - se), width=0.1,  alpha=1, size=0.4)+
-  
   
   #right CS+ ob
   geom_right_violin(data = bsC_Ro, alpha = .4, position = position_nudge(x = +0.3, y = 0), adjust = 1.5, trim = F, color = NA) + 
@@ -155,7 +146,7 @@ plt1 <- ggplot(data = bsCg, aes(x = condition, y = gripFreq, color = group, fill
   #details
   #scale_fill_manual(values = c("obese"="blue", "control"="black")) +
   #scale_color_manual(values = c("obese"="blue", "control"="black")) +
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,50, by = 10)), limits = c(0,50)) +
+  #scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,50, by = 10)), limits = c(0,50)) +
   guides(fill = guide_legend(override.aes = list(alpha = 0.3))) +
   theme_classic() +
   theme(plot.margin = unit(c(1, 1, 1, 1), units = "cm"),
@@ -167,8 +158,7 @@ plt1 <- ggplot(data = bsCg, aes(x = condition, y = gripFreq, color = group, fill
         legend.direction = "horizontal",
         axis.ticks.x = element_blank(), 
         axis.line.x = element_blank()) + 
-  labs( x = "Baseline                 CS-                CS+", 
-        y = "Number of Grips",
+  labs(   y = "Number of Grips",
         caption = "Second session: nControl = 30, nObese = 62 \n Error bars represent SEM for within-subject design using method from Morey (2008)")
 
 plot(plt1)

@@ -144,9 +144,9 @@ def make_vio_plot(data, IQM_to_plot, data_descriptors, label1, outliers=False):
                  'dvars_nstd': ('#D2691E'),
                  'fwhm_x': ('#DAA520'), 'fwhm_y': ('#DAA520'), 'fwhm_z': ('#DAA520'), 'fwhm_avg': ('#DAA520'), #spatial
                  'fber': ('#DAA520'), 'efc': ('#DAA520'),
-                 'cjv': ('#A52A2A'), 'cnr': ('#A52A2A'), 'qi_2': ('#A52A2A'), 'snr': ('#A52A2A'), # noise
-                 'snr_csf': ('#A52A2A'), 'snr_gm': ('#A52A2A'), 'snr_wm': ('#A52A2A'), 'snr_total': ('#A52A2A'),
-                 'snrd_csf': ('#A52A2A'), 'snrd_gm': ('#A52A2A'), 'snrd_wm': ('#A52A2A'),
+                 'cjv': ('#A52A2A'), 'cnr': ('#A52A2A'), 'qi_2': ('#A52A2A'), 'snr': ('#71EEB8'), # noise
+                 'snr_csf': ('#9fe2bf'), 'snr_gm': ('#A52A2A'), 'snr_wm': ('#A52A2A'), 'snr_total': ('#A52A2A'),
+                 'snrd_csf': ('#9fe2bf'), 'snrd_gm': ('#71EEB8'), 'snrd_wm': ('#A52A2A'),
                  'fd_mean': ('#66CDAA'), 'fd_num': ('#66CDAA'), 'fd_perc': ('#66CDAA'), # motion IQMs
                  'inu_med': ('#6495ED'), 'inu_range': ('#6495ED'), 'wm2max': ('#6495ED'), # artifact IQMs
                  'aor': ('#9932CC'), 'aqi': ('#9932CC'), 'dummy_trs': ('#9932CC'), 'gsr_x': ('#9932CC'), # other
@@ -424,7 +424,7 @@ def make_vio_plot_df(data, IQM_to_plot, data_descriptors, outliers=False):
                  'dvars_nstd': ('#D2691E'),
                  'fwhm_x': ('#DAA520'), 'fwhm_y': ('#DAA520'), 'fwhm_z': ('#DAA520'), 'fwhm_avg': ('#DAA520'), #spatial
                  'fber': ('#DAA520'), 'efc': ('#DAA520'),
-                 'cjv': ('#A52A2A'), 'cnr': ('#A52A2A'), 'qi_2': ('#A52A2A'), 'snr': ('#A52A2A'), # noise
+                 'cjv': ('#A52A2A'), 'cnr': ('#A52A2A'), 'qi_2': ('#A52A2A'), 'snr': ('#71EEB8'), # noise
                  'snr_csf': ('#A52A2A'), 'snr_gm': ('#A52A2A'), 'snr_wm': ('#A52A2A'), 'snr_total': ('#A52A2A'),
                  'snrd_csf': ('#A52A2A'), 'snrd_gm': ('#A52A2A'), 'snrd_wm': ('#A52A2A'),
                  'fd_mean': ('#66CDAA'), 'fd_num': ('#66CDAA'), 'fd_perc': ('#66CDAA'), # motion IQMs

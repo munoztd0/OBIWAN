@@ -5,7 +5,7 @@
 % created by Eva
 % last modified by David on August 2020
 
-%  rescued 101 and 103
+%  rescued 101 and 103 for behavior
 
 dbstop if error
 clear all
@@ -60,8 +60,6 @@ for j = 1:length(session)
         %conditionX=char(group(i,1));
         sessionX=char(session(j)); 
         sess=['ses-' sessionX];
-
-
 
         %load behavioral file
         if strcmp(sessionX, 'third')
@@ -121,18 +119,16 @@ for j = 1:length(session)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%  get onsets
 
-        ONSETS.trial    = reshape(data.PIT.Onsets.StartTrial,1,ntrials)';
-        ONSETS.ITI      = reshape(data.PIT.Onsets.ITI,1,ntrials)';
+        ONSETS.trial    = reshape(data.PIT.Onsets.StartTrial',1,[])'; % BADDDD reshape(data.PIT.Onsets.StartTrial,1,ntrials)';
+        ONSETS.ITI      = reshape(data.PIT.Onsets.ITI',1,[])'; %reshape(data.PIT.Onsets.ITI,1,ntrials)';
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%  get durations
-        DURATIONS.trial = reshape(data.PIT.Durations.TimeTrial',1,ntrials); 
-        DURATIONS.ITI    = reshape(data.PIT.Durations.ITI',1,ntrials);
-
+        DURATIONS.trial = reshape(data.PIT.Durations.TimeTrial',1,[])'; %reshape(data.PIT.Durations.TimeTrial',1,ntrials); 
+        DURATIONS.ITI    = reshape(data.PIT.Durations.ITI',1,[])'; %(data.PIT.Durations.ITI',1,ntrials);
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%  get condition name
-        
+        %%%  get condition name 
         %rescuing data from old structure #fffff
         if strcmp(subjX(end-2:end), '101') || strcmp(subjX(end-2:end), '103')
            %a = reshape(data.PIT.Image,ntrials,1);
@@ -164,9 +160,13 @@ for j = 1:length(session)
 
         % concatenate the mobilized effort %dernier code = 20180315-CodeBBL
         mobilized_effort = reshape(data.PIT.mobilizedforce,a,ntrials);
+        %this one is OK
+        
+        %reshape(data.PIT.mobilizedforce',1,[])'
         
         %convert to vector
         ForceVector = data.PIT.mobilizedforce(:);
+        ForceVectorSTD = scaledata(ForceVector,0,1);
         TimeVector = data.PIT.Time(:);
         
         % compute the threshold to determine what we consider as a response (50% of the maximal force)
@@ -185,13 +185,13 @@ for j = 1:length(session)
         idxForce = 1:length(ForceVector);
         
         %plot
-        plot(TimeSort, ForceSort)
-        yline(threshold_calib,'--','threshold calibra','LineWidth',3);
-        yline(threshold,'--','threshold analytical','LineWidth',2);
-        
+%         plot(TimeSort, ForceSort)
+%         yline(threshold_calib,'--','threshold calibra','LineWidth',3);
+%         yline(threshold,'--','threshold analytical','LineWidth',2);
+%         
         %Donato normalized before[pks50Normalized,locs50Normalized] = findpeaks(trialNORMALIZED, 'MinPeakDistance',5,'MinPeakHeight',threshold,'MinPeakProminence', (data.maximalforce-data.minimalforce)/4);
-        [pks50,locs50] = findpeaks(ForceSort, 'MinPeakDistance',5,'MinPeakHeight',threshold,'MinPeakProminence', (data.maximalforce-data.minimalforce)/4);
-        [pks_calib,locs_calib] = findpeaks(ForceSort, 'MinPeakDistance',5,'MinPeakHeight',threshold_calib,'MinPeakProminence', (data.maximalforce-data.minimalforce)/4);
+        [pks50,locs50] = findpeaks(ForceSort, 'MinPeakDistance',10,'MinPeakHeight',threshold,'MinPeakProminence', (data.maximalforce-data.minimalforce)/4);
+        [pks_calib,locs_calib] = findpeaks(ForceSort, 'MinPeakDistance',10,'MinPeakHeight',threshold_calib,'MinPeakProminence', (data.maximalforce-data.minimalforce)/4);
         
         peak_idx(1:length(ForceVector)) = ismember(1:length(ForceSort),locs50);
         peak_idx_calib(1:length(ForceVector)) = ismember(1:length(ForceSort),locs_calib);
@@ -208,7 +208,7 @@ for j = 1:length(session)
         BEHAVIOR.peak_calib = sum(peak_idx_calib);
         
         % extract the area under the curve
-        BEHAVIOR.AUC_thr = trapz(mobilized_effort>threshold);
+        BEHAVIOR.AUC = trapz(mobilized_effort>threshold);
         BEHAVIOR.AUC_calib = trapz(mobilized_effort>threshold_calib);
 
         % extract the onset of each grip
@@ -266,8 +266,8 @@ for j = 1:length(session)
         events.durations    = zeros(nevents,1);
         events.phase        = cell (nevents,1);
         events.CSname       = cell (nevents,1);
-        events.peaks        = nan (nevents,1);
-        %events.grips        = nan (nevents,1); need to choose between both
+        %events.peaks        = nan (nevents,1);
+        events.grips        = nan (nevents,1); %need to choose between both
 
         cmpt = 0;
         for ii = 1:ntrials
@@ -281,7 +281,7 @@ for j = 1:length(session)
                 events.durations(cmpt)  = DURATIONS.(phaseX) (ii);
                 events.phase(cmpt)      = phase (iii);
                 events.CSname(cmpt)     = CONDITIONS.CS(ii);
-                events.peaks(cmpt)      = BEHAVIOR.gripFreq(ii);
+                events.grips(cmpt)      = BEHAVIOR.AUC(ii); %whatchout
 
             end
 
@@ -289,10 +289,10 @@ for j = 1:length(session)
 
         events.onsets       = num2cell(events.onsets);
         events.durations    = num2cell(events.durations);
-        events.peaks        = num2cell(events.peaks);
+        events.grips        = num2cell(events.grips);
 
          eventfile = [events.onsets, events.durations,events.phase,...
-            events.CSname, events.peaks];
+            events.CSname, events.grips];
         
         cd (bids_dir)
         % open data base
