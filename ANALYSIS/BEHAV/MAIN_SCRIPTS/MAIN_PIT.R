@@ -42,6 +42,9 @@ HED = HED %>% filter(id %notin% c(242, 256, 201, 218, 219, 221, 225, 230, 241,  
 fac <- c("id", "trial", "condition", "session", "trialxcondition", "gender", "intervention")
 PIT[fac] <- lapply(PIT[fac], factor)
 
+bs = ddply(PIT, .(id, session), summarise, gripZ = mean(gripZ, na.rm = TRUE))
+
+
 #check demo
 n_tot = length(unique(PIT$id))
 n_pre = length(which(bs$session == "second"))
@@ -117,7 +120,7 @@ emm_options(pbkrtest.limit = 5000) #set emmeans options
 # interaction plot interventionXconditionXtime 
 PIT$gripZ = PIT$gripAUC
 PIT$group2 <- as.factor(PIT$group2)
-mod <- lmer(gripZ ~ condition*time*intervention*group2 + gender + ageZ + diff_bmiZ +likZ +(time*condition |id) + (1|trialxcondition) , 
+mod <- lmer(gripZ ~ condition*time*intervention  +(time*condition |id) + (1|trialxcondition) , 
             data = PIT, control = control) #need to be fitted using ML so here I just use lmer function so its faster
 
 #pred CI #takes forever
@@ -126,38 +129,31 @@ mod <- lmer(gripZ ~ condition*time*intervention*group2 + gender + ageZ + diff_bm
 # colnames(df.predicted) <- c("intervention", "condition", "time", "group2","fit", "SE", "df", "lowCI", "uppCI")
 
 #custom contrasts
-# con <- list(
-#   c1 = c(0, 0, 0, 0, 1, -1, 0, 0), #Post: CSm Placebo > CSm- Lira
-#   c2 = c(0, 0, 0, 0, 0, 0, 1, -1), #Post: CSp Placebo > CSp Lira
-#   c3 = c(0, 0, 1, -1, 0, 0, 0, 0), #Pre: CSp Placebo > CSp Lira
-#   c4 = c(1, -1, 0, 0, 0, 0, 0, 0) #Pre: CSm Placebo > CSm Lira
-# )
+con1 <- list(
+  c1 = c(1, 0, 1, 0, -1, 0,-1, 0), #Post PIT - Pre PIT placebo
+  c2 = c(0, 1, 0, 1, 0, -1, 0, -1) #PIT - Pre PIT Lira
+)
 
 con <- list(
   #group1
-  c10 = c(0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0), #Post: CSp Placebo > CSm- Placebo
-  c20 = c(0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0), #Post: CSp Lira > CSm Lira
-  c30 = c(0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), #Pre: CSp Lira > CSm Lira
-  c40 = c(-1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), #Pre: CSp Placebo > CSm Placebo
-  #group2
-  c11 = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0), #Post: CSp Placebo > CSm- Placebo
-  c21 = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1), #Post: CSp Lira > CSm Lira
-  c31 = c(0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0), #Pre: CSp Lira > CSm Lira
-  c41 = c(0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0) #Pre: CSp Placebo > CSm Placebo
+  c10 = c(0, 0, 0, 0, -1, 0, 1, 0), #Post: CSp Placebo > CSm- Placebo
+  c20 = c(0, 0, 0, 0, 0, -1, 0, 1), #Post: CSp Lira > CSm Lira
+  c30 = c(0, -1, 0, 1, 0, 0, 0, 0), #Pre: CSp Lira > CSm Lira
+  c40 = c(-1, 0, 1, 0, 0, 0, 0, 0) #Pre: CSp Placebo > CSm Placebo
 )
 
 #contrasts on estimated means adjusted via the Multivariate normal t distribution
-cont = emmeans(mod, ~ intervention:condition:time:group2, contr = con, adjust = "mvt")
+cont = emmeans(mod, ~ intervention:condition:time, contr = con, adjust = "mvt")
+cont2 = emmeans(mod, ~ intervention:condition:time, contr = con2, adjust = "mvt")
 #cont = confint(emmeans(mod,~ intervention:condition:time:group2, contr = con,adjust = "mvt"), level = .95, type = "response")
+cont2$contrasts
 
-
-#plot(cont$contrasts, comparisons = TRUE)
+#plot(cont$contrasts, comparisons = TRUE, horizontal=FALSE)
 df.PIT = as.data.frame(cont$contrasts) 
-intervention = c(0, 1, 1, 0, 0, 1, 1, 0)
-time = c(1, 1, 0, 0, 1, 1, 0, 0)
-group2 = c(0, 0, 0, 0, 1, 1, 1, 1)
-df.PIT = cbind(df.PIT, intervention, time, group2)
-fac <- c("intervention", "time", "group2")
+intervention = c(0, 1, 1, 0)
+time = c(1, 1, 0, 0)
+df.PIT = cbind(df.PIT, intervention, time)
+fac <- c("intervention", "time")
 df.PIT[fac] <- lapply(df.PIT[fac], factor)
 
 # CSPlus <- subset(PIT, condition =="CSplus" )
@@ -167,24 +163,29 @@ df.PIT[fac] <- lapply(df.PIT[fac], factor)
 # df.observed = CSPlus
 # df.observed$estimate = CSPlus$gripZ - CSMinus$gripZ
 
-full.obs = ddply(PIT, .(id, group2, intervention, time, condition), summarise, estimate = mean(gripZ)) 
+full.obs = ddply(PIT, .(id, intervention, time, condition), summarise, estimate = mean(gripZ)) 
 plus = subset(full.obs, condition == 'CSplus')
 minus = subset(full.obs, condition == 'CSminus')
 df.observed = minus
 df.observed$estimate = plus$estimate - minus$estimate
-df.observed$bmiT = df.observed$group2
+#df.observed$group = df.observed$group
 
 labelsSES <- c("0" = "Pre-Test", "1" = "Post-Test")
-labelsOB <- c( "0" = "Class I" , "1" = "Class II-III")
+#labelsOB <- c( "0" = "Class I" , "1" = "Class II-III")
 labelsTRE <- c( "0" = "Placebo" , "1" = "Liraglutide")
 
-pl <-  ggplot(df.PIT, aes(x = group2, y = estimate, color = intervention)) +
-  geom_bar(aes(y = estimate, x = group2, group = intervention), stat="identity", alpha=0.6, width=0.3, color  = 'lightgrey', fill  = 'lightgrey', position = position_dodge(0.4)) +
-  geom_errorbar(aes(ymax = estimate + SE, ymin = estimate - SE), width=0.1,  alpha=0.7, position = position_dodge(0.4))+
+
+pl <-  ggplot(df.PIT, aes(x = time, y = estimate, color = intervention)) +
+  geom_bar(aes(y = estimate, x = time, group = intervention), stat="identity", alpha=0.6, width=0.3, color  = 'lightgrey', fill  = 'lightgrey') +
+  geom_errorbar(aes(ymax = estimate + SE, ymin = estimate - SE), width=0.1,  alpha=0.7)+
   geom_point(size = 0.5,  position = position_dodge(0.4)) +  #color = 'blue'
-  geom_hline(yintercept=0, linetype="dashed", size=0.4, alpha=0.7) + 
-  geom_point(data = df.observed, size = 0.1, alpha = 0.6,  position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.4)) + #, color = 'royalblue'
-  facet_wrap(~ time, labeller=labeller(time = labelsSES))
+  geom_hline(yintercept=0, linetype="dashed", size=0.4, alpha=0.7) +
+  geom_jitter(data = df.observed, position = position_jitter(seed = 123, width = 0.02), alpha=0.5, size = 0.5) +
+  geom_line(data = df.observed, aes(group=id), alpha=0.1, position = position_jitter (seed = 123, width = 0.02)) + 
+  facet_wrap(~ intervention, labeller=labeller(intervention = labelsTRE))
+
+
+
 
 plt = pl + 
   scale_y_continuous(expand = c(0, 0),
@@ -236,7 +237,6 @@ save.image(file = "PIT_Lira.RData", version = NULL, ascii = FALSE,
 # method = "PB", control = control, REML = FALSE, args_test = list(nsim = 10))
 
 PIT$gripZ = PIT$gripAUC
-bs = ddply(PIT, .(id, session), summarise, gripZ = mean(gripZ, na.rm = TRUE))
 
 
 mdl.aov = aov_4(gripZ ~ condition*time*intervention + bmiZ + likZ + diff_bmiZ + gender + ageZ +  (time*condition|id) , 
@@ -261,7 +261,7 @@ model #The ‘intercept’ of the lmer model is the mean force rate in CS- conid
 # 6                    diff_bmiZ  1     0.00    .995
 # 7               condition:time  1     0.06    .804
 # 8       condition:intervention  1     1.37    .242
-# 9            time:intervention  0     0.00   >.999
+# 9            time:intervention  0     0.00    NaN
 # 10 condition:time:intervention  1     0.25    .615
 
 # COMPUTE EFFECT SIZES (COMPUTE R Squared For Mixed Models VIA NAKAGAWA ESTIMATE)
@@ -427,3 +427,16 @@ minus = subset(full.obs, condition == 'CSminus')
 df.observed = minus
 df.observed$estimate = plus$estimate - minus$estimate
 df.observed$bmiT = df.observed$group2
+
+con <- list(
+  #group1
+  c10 = c(0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0), #Post: CSp Placebo > CSm- Placebo
+  c20 = c(0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0), #Post: CSp Lira > CSm Lira
+  c30 = c(0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), #Pre: CSp Lira > CSm Lira
+  c40 = c(-1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), #Pre: CSp Placebo > CSm Placebo
+  #group2
+  c11 = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0), #Post: CSp Placebo > CSm- Placebo
+  c21 = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1), #Post: CSp Lira > CSm Lira
+  c31 = c(0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0), #Pre: CSp Lira > CSm Lira
+  c41 = c(0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0) #Pre: CSp Placebo > CSm Placebo
+)
