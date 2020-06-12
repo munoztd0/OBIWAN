@@ -15,7 +15,7 @@ set fmri(level) 1
 # 7 : Full first-level analysis
 # 1 : Pre-processing
 # 2 : Statistics
-set fmri(analysis) 7
+set fmri(analysis) 1
 
 # Use relative filenames
 set fmri(relative_yn) 0
@@ -30,15 +30,15 @@ set fmri(featwatcher_yn) 0
 set fmri(sscleanup_yn) 0
 
 # Output directory
-set fmri(outputdir) "homeOOO/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/glmUUU/sub-subXXX/output.feat"
+set fmri(outputdir) "/home/cisa/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/GLM-02/sub-control100/output.feat"
 
 # TR(s)
-set fmri(tr) 2
+set fmri(tr) 2.000000 
 
-# Total volumes  // we get that from melodICA.sh
-set fmri(npts) ZZZ
+# Total volumes
+set fmri(npts) 622
 
-# Delete volumes  
+# Delete volumes
 set fmri(ndelete) 0
 
 # Perfusion tag/control order
@@ -50,7 +50,7 @@ set fmri(multiple) 1
 # Higher-level input type
 # 1 : Inputs are lower-level FEAT directories
 # 2 : Inputs are cope images from FEAT directories
-set fmri(inputtype) 1
+set fmri(inputtype) 2
 
 # Carry out pre-stats processing?
 set fmri(filtering_yn) 1
@@ -126,8 +126,8 @@ set fmri(templp_yn) 0
 # MELODIC ICA data exploration
 set fmri(melodic_yn) 0
 
-# Carry out main stats? #change that!
-set fmri(stats_yn) 0  
+# Carry out main stats?
+set fmri(stats_yn) 0
 
 # Carry out prewhitening?
 set fmri(prewhiten_yn) 1
@@ -169,10 +169,10 @@ set fmri(nftests_real) 0
 set fmri(constcol) 0
 
 # Carry out post-stats steps?
-set fmri(poststats_yn) 1
+set fmri(poststats_yn) 0
 
 # Pre-threshold masking?
-set fmri(threshmask) "homeOOO/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/glmUUU/sub-subXXX/timing/mask.nii"
+set fmri(threshmask) "/home/cisa/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/GLM-02/sub-control100/timing/mask.nii"
 
 # Thresholding
 # 0 : None
@@ -244,12 +244,8 @@ set fmri(regstandard_yn) 1
 # Use alternate reference images?
 set fmri(alternateReference_yn) 0
 
-# Session's alternate reference image for analysis 1
-#set alt_ex_func(1) "homeOOO/OBIWAN/DERIVATIVES/PREPROC/sub-subXXX/ses-first/anat/sub-subXXX_ses-first_acq-ANTsNorm_T1w"
-
 # Standard image
 set fmri(regstandard) "/usr/local/fsl/data/standard/MNI152_T1_2mm_brain"
-#set fmri(regstandard) "homeOOO/OBIWAN/DERIVATIVES/EXTERNALDATA/CANONICALS/CIT168_T1w_MNI"
 
 # Search space for registration to standard space
 # 0   : No search
@@ -264,22 +260,20 @@ set fmri(regstandard_dof) 6
 set fmri(regstandard_nonlinear_yn) 0
 
 # Control nonlinear warp field resolution
-set fmri(regstandard_nonlinear_warpres) 10
+set fmri(regstandard_nonlinear_warpres) 10 
 
 # High pass filter cutoff
 set fmri(paradigm_hp) 128
 
-# Total voxels // we get that from melodICA.sh
-set fmri(totalVoxels) WWW
+# Total voxels
+set fmri(totalVoxels) 280526976
+
 
 # Number of lower-level copes feeding into higher-level analysis
 set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
-set feat_files(1) "homeOOO/OBIWAN/DERIVATIVES/PREPROC/sub-subXXX/ses-sesYYY/func/sub-subXXX_ses-sesYYY_task-hedonicreactivity_smoothBold.nii"
-
-
-##model specs
+set feat_files(1) "/home/cisa/OBIWAN/DERIVATIVES/PREPROC/sub-control100/ses-second/func/sub-control100_ses-second_task-hedonicreactivity_smoothBold"
 
 # Add confound EVs text file
 set fmri(confoundevs) 0
@@ -317,7 +311,7 @@ set fmri(tempfilt_yn1) 1
 set fmri(deriv_yn1) 1
 
 # Custom EV file (EV 1)
-set fmri(custom1) "homeOOO/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/glmUUU/sub-subXXX/timing/glmUUU_task-hedonicreactivity_trialstart.txt"
+set fmri(custom1) "/home/cisa/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/GLM-02/sub-control100/timing/GLM-02_task-hedonicreactivity_trialstart.txt"
 
 # Gamma sigma (EV 1)
 set fmri(gammasigma1) 3
@@ -382,7 +376,7 @@ set fmri(tempfilt_yn2) 1
 set fmri(deriv_yn2) 1
 
 # Custom EV file (EV 2)
-set fmri(custom2) "homeOOO/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/glmUUU/sub-subXXX/timing/glmUUU_task-hedonicreactivity_taste_reward.txt"
+set fmri(custom2) "/home/cisa/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/GLM-02/sub-control100/timing/GLM-02_task-hedonicreactivity_taste_reward.txt"
 
 # Gamma sigma (EV 2)
 set fmri(gammasigma2) 3
@@ -447,7 +441,7 @@ set fmri(tempfilt_yn3) 1
 set fmri(deriv_yn3) 1
 
 # Custom EV file (EV 3)
-set fmri(custom3) "homeOOO/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/glmUUU/sub-subXXX/timing/glmUUU_task-hedonicreactivity_taste_control.txt"
+set fmri(custom3) "/home/cisa/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/GLM-02/sub-control100/timing/GLM-02_task-hedonicreactivity_taste_control.txt"
 
 # Gamma sigma (EV 3)
 set fmri(gammasigma3) 3
@@ -512,7 +506,7 @@ set fmri(tempfilt_yn4) 1
 set fmri(deriv_yn4) 1
 
 # Custom EV file (EV 4)
-set fmri(custom4) "homeOOO/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/glmUUU/sub-subXXX/timing/glmUUU_task-hedonicreactivity_rinse.txt"
+set fmri(custom4) "/home/cisa/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/GLM-02/sub-control100/timing/GLM-02_task-hedonicreactivity_rinse.txt"
 
 # Gamma sigma (EV 4)
 set fmri(gammasigma4) 3
@@ -577,7 +571,7 @@ set fmri(tempfilt_yn5) 1
 set fmri(deriv_yn5) 1
 
 # Custom EV file (EV 5)
-set fmri(custom5) "homeOOO/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/glmUUU/sub-subXXX/timing/glmUUU_task-hedonicreactivity_liking.txt"
+set fmri(custom5) "/home/cisa/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/GLM-02/sub-control100/timing/GLM-02_task-hedonicreactivity_liking.txt"
 
 # Gamma sigma (EV 5)
 set fmri(gammasigma5) 3
@@ -642,7 +636,7 @@ set fmri(tempfilt_yn6) 1
 set fmri(deriv_yn6) 1
 
 # Custom EV file (EV 6)
-set fmri(custom6) "homeOOO/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/glmUUU/sub-subXXX/timing/glmUUU_task-hedonicreactivity_intensity.txt"
+set fmri(custom6) "/home/cisa/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/GLM-02/sub-control100/timing/GLM-02_task-hedonicreactivity_intensity.txt"
 
 # Gamma sigma (EV 6)
 set fmri(gammasigma6) 3
@@ -707,7 +701,7 @@ set fmri(tempfilt_yn7) 1
 set fmri(deriv_yn7) 1
 
 # Custom EV file (EV 7)
-set fmri(custom7) "homeOOO/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/glmUUU/sub-subXXX/timing/glmUUU_task-hedonicreactivity_familiarity.txt"
+set fmri(custom7) "/home/cisa/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/GLM-02/sub-control100/timing/GLM-02_task-hedonicreactivity_familiarity.txt"
 
 # Gamma sigma (EV 7)
 set fmri(gammasigma7) 3
@@ -1295,7 +1289,7 @@ set fmri(conmask1_1) 0
 # Now options that don't appear in the GUI
 
 # Alternative (to BETting) mask image
-set fmri(alternative_mask) "homeOOO/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/glmUUU/sub-subXXX/timing/mask.nii"
+set fmri(alternative_mask) "/home/davidM/OBIWAN/DERIVATIVES/FSL/hedonicreactivity/GLM-02/sub-control100/timing/mask.nii"
 
 # Initial structural space registration initialisation transform
 set fmri(init_initial_highres) ""

@@ -68,4 +68,12 @@ echo ${nvoxs}
 # task the template into FEAT
 feat ${GLM_tmp}
 
+#hacking FSL to think we did the reg in FSL but we did it with ANTS ahaha dumb FSL.. ok I need to sleep ..
+#cp -r ${home}/OBIWAN/DERIVATIVES/GLM/FSL/${taskID}/$glmID/sub-${subjectID}/output+.feat/reg ${home}/OBIWAN/DERIVATIVES/GLM/FSL/${taskID}/$glmID/sub-${subjectID}/output.feat/
+rm ${home}/OBIWAN/DERIVATIVES/GLM/FSL/${taskID}/$glmID/sub-${subjectID}/output.feat/reg/*.mat
+
+cp $FSLDIR/etc/flirtsch/ident.mat ${home}/OBIWAN/DERIVATIVES/GLM/FSL/${taskID}/$glmID/sub-${subjectID}/output.feat/reg/example_func2standard.mat
+cp ${home}/OBIWAN/DERIVATIVES/GLM/FSL/${taskID}/$glmID/sub-${subjectID}/output.feat/mean_func.nii.gz ${home}/OBIWAN/DERIVATIVES/GLM/FSL/${taskID}/$glmID/sub-${subjectID}/output.feat/reg/standard.nii.gz
+
+mv ${home}/OBIWAN/DERIVATIVES/GLM/FSL/${taskID}/$glmID/sub-${subjectID}/output.feat ${home}/OBIWAN/DERIVATIVES/GLM/FSL/${taskID}/$glmID/sub-${subjectID}/first.feat
 echo "Finished GLM ${glmID} for subj ${subjectID} for session ${taskID} at $(date +"%T")"

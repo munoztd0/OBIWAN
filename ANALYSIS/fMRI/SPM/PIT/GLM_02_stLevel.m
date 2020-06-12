@@ -64,31 +64,36 @@ for i = 1:length(param.task)
     param.Cnam{i} = {'ONS.onsets.CS.CSp',...%1
         'ONS.onsets.CS.CSm',...%2
         'ONS.onsets.CS.Baseline',...%3
-        'ONS.onsets.grips'};%4
+        'ONS.onsets.grips',...%4
+        'ONS.onsets.ITI'};%5
     
     % duration of the blocks (if events, put '0'). Specify it for each condition of each session
     % the values must be included in your onsets in seconds
     param.duration{i} = {'ONS.durations.CS.CSp',...
         'ONS.durations.CS.CSm',...
         'ONS.durations.CS.Baseline',...
-        'ONS.durations.grips'};
+        'ONS.durations.grips',...
+        'ONS.durations.ITI'};
     
     % parametric modulation of your events or blocks (ex: linear time, or emotional value, or pupillary size, ...)
     % If you have a parametric modulation
     param.modulName{i} = {'none',...%1
         'none',...%2
         'none',...%3
+        'none',...
         'none'};
     
-    param.modul{i} = {'ONS.modulators.CS.CSp',...%1
-        'ONS.modulators.CS.CSm',... %2
-        'ONS.modulators.CS.Baseline',... %3
+    param.modul{i} = {'none',...%1
+        'none',... %2
+        'none',... %3
+        'none',...
         'none'};
     
     % value of the modulators, If you have a parametric modulation
     param.time{i} = {'0',... %1
         '0',... %2
         '0',... %3
+        '0',...
         '0'};
     
 end
@@ -164,7 +169,6 @@ end
         
         % variable initialization
         ntasks = size(param.task,1);
-        im_style = 'swar'; % this is only for the old pipeline
         nscans = [];
         scanID = [];
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -281,7 +285,7 @@ end
         %multiple regressors for mvts parameters ( no movement regressor
         %after ICA)
         
-        rnam = {'X','Y','Z','x','y','z'};
+        %rnam = {'X','Y','Z','x','y','z'};
         for ses=1:ntasks
             
             SPM.Sess(ses).C.C = [];
@@ -296,7 +300,7 @@ end
 %                         SPM.Sess(ses).C.name = rnam;
         end
         
-        %SPM.xsDes = length(
+        SPM.xsDes = length(ONS.onsets.ITI);
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % basis functions and timing parameters
