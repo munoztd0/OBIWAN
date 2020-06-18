@@ -84,7 +84,7 @@ for j = 1:length(session)
         else
             
             %old structure
-            if strcmp(subjX(end-2:end), '101') || strcmp(subjX(end-2:end), '103')
+            if strcmp(subjX(end-2:end), '103') 
                 continue
             end
 
@@ -126,22 +126,14 @@ for j = 1:length(session)
             if data.Durations.TrialStageSix(ii) < 0.9999
                 cmpt = cmpt+1;
                 ONSETS.action(cmpt,1) = data.Onsets.StageSix(ii) + data.Durations.TrialStageSix(ii);
-            else
-                cmpt = cmpt+1;
-                %ONSETS.action(cmpt,1) = nan;
-                ONSETS.action(cmpt,1) = data.Onsets.StageSix(ii) + data.Durations.TrialStageSix(ii); %instead i am writing them a 0ms
             end
         end
-        
 
-        %ONSETS.signal = data.Onsets.StageSix; %it was six before?
-        ONSETS.signal = data.Onsets.StageThree; %show asterisc
-        ONSETS.reward  = data.Onsets.StageNine; %UCS is delivered %stage 8 is for release
-        %ONSETS.jitter     = data.Onsets.StageEleven;
-        ONSETS.swallow = data.Onsets.StageThirten; %swallow signal
-
+        ONSETS.signal = data.Onsets.StageSix;
+        ONSETS.reward  = data.Onsets.StageNine;
+        ONSETS.swallow = data.Onsets.StageThirten;
+        ONSETS.ITI     = data.Onsets.StageThirten;
         ONSETS.baseline = data.Onsets.BaselineStart;
-        
 
 
 
@@ -152,28 +144,20 @@ for j = 1:length(session)
 
         DURATIONS.CS = data.Durations.TrialStageTwo;
         cmpt = 0;
-        for ii = 1:length(data.Durations.TrialStageSix) % here take other variable
+        for ii = 1:length(data.Durations.TrialStageSix) % here take onther variable
             if data.Durations.TrialStageSix(ii) < 0.9999
                 cmpt = cmpt+1;
                 DURATIONS.action(cmpt,1) = data.Durations.TrialStageSix(ii);
-            else
-                cmpt = cmpt+1;
-                %DURATIONS.action(cmpt,1) = nan;
-                DURATIONS.action(cmpt,1) = 0; %) duratyion instead of nan bc SPM dont likey
             end
         end
 
-        %DURATIONS.signal   = data.DURATIONS.TrialStageSix; was that before
-        DURATIONS.signal    = data.Durations.TrialStageThree + data.Durations.TrialStageFour + data.Durations.TrialStageFive +  data.Durations.TrialStageSeven; %show asterisc after action ?
-        DURATIONS.reward   = data.Durations.TrialStageNine + data.Durations.TrialStageEight +  data.Durations.TrialStageEleven;
-        %DURATIONS.jitter     = data.Durations.TrialStageEleven;
+        DURATIONS.signal   = data.Durations.TrialStageSix;
+        DURATIONS.reward   = data.Durations.TrialStageNine + data.Durations.TrialStageEleven;
         DURATIONS.swallow  = data.Durations.TrialStageThirten;
-
+        DURATIONS.ITI      = data.Durations.TrialStageThirten;
         DURATIONS.baseline = data.Durations.ShowBaseline;
 
-%         if strcmp(subjX(end-2:end), '230') 
-%             x = 1;
-%         end
+    
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%  get condition name
@@ -181,7 +165,6 @@ for j = 1:length(session)
         if strcmp(subjX(end-2:end), '101') 
             data.rounds = data.rounds(1:ntrials);
             CONDITIONS.CS =  data.csNames(1:ntrials);
-            
             
             for p = 1:ntrials
                 if strcmp(CONDITIONS.CS{p}, 'CSminu')
@@ -200,16 +183,15 @@ for j = 1:length(session)
                 end
             end
         else
-            ONSETS.rinse = data.Onsets.RinseStart;
-            DURATIONS.rinse   = data.Durations.Rinse;
+
             CONDITIONS.CS =  data.PavCond(~cellfun('isempty',data.csNames));
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%% get Behavior %this loop is useless now but im lazy
-        BEHAVIOR.RT1  = nan(ntrials,1);
+        %%% get Behavior
+        BEHAVIOR.RT  = nan(ntrials,1);
         BEHAVIOR.ACC = nan(ntrials,1);
         for ii = 1:length(DURATIONS.action)
-            BEHAVIOR.RT1(ii) = DURATIONS.action(ii);
+            BEHAVIOR.RT(ii) = DURATIONS.action(ii);
             if strcmp(keysPressed{ii},'3#') 
                 BEHAVIOR.ACC(ii) = 1; % to be added
             else
@@ -217,9 +199,6 @@ for j = 1:length(session)
             end
         end
         
-        
-        BEHAVIOR.RT.CSp = DURATIONS.action(strcmp('CSplus',data.PavCond));
-        BEHAVIOR.RT.CSm = DURATIONS.action(strcmp('CSminus',data.PavCond));
         
 
         BEHAVIOR.liking.CSp = PavCheck.ratings(strcmp('CSplus',PavCheck.imagesCond)); 
@@ -251,6 +230,7 @@ for j = 1:length(session)
         ROUNDS = data.rounds;
 
 
+       
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% save mat file
@@ -263,7 +243,7 @@ for j = 1:length(session)
         
         cd (func_dir)
         matfile_name = ['sub-' num2str(subjX)  '_ses-' sessionX  '_task-' task '_events.mat'];
-        save(matfile_name, 'ONSETS', 'DURATIONS',  'BEHAVIOR', 'CONDITIONS')
+        save(matfile_name, 'ONSETS', 'DURATIONS',  'BEHAVIOR', 'CONDITIONS', 'ROUNDS')
 
 
        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -292,7 +272,7 @@ for j = 1:length(session)
                 events.durations(cmpt)  = DURATIONS.(phaseX) (ii);
                 events.phase(cmpt)      = phase (iii);
                 events.CSname(cmpt)     = CONDITIONS.CS(ii);
-                events.reactionTime(cmpt) = BEHAVIOR.RT1(ii);
+                events.reactionTime(cmpt) = BEHAVIOR.RT(ii);
                 events.responseACC(cmpt) = BEHAVIOR.ACC(ii);
                 events.rounds(cmpt)   = ROUNDS(ii);
 
@@ -340,11 +320,11 @@ for j = 1:length(session)
         db.trial(:,k)     = [1:ntrials]';
         db.condition(:,k) = CONDITIONS.CS;
         db.itemxc(:,k)    = itemxc;
-        db.RT (:,k)       = BEHAVIOR.RT1;
+        db.RT (:,k)       = BEHAVIOR.RT;
         db.ACC(:,k)       = BEHAVIOR.ACC;
         db.liking(:,k)    = Behavior.liking;
         db.baseLiking(:,k)= BEHAVIOR.liking.b;
-        %db.rounds(:,k)    = ROUNDS;
+        db.rounds(:,k)    = ROUNDS;
     
     end
 end
@@ -364,7 +344,7 @@ R.condition = db.condition(:);
 
 % mixed
 R.itemxc    = num2cell(db.itemxc(:));
-%R.rounds    = num2cell(db.rounds(:));
+R.rounds    = num2cell(db.rounds(:));
 
 % dependent variable
 R.RT        = num2cell(db.RT(:));
@@ -378,19 +358,19 @@ if save_Rdatabase
     cd (R_dir)
     
     % concatenate
-    Rdatabase = [R.task, R.id, R.group, R.session, R.trial,R.condition, R.itemxc, R.RT, R.ACC, R.liking];
+    Rdatabase = [R.task, R.id, R.group, R.session, R.trial,R.condition, R.itemxc, R.RT, R.ACC, R.liking, R.rounds];
     
     % open database
     fid = fopen([analysis_name '.txt'], 'wt');
     
     % print heater
-    fprintf(fid,'%s   %s   %s   %s   %s   %s   %s   %s   %s   %s\n',...
+    fprintf(fid,'%s   %s   %s   %s   %s   %s   %s   %s   %s   %s   %s\n',...
         'task','id', 'group', ...
         'session','trial', 'condition',...
-        'trialxcondition','RT', 'ACC', 'liking');
+        'trialxcondition','RT', 'ACC', 'liking', 'rounds');
     
     % print data
-    formatSpec ='%s   %s   %s   %s   %d    %s   %d   %d   %d   %d\n';
+    formatSpec ='%s   %s   %s   %s   %d    %s   %d   %d   %d   %d   %d\n';
     [nrows,~] = size(Rdatabase);
     for row = 1:nrows
         fprintf(fid,formatSpec,Rdatabase{row,:});

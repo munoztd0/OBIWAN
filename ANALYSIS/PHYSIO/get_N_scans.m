@@ -3,6 +3,7 @@ function nscans = get_N_scans(subj, task, sess)
 
 dbstop if error
 
+orig = pwd;
 
 cd ~
 home = pwd;
@@ -38,3 +39,6 @@ V         = dir(fullfile(smoothfolder, targetscan.name));
 [p,n,e]   = spm_fileparts(V(1).name);
 Vn        = spm_vol(fullfile(p,[n e]));
 nscans    = [nscans numel(Vn)];
+
+cd (orig)
+end

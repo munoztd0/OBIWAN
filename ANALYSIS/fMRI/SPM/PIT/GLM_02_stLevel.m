@@ -64,48 +64,44 @@ for i = 1:length(param.task)
     param.Cnam{i} = {'ONS.onsets.CS.CSp',...%1
         'ONS.onsets.CS.CSm',...%2
         'ONS.onsets.CS.Baseline',...%3
-        'ONS.onsets.grips',...%4
-        'ONS.onsets.ITI'};%5
+        'ONS.onsets.ITI'};%4      %'ONS.onsets.grips',...%5
     
     % duration of the blocks (if events, put '0'). Specify it for each condition of each session
     % the values must be included in your onsets in seconds
     param.duration{i} = {'ONS.durations.CS.CSp',...
         'ONS.durations.CS.CSm',...
         'ONS.durations.CS.Baseline',...
-        'ONS.durations.grips',...
-        'ONS.durations.ITI'};
+        'ONS.durations.ITI'};         %'%ONS.durations.grips',...
     
     % parametric modulation of your events or blocks (ex: linear time, or emotional value, or pupillary size, ...)
     % If you have a parametric modulation
     param.modulName{i} = {'none',...%1
         'none',...%2
         'none',...%3
-        'none',...
-        'none'};
+        'none'};    
     
     param.modul{i} = {'none',...%1
         'none',... %2
         'none',... %3
-        'none',...
         'none'};
     
     % value of the modulators, If you have a parametric modulation
     param.time{i} = {'0',... %1
         '0',... %2
         '0',... %3
-        '0',...
         '0'};
     
 end
 
 %% apply design for first level analysis for each participant
+subj = subj([91],:); %60 -> 233 234 91 -> 269
+%subj = subj([91],:); %60 -> 233 91 -> 269
 
 for i = 1:length(subj)
     
-    
     if i ==  42 || i == 66 || i ==69 %fails at 213 239 242 ??
         continue
-    end
+    end %still have to redo 123 124 233
     
     
     %subjT       =  [group subj{i}];
@@ -126,7 +122,7 @@ for i = 1:length(subj)
     
     %%%%%%%%%%%%%%%%%%%%% DO FIRST LEVEL ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%%%
     if firstLevel == 1
-        [SPM] = doFirstLevel(subjoutdir,subjfuncdir,name_ana,param,subjX);
+        [SPM] = doFirstLevel(subjoutdir,subjfuncdir,name_ana,param,subjX, sessionX);
     else
         cd (fullfile(subjoutdir,'output'));
         load SPM
@@ -148,7 +144,7 @@ for i = 1:length(subj)
         cd (fullfile(subjoutdir,'output'))
         
         % copy images T
-        Timages = ['01']; %;; '02' '03'; '04'; '05'; '06'; '07'];% constrasts of interest
+        Timages = ['01'; '02'; '03'; '04']; % '05'; '06'; '07'];% constrasts of interest
         for y =1:size(Timages,1)
             copyfile(['con_00' (Timages(y,:)) '.nii'],[groupdir, subjX '_con-00' (Timages(y,:)) '.nii'])
         end
@@ -165,8 +161,9 @@ for i = 1:length(subj)
 end
 
 %% function section
-    function [SPM] = doFirstLevel(subjoutdir,subjfuncdir, name_ana, param, subjX)
+    function [SPM] = doFirstLevel(subjoutdir,subjfuncdir, name_ana, param, subjX, sessionX)
         
+        subjO = subjX(5:end);
         % variable initialization
         ntasks = size(param.task,1);
         nscans = [];
@@ -282,25 +279,34 @@ end
         end
         
         %-----------------------------
-        %multiple regressors for mvts parameters ( no movement regressor
-        %after ICA)
-        
-        %rnam = {'X','Y','Z','x','y','z'};
-        for ses=1:ntasks
-            
-            SPM.Sess(ses).C.C = [];
-            SPM.Sess(ses).C.name = {};
-            
-            %movement
-%                         targetfile         = dir (fullfile(smoothfolder, ['rp_*' taskX '*.txt']));
-% 
-%                         fn = spm_select('List',smoothfolder,targetfile.name);% path
-%                         [r1,r2,r3,r4,r5,r6] = textread([smoothfolder '/' fn(1,:)],'%f%f%f%f%f%f'); % path
-%                         SPM.Sess(ses).C.C = [r1 r2 r3 r4 r5 r6];
-%                         SPM.Sess(ses).C.name = rnam;
+        if  strcmp(subjX(end-2:end), '101')  || strcmp(subjX(end-2:end), '103')%because we dont the triggers for the two first participant
+             SPM.Sess(ses).C.C = [];
+             SPM.Sess(ses).C.name = {};
+        else
+            for ses=1:length(param.task)
+               
+               %rnam = {'X','Y','Z','x','y','z'};
+               rnam = {'effort'};
+               physio        = fullfile('~/OBIWAN/SOURCEDATA/physio/', subjO, ['ses-' sessionX]);
+
+               cd (physio)
+               filename = strcat(param.task{ses}, '_regressor_effort.txt'); %because dlmread is stupid af
+
+               effort = dlmread(filename);
+               
+               if any(isnan(effort(:))) % corrupt Effort files || strcmp(subjX(end-2:end), '113') || strcmp(subjX(end-2:end), '120')
+                     SPM.Sess(ses).C.C = [];
+                     SPM.Sess(ses).C.name = {};
+               else
+                    SPM.Sess(ses).C.C = effort;
+                    SPM.Sess(ses).C.name = rnam;
+               end
+
+            end
         end
+        cd([subjoutdir '/output/'])
         
-        SPM.xsDes = length(ONS.onsets.ITI);
+        SPM.xsDes = length(ONS.onsets.ITI); %or whatever is just to have the number of trials
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % basis functions and timing parameters
@@ -401,19 +407,32 @@ end
         Ct = []; Ctnames = []; ntask = size(param.task,1);
         
         % | CONSTRASTS FOR T-TESTS
-        
-%                 
-%         % con1
-%         Ctnames{1} = 'CSp&CSm_Baseline';
-%         weightPos  = ismember(conditionName, {'task1.CS.CSp', 'task1.CS.CSm'}) * 1;
-%         weightNeg  = ismember(conditionName, { 'task1.CS.Baseline'})* -2;
-%         Ct(1,:)    = weightPos+weightNeg;
+
         
         % con1
         Ctnames{1} = 'CSp_CSm';
         weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
         weightNeg  = ismember(conditionName, {'task1.CS.CSm'})* -1;
         Ct(1,:)    = weightPos+weightNeg;
+        
+                     
+        % con2
+        Ctnames{2} = 'CSp&CSm_Baseline';
+        weightPos  = ismember(conditionName, {'task1.CS.CSp', 'task1.CS.CSm'}) * 1;
+        weightNeg  = ismember(conditionName, { 'task1.CS.Baseline'})* -2;
+        Ct(2,:)    = weightPos+weightNeg;
+        
+        % con3
+        Ctnames{3} = 'CSp_Baseline';
+        weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
+        weightNeg  = ismember(conditionName, {'task1.CS.Baseline'})* -1;
+        Ct(3,:)    = weightPos+weightNeg;
+        
+        % con4
+        Ctnames{4} = 'CSp_ITI';
+        weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
+        weightNeg  = ismember(conditionName, {'task1.CS.ITI'})* -1;
+        Ct(4,:)    = weightPos+weightNeg;
         
 %         % con2
 %         Ctnames{2} = 'Effort';

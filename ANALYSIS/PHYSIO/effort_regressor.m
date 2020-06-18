@@ -1,4 +1,4 @@
-function eff_regressor(subID)
+function eff_regressor(subID, session)
 
 % Create physiological regressors
 
@@ -6,9 +6,9 @@ function eff_regressor(subID)
 % processed by their own because the physiology stops slighlty before the
 % end of the last EPI acquisition
 
-task = 'PIT';
-session = 'second';
-
+session = 'second'; %remove that when clusyer
+%subj={subID};
+displayPlot = 0;
 %clc
 
 dbstop if error
@@ -17,134 +17,279 @@ dbstop if error
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% define paths
 
+
 cd ~
 home = pwd;
 homedir = [home '/OBIWAN'];
 
-%subj   = subID;
-%subj = {'02'};
-
-
 physiodir   = fullfile(homedir, '/SOURCEDATA/physio');
 outdir = fullfile(homedir, '/DERIVATIVES/PHYSIO');
-addpath([homedir  '/CODE/ANALYSIS/PHYSIO'])
-addpath(genpath('/usr/local/MATLAB/R2018a/eeglab'))
-run = {'*task-PIT_run-01_bold.nii.gz'}; %PIT
 
-%subj={subID};
-subj={'control100'};%;'12';'13';'14';'15';'16';'17';'18';'20';'21';'22';'23';'24';'25';'26';}; %subID;
+control = [homedir '/sub-control*'];
+obese = [homedir '/sub-obese*'];
+
+controlX = dir(control);
+obeseX = dir(obese);
+
+subj = vertcat(controlX, obeseX);
+%subj = obeseX; 
+addpath([homedir  '/CODE/ANALYSIS/PHYSIO'])
+
+%subj={'control100'};%;'12';'13';'14';'15';'16';'17';'18';'20';'21';'22';'23';'24';'25';'26';}; %subID;
 %physioID = {'s11'; 's13'; 's14'; 's15'; 's16'; 's17'; 's18'; 's20'; 's21'; 's22'; 's23'; 's24'; 's25'; 's26''s10'; 's11'; 's13'; 's14'; 's15'; 's16'; 's17'; 's18'; 's20'; 's21'; 's22'; 's23'; 's24'; 's25'; 's26'};
 %10';'12';'14'; '16';
 
 
 for i=1:length(subj)
-    subjX = subj{i,1};
-    subjX=char(subjX); % subj{i,1}
-   
+    i = i+67; %do just 
+    if i == 70
+        break
+    end
+    %subjX = subj{i,1};
+    %subjX=char(subjX); % subj{i,1}
+    subjO = subj(i).name;
+    subjO=char(subjO);
+    %group = subjO(1:end-3);
+    subjX = subjO(5:end);
+    sub = subjO(end-2:end);
     
-    fprintf('participant number: %s \n', subj{i})
+                    
+
     
+     %load behavioral file
+    if strcmp(session, 'third') %session third exceptions
+        
+        subjdir = fullfile(physiodir, subjX, ['ses-' session]);
+        filename = ['2' sub '.acq'];
+        %behav_file = [num2str(subjX) '_ses-' sessionX '_task-' taskX '_events.mat'];
+        full_path = fullfile(subjdir, ['2' sub '.acq']);
+
+    
+        %missing trials
+        %if strcmp(subjX(end-2:end), '201')  || strcmp(subjX(end-2:end), '214') 
+            %continue
+        %end
+
+        %missing hedonic sess
+        %if  strcmp(subjX(end-2:end), '208') || strcmp(subjX(end-2:end), '212') || strcmp(subjX(end-2:end), '245') || strcmp(subjX(end-2:end), '249')
+            %continue
+        %end
+        if exist(full_path, 'file')
+            cd (subjdir)
+        else 
+            continue
+        end
+    else   %session second exceptions
+        subjdir = fullfile(physiodir, subjX, ['ses-' session]);
+        filename = [sub '.acq'];
+        %behav_file = [num2str(subjX) '_ses-' sessionX '_task-' taskX '_events.mat'];
+        full_path = fullfile(subjdir, [sub '.acq']);
+
+        %old structure
+        %if strcmp(subjX(end-2:end), '101') || strcmp(subjX(end-2:end), '103')
+            %continue
+        %end
+
+        if exist(full_path, 'file')
+            cd (subjdir)
+        else 
+            continue
+        end
+    end
+    
+    disp (['****** PARTICIPANT: ' subjX ' **** session ' session ' ****' ]);
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % OPEN FILE
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    subjdir = fullfile(physiodir, subj{1}, ['ses-' session]);
-    cd (subjdir)
-    
-    file = dir('*.acq');
-    %physio = load_acq(file.name); %load and transform acknoledge file
-    rundir = fullfile(homedir, 'ses-second','func'); % run{k}
-    %nouveau canal = (CH28x1+CH29x2+CH30x4+CH31x8+CH32x16+CH33x32+CH34x64)/5
-    
+
+   
+    physio = load_acq(filename); %load and transform acknoledge file
+    %load('control100.mat')
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % SET PARAMETERS ACCORDING TO THE SCANNER
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-
     % ENTER VARIABLES PARAMETERS for the PIT
-    sampling_rate = 500; % number of measures per sec
+    SR = 500; % number of measures per sec
     TR = 2;
-%     EPI1 = get_N_scans(subj{1}, 'instrumentallearning', session);
-%     EPI2 = get_N_scans(subj{1}, 'pavlovianlearning', session);
-%     EPI3 = get_N_scans(subj{1}, 'PIT', session);
-%     EPI4 = get_N_scans(subj{1}, 'hedonicreactivity', session);
-%     
-    grip_channel = 4; %
-    suck_channel = 5; %ACC1-z
-    MRI_volumeALL = 13; %??
-    MRI_volumeHED = 9; %?? HED
-    %num_channel = 4; %channels of interest ??
 
+    grip_channel = 4; %
+    suck_channel = 5; %
+    MRI = 13; %
+    %num_channel = 4; %channels of interest 
 
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % EXTRACT SIGNAL FOR TAPAS TOOLBOX AND SAVE INPUT VARIABLES
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    %Sycronize the physiological data to the MRI session %not two 5 in X (sampling rate * TR) 
-    start_1 = find((physio.data (:,MRI_volumeALL)) == 5, 1, 'first'); % First MRI volume trigger start_INST = find((physio.data (:,MRI_volumeALL)) == 5, 1, 'first'); % First MRI volume trigger
-    end_4 = find((physio.data (:,MRI_volumeALL)) == 5, 1, 'last'); % First MRI volume trigger start_INST = find((physio.data (:,MRI_volumeALL)) == 5, 1, 'first'); % First MRI volume trigger
-    %(CH28x1+CH29x2+CH30x4+CH31x8+CH32x16+CH33x32+CH34x64)/5
-    nouveau_canal = (physio.data (:,6)*1+physio.data (:,7)*2+physio.data (:,8)*4+physio.data (:,9)*8+physio.data (:,10)*16+physio.data (:,11)*32+physio.data (:,12)*64+physio.data (:,13)*128)/5;
-    %nouveau_canal = (physio.data (:,6)+physio.data (:,7)+physio.data (:,8)+physio.data (:,9)+physio.data (:,10)+physio.data (:,11)+physio.data (:,12))/5;
+    %Sycronize the physiological data to the MRI session %we can use EPI to check if the lenght is the same between physio recording and MRI scans 
 
-    %remove useless parts
-    %physio.data = physio.data (start_1:end_4,:);
+    data = physio.data;
     
-    time_1 = (EPI1 * TR) * sampling_rate;
-    time_2 = (EPI2 * TR) * sampling_rate;
-    time_3 = (EPI3 * TR) * sampling_rate;
-    time_4 = (EPI4 * TR) * sampling_rate;
+    %create new trigger channel %(CH28x1+CH29x2+CH30x4+CH31x8+CH32x16+CH33x32+CH34x64)/5
+    data(:,16) = (data (:,6)*1+data (:,7)*2+data (:,8)*4+data (:,9)*8+data (:,10)*16+data (:,11)*32+data (:,12)*64)/5;
     
+    %DO HED
+    if find((data (:,16)) == 62, 1, 'first')
+        start_HED = find((data (:,16)) == 62, 1, 'first'); % 62 is HED disctinctive trigger
+
+        HED = data(start_HED-10000:length(data),:);
+        start = find((HED (:,MRI)) == 5, 1, 'first'); % First MRI volume trigger start_INST = find((data (:,MRI_volumeALL)) == 5, 1, 'first'); % First MRI volume trigger
+        fin_H = find((HED (:,MRI)) == 5, 1, 'last'); % + TR*sampling_rate; % First MRI volume trigger start_INST = find((data (:,MRI_volumeALL)) == 5, 1, 'first'); % First MRI volume trigger
+        HED = HED(start:fin_H,:);
+
+        data = data(1:start_HED-10001,:);
+        
+        save (['HED_' subjX '.mat'], 'HED');
+
+        %EPI4 = get_N_scans(subjX, 'hedonicreactivity', session);
+        %length(HED) - EPI4*TR*SR %check length - OK
+    else 
+        data = data(1:length(data),:);
+    end
     
-    %cut cut cut
+    if isempty(data)
+        break
+    end
     
-    physio1.data = physio.data (start_1:start_1+time_1+1000,:);
+    %DO PIT
+    if find((data (:,16)) == 48, 1, 'first')
+        start_PIT = find((data (:,16)) == 48, 1, 'first'); % 48 is PIT disctinctive trigger
+
+        PIT = data(start_PIT-10000:length(data),:);
+        start = find((PIT (:,MRI)) == 5, 1, 'first'); % First MRI volume trigger start_INST = find((data (:,MRI_volumeALL)) == 5, 1, 'first'); % First MRI volume trigger
+        fin = find((PIT (:,MRI)) == 5, 1, 'last'); % + TR*sampling_rate; % First MRI volume trigger start_INST = find((data (:,MRI_volumeALL)) == 5, 1, 'first'); % First MRI volume trigger
+        PIT = PIT(start:fin,:);
+        data = data(1:start_PIT-10001,:);  
+
+        save (['PIT_' subjX '.mat'], 'PIT');
+
+        EPI3 = get_N_scans(subjX, 'PIT', session);
+        %length(PIT) - EPI3*TR*SR %check length - OK
+    
+        ePIT = 1;
+    else 
+        data = data(1:length(data),:);
+    end
     
 
-    pyhsio_end = length(physio.data); %%% HERE INSERT THE LENGHT OF THE PHYSIO FILE: Physiotoolbox will calculate the exact length !!
+    if isempty(data)
+        break
+    end
     
-%     respEPI = physio.data (scanner_start:pyhsio_end,resp_channel); % resp belt wave form
-%     heartEPI = physio.data (scanner_start:pyhsio_end,heart_channel); % SpO wave form
+%     %DO PAV
+%     if find((data(:,16)) == 5, 1, 'first')
+%         start_PAV = find((data(:,16)) == 16, 1, 'first'); % 16 is PAV disctinctive trigger
+% 
+%         PAV = data(start_PAV-10000:length(data),:);
+%         start = find((PAV (:,MRI)) == 5, 1, 'first'); % First MRI volume trigger start_INST = find((data (:,MRI_volumeALL)) == 5, 1, 'first'); % First MRI volume trigger
+%         fin = find((PAV (:,MRI)) == 5, 1, 'last'); % + TR*sampling_rate; % First MRI volume trigger start_INST = find((data (:,MRI_volumeALL)) == 5, 1, 'first'); % First MRI volume trigger
+%         PAV = PAV(start:fin,:);
+% 
+%         data = data(1:start_PAV-10001,:);
+%         
+%         %EPI2 = get_N_scans(subjX, 'pavlovianlearning', session);
+%         %length(PAV) - EPI2*TR*SR %check length - OK
+%         save (['PAV_' subjX '.mat'], 'PAV');
+%     else 
+%         data = data(1:length(data),:);
+%     end
+%     if isempty(data)
+%         break
+%     end
+%     
+%     
+%     %DO INST
+%     %if find((data(:,16)) == 7, 1, 'first')
+%         start_INST = find((data(:,16)) == 7, 1, 'first'); % 7 is INST disctinctive trigger
+% 
+%         INST = data(start_INST-10000:length(data),:);
+%         start = find((INST (:,MRI)) == 5, 1, 'first'); % First MRI volume trigger start_INST = find((data (:,MRI_volumeALL)) == 5, 1, 'first'); % First MRI volume trigger
+%         fin = find((INST (:,MRI)) == 5, 1, 'last'); % + TR*sampling_rate; % First MRI volume trigger start_INST = find((data (:,MRI_volumeALL)) == 5, 1, 'first'); % First MRI volume trigger
+%         INST = INST(start:fin,:);
+%         
+%         save (['INST_' subjX '.mat'], 'INST');
+%         
+%         EPI1 = get_N_scans(subjX, 'instrumentallearning', session);
+% 
+%         eINST = 1;
+%     %else 
+%         %data = data(1:length(data),:);
+%     %end
+%     %if data = []
+%         %break
+%     %end
 %     
     
-%     %cd (subjdir) % we save these variables in the subject directory with the nii images
-%     save (['respEPI_' subjX '.mat'], 'respEPI');
-%     save (['heartEPI_' subjX '.mat'], 'heartEPI');
 
-    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % CREATE AND SAVE THE EFFORT REGRESSOR
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+    %PIT
+    if ePIT
+        mxEPI = (TR*SR); %n of physio point measure per EPI
+        scanner_end = length(PIT);
+        gripEPI = PIT(1:scanner_end,grip_channel); %exact length of the pyhsiological during the scanning session
+        effort_reg = nan(length(EPI3),1);% initialize an empty vector
+        cmpt = 1;
 
-    mxEPI = (TR*sampling_rate); %n of physio point measure per EPI
-    %scanner_end = max (find((physio.data (:,MRI_volume)) == 5)) + mxEPI;% we need to add + mxEPI because the trigger is at the begining of TR not at the end
-    scanner_end = length(physio.data);
-    gripEPI = physio.data (scanner_start:scanner_end,grip_channel); %exact length of the pyhsiological during the scanning session
-    effort_reg = nan (length(EPI),1);% initialize an empty vector
-    cmpt = 1;
-
-    for j= 1:length(EPI)
-        %disp ([num2str(cmpt)]);
-        if cmpt+mxEPI > length (gripEPI) % this should prevent matlab to crash if the physio is shorter than the scanning run
-            x = length(gripEPI);
-        else
-            x = cmpt+mxEPI;
+        for j= 1:EPI3
+            %disp ([num2str(cmpt)]);
+            if cmpt+mxEPI > length (gripEPI) % this should prevent matlab to crash if the physio is shorter than the scanning run
+                x = length(gripEPI);
+            else
+                x = cmpt+mxEPI;
+            end
+            mean_effort = mean (gripEPI(cmpt:x));
+            cmpt = cmpt+mxEPI;
+            effort_reg (j) = mean_effort;
         end
-        mean_effort = mean (gripEPI(cmpt:x));
-        cmpt = cmpt+mxEPI;
-        effort_reg (j) = mean_effort;
-    end
 
+
+        % save the reg as a file text in the participant directory
+        fid = fopen('PIT_regressor_effort.txt','wt');
+        for ii = 1:length(effort_reg)
+            fprintf(fid,'%g\t',effort_reg(ii));
+            fprintf(fid,'\n');
+        end
+        fclose(fid);
+    end
     
-    % save the reg as a file text in the participant directory
-    fid = fopen('regressor_effort.txt','wt');
-    for ii = 1:length(effort_reg)
-        fprintf(fid,'%g\t',effort_reg(ii));
-        fprintf(fid,'\n');
-    end
-    fclose(fid);
+    %PAV
+    
+%     if eINST
+%         
+%         mxEPI = (TR*SR); %n of physio point measure per EPI
+%         scanner_end = length(PAV);
+%         gripEPI = PAV(1:scanner_end,grip_channel); %exact length of the pyhsiological during the scanning session
+%         effort_reg = nan (length(EPI2),1);% initialize an empty vector
+%         cmpt = 1;
+% 
+%         for j= 1:EPI2
+%             %disp ([num2str(cmpt)]);
+%             if cmpt+mxEPI > length (gripEPI) % this should prevent matlab to crash if the physio is shorter than the scanning run
+%                 x = length(gripEPI);
+%             else
+%                 x = cmpt+mxEPI;
+%             end
+%             mean_effort = mean (gripEPI(cmpt:x));
+%             cmpt = cmpt+mxEPI;
+%             effort_reg (j) = mean_effort;
+%         end
 
+
+%         % save the reg as a file text in the participant directory
+%         fid = fopen('PAV_regressor_effort.txt','wt');
+%         for ii = 1:length(effort_reg)
+%             fprintf(fid,'%g\t',effort_reg(ii));
+%             fprintf(fid,'\n');
+%         end
+%         fclose(fid);
+%     end
 
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -153,87 +298,30 @@ for i=1:length(subj)
     num_channel = [4 5 9 10 13]; %channels of interest ??
     if displayPlot
         % Variable for Figure1
-        Start = scanner_start;
-        End = pyhsio_end;
+        Start = start_INST;
+        End = fin_H;
             i = 0;
             % Figure run1
             figure
-            for j = [4 5 9 10 13]
+            for j = [4 5 13 16]
                 i = i + 1;
                 subplot(length(num_channel),1,i);
                 plot(physio.data (Start:End,j));
                 switch j
                     %case 1
                         %title('ACC1-X');
-                    %case 2
-                        %title('ACC1-Y');
-                    %case 3
-                        %title('ACC1-Z');
                     case 4
                         title ('Handgrip');
                     case 5
                         title('Licking');
-                    case 6
-                        title('DG input 1');
-                    case 7
-                        title('DG input 2');
-                    case 8
-                        title('DG input 3');
-                    case 9
-                        title('DG input 4');
-                    case 10
-                        title('DG input 5');
-                    case 11
-                        title('DG input 6');
-                    case 12
-                        title('DG input 7');
                     case 13
-                        title('DG input 8');
-                    case 14
-                        title('SumAbsAcc');
-                    case 15
-                        title('SumAbsAccInt');
+                        title('MRI Volume');
+                    case 16
+                        title('Triggers');
                 end
             end
         end
-%             figure
-%             for j = 1:num_channel
-%                 subplot(num_channel,1,j);
-%                 plot(physio.data (Start:End,j));
-%                 switch j
-%                     %case 1
-%                         %title('ACC1-X');
-%                     %case 2
-%                         %title('ACC1-Y');
-%                     %case 3
-%                         %title('ACC1-Z');
-%                     case 4
-%                         title ('Handgrip');
-%                     case 5
-%                         title('Licking');
-%                     case 6
-%                         title('DG input 1');
-%                     case 7
-%                         title('DG input 2');
-%                     case 8
-%                         title('DG input 3');
-%                     case 9
-%                         title('DG input 4');
-%                     case 10
-%                         title('DG input 5');
-%                     case 11
-%                         title('DG input 6');
-%                     case 12
-%                         title('DG input 7');
-%                     case 13
-%                         title('DG input 8');
-%                     case 14
-%                         title('SumAbsAcc');
-%                     case 15
-%                         title('SumAbsAccInt');
-%                 end
-%             end
-%         end
+
 end 
     
 end
