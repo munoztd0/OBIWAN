@@ -8,8 +8,8 @@ analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV')
 
 setwd(analysis_path)
 
-#path <-'~/OBIWAN/DERIVATIVES/GLM/FSL/hedonicreactivity/GLM-02/group_covariates'
-path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-03/covariates'
+path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-04/covariates'
+#path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-04/covariates'
 
 #HED <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset

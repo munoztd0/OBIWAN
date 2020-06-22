@@ -1,12 +1,12 @@
-function GLM_02_getOnsets()
+function GLM_04_getOnsets()
 
-% intended for OBIWAN hedonic reactivity task
+% intended for OBIWAN PIT task 
 
 % get onsets 
-% Simplified model on ONSETs 7 (STARTTRIAL, 2*TASTE with modulator (liking
-% ratings) 3*questions 1 RINSE)
+% Simplified model on ONSETs (STARTTRIAL, 3*CS with modulator AUC)
 % last modified on MARCH 2020
-
+    
+    
 dbstop if error
 clear all
 
@@ -21,8 +21,8 @@ mdldir        = fullfile (homedir, '/DERIVATIVES/GLM/SPM');
 sourcefiles   = fullfile(homedir, '/DERIVATIVES/PREPROC');
 addpath (genpath(fullfile(homedir,'/CODE/ANALYSIS/fMRI/dependencies')));
 
-ana_name      = 'GLM-02';
-task          = {'hedonicreactivity'}; 
+ana_name      = 'GLM-04';
+task          = {'PIT'}; 
 
 
 control = [homedir '/sub-control*'];
@@ -31,13 +31,13 @@ obese = [homedir '/sub-obese*'];
 controlX = dir(control);
 obeseX = dir(obese);
 
+%subj = controlX; 
 subj = vertcat(controlX, obeseX);
 
-session = {'second'}; % 'third'};
-%subj          = {'100'};
-%group         = {'control'};
-%subj          = {'100'    ;'102'    ;'105'    ;'106'    ;'107'    ;'108'    ;'109'    ;'110'    ;'112'    ;'113'    ;'114'    ;'115'    ;'116'    ;'118'    ;'119'    ;'120'    ;'121'    ;'122'    ;'125'    ;'126'    ;'127'    ;'128'    ;'129'    ;'130'    ;'131'    ;'132'    ;'133'    };     % subject ID
-%group         = {'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control';'control'}; % control or obsese
+session = {'second'};
+
+%subj          = {'129'    ;'131'    ;'132'    ;'133'    ;'213'  ;'216'  ;'219'  ;'220'  ;'221'  };     % subject ID
+%group         = {'control';'control';'control';'control';'obese';'obese';'obese';'obese';'obese'}; % control or obsese
 
 %% create folder  
 mkdir (fullfile (mdldir, char(task), ana_name)); % this is only because we have one task per task
@@ -50,57 +50,57 @@ for j = 1:length(task)
     
     for  i=1:length(subj)
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Load participants data
+        %subjX=subj(i,1);
         subjX = subj(i).name;
         subjX=char(subjX);
         group = subjX(1:end-3);
         sub = subjX(end-2:end);
         %conditionX=char(group(i,1));
-        sessionX=char(session(j));
-        %subjX=[char(group(i)) char(subj(i))];
-        sess=['ses-' sessionX];               
-                
+        sessionX=char(session(j)); 
+        sess=['ses-' sessionX];
+
+            
         path = fullfile(sourcefiles, subjX,['ses-' sessionX],'func');
         behav_file = [num2str(subjX) '_ses-' sessionX '_task-' taskX '_events.mat'];
         full_path = fullfile(path, behav_file);
             
 
         %load behavioral file
-        if strcmp(sessionX, 'third') %session third exceptions
-                
+        if strcmp(sessionX, 'third')
+            
             %missing trials
-            if strcmp(subjX(end-2:end), '201')  || strcmp(subjX(end-2:end), '214') 
+            if strcmp(subjX(end-2:end), '214')  
                 continue
             end
             
-            %missing hedonic sess
-            if  strcmp(subjX(end-2:end), '208') || strcmp(subjX(end-2:end), '212') || strcmp(subjX(end-2:end), '245') || strcmp(subjX(end-2:end), '249')
+            %missing PIT sess
+            if  strcmp(subjX(end-2:end), '212')  || strcmp(subjX(end-2:end), '245') || strcmp(subjX(end-2:end), '249')
                 continue
             end
+            
             if exist(full_path, 'file')
                 cd (path)
                 load (behav_file);
             else 
                 continue
             end
-        else   %session second exceptions
+        else
             
-            %old structure
-            if strcmp(subjX(end-2:end), '101') || strcmp(subjX(end-2:end), '103')
-                continue
-            end
+%             %old structure
+%             if strcmp(subjX(end-2:end), '101') || strcmp(subjX(end-2:end), '103')
+%                 continue
+%             end
 
             %missing trials
-            if strcmp(subjX(end-2:end), '123') || strcmp(subjX(end-2:end), '124') || strcmp(subjX(end-2:end), '234')
+            if strcmp(subjX(end-2:end), '110') || strcmp(subjX(end-2:end), '218') %|| strcmp(subjX(end-2:end), '234')
                 continue
             end
 
-            %missing hedonic sess
-            if strcmp(subjX(end-2:end), '212')
+            %missing PIT sess
+            if strcmp(subjX(end-2:end), '212') || strcmp(subjX(end-2:end), '224')
                 continue
             end
-        
+            
             if exist(full_path, 'file')
                 cd (path)
                 load (behav_file);
@@ -109,55 +109,49 @@ for j = 1:length(task)
             end
         end
         
+        
         disp (['****** PARTICIPANT: ' subjX ' **** session ' sessionX ' ****' ]);
-
         
         subjdir = fullfile(mdldir, char(task), ana_name,  subjX,'timing');
         mkdir (subjdir)
-       
-        %cd (fullfile(sourcefiles, subjX,['ses-' sessionX],'func'));
-        %fprintf('participant number: %s task: %s \n', subj(i).name, task{j})
-        %disp(['file ' num2str(i) ' ' behav_file]);
-        
         
         %% FOR SPM
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Get onsets and durations for start
-        onsets.trialstart    = ONSETS.trialstart;
-        durations.trialstart = zeros (length(onsets.trialstart),1);
-        modulators.trialstart = ones (length(onsets.trialstart),1);
+        % Get onsets and durations for CS
+        
+        onsets.CS.CSp          = ONSETS.trial(strcmp ('CSplus', CONDITIONS.CS));
+        onsets.CS.CSm          = ONSETS.trial(strcmp ('CSminus', CONDITIONS.CS));
+        onsets.CS.Baseline     = ONSETS.trial(strcmp ('BL', CONDITIONS.CS));
+        
+        durations.CS.CSp       = DURATIONS.trial(strcmp ('CSplus', CONDITIONS.CS));
+        durations.CS.CSm       = DURATIONS.trial(strcmp ('CSminus', CONDITIONS.CS));
+        durations.CS.Baseline  = DURATIONS.trial(strcmp ('BL', CONDITIONS.CS));
+        
+        %change here
+        modulators.CS.CSp      = BEHAVIOR.AUC(strcmp ('CSplus', CONDITIONS.CS))';
+        modulators.CS.CSm      = BEHAVIOR.AUC(strcmp ('CSminus', CONDITIONS.CS))';
+        modulators.CS.Baseline = BEHAVIOR.AUC(strcmp ('BL', CONDITIONS.CS))';
+        
+        
+       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Get onsets and durations for ITI
+        
+        onsets.ITI          = ONSETS.ITI;
+        durations.ITI          = DURATIONS.ITI;
+        modulators.ITI           = ones  (length(onsets.ITI),1);
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Get onsets and durations for taste
-        onsets.taste.reward      = ONSETS.break(strcmp ('MilkShake', CONDITIONS));
-        onsets.taste.control     = ONSETS.break(strcmp ('Empty', CONDITIONS));
+        % Get onsets grips
+        %change here
+        onsets.grips           = ONSETS.grips;
+        durations.grips       = zeros (length(onsets.grips),1);
+        modulators.grips      = ones  (length(onsets.grips),1);
         
-        durations.taste.reward   = zeros (length(onsets.taste.reward),1);
-        durations.taste.control  = zeros (length(onsets.taste.control),1);
+        onsets.peaks           = ONSETS.peaks;
+        durations.peaks       = zeros (length(onsets.peaks),1);
+        modulators.peaks      = ones  (length(onsets.peaks),1);
         
-        modulators.taste.reward  = BEHAVIOR.liking (strcmp ('MilkShake', CONDITIONS));
-        modulators.taste.control = BEHAVIOR.liking (strcmp ('Empty', CONDITIONS));
-        
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Get onsets and duration questions
-        onsets.liking            = ONSETS.liking;
-        durations.liking         = DURATIONS.liking;
-        modulators.liking        = ones (length(onsets.liking),1);
-        
-        onsets.intensity         = ONSETS.intensity;
-        durations.intensity      = DURATIONS.intensity;
-        modulators.intensity     = ones (length(onsets.intensity),1);
-        
-        onsets.familiarity       = ONSETS.familiarity;
-        durations.familiarity    = DURATIONS.familiarity;
-        modulators.familiarity   = ones (length(onsets.familiarity),1);
-        
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Get onsets and duration for rinse
-        onsets.rinse             = ONSETS.rince;
-        durations.rinse          = DURATIONS.rince;
-        modulators.rinse         = ones (length(onsets.rinse),1);
         
         %% FOR FSL
         
@@ -167,14 +161,14 @@ for j = 1:length(task)
         
         % create text file with 3 colons: onsets, durations, paretric modulators
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        name = {'trialstart'; 'taste'; 'liking'; 'intensity'; 'familiarity'; 'rinse'};
+        name = { 'CS';  'ITI'; 'grips'; 'peaks'};
         
         for ii = 1:length(name)
             
             nameX = char(name(ii));
             
-            if strcmp (nameX, 'taste')  % for structure that contains substuctures
-                substr = {'reward'; 'control'};% specify the substructures names
+            if strcmp (nameX, 'CS')  % for structure that contains substuctures
+                substr = {'CSp'; 'CSm'; 'Baseline'};% specify the substructures names
                 
                 for iii = 1:length(substr)
                     substrX = char(substr(iii));
@@ -191,7 +185,7 @@ for j = 1:length(task)
                     fclose(fid);
                 end
                 
-          else
+            else
                 % database with three rows of interest %%%% ADD MODULATORS
                 database.(nameX) = [num2cell(onsets.(nameX)), num2cell(durations.(nameX)), num2cell(modulators.(nameX))];
                 % save the database in a txt file
@@ -214,6 +208,5 @@ for j = 1:length(task)
     end
     
 end
-
 
 end

@@ -1,4 +1,4 @@
-function GLM_03_stLevel(subID)
+function GLM_04_stLevel(subID)
 
 % compute first level model contrasts CSp-CSm with PM effort AUC
 
@@ -8,7 +8,7 @@ dbstop if error
 %% define task variable
 sessionX = 'second';
 task = 'PIT';
-name_ana = 'GLM-03'; % output folder for this analysis
+name_ana = 'GLM-04'; % output folder for this analysis
 
 %% DEFINE PATH
 
@@ -25,7 +25,7 @@ obeseX = dir(obese);
 subj = vertcat(controlX, obeseX);
 
 %% What to do
-firstLevel    = 1;
+firstLevel    = 0;
 constrasts    = 1;
 copycontrasts = 1;
 
@@ -140,7 +140,7 @@ for i = 1:length(subj)
         cd (fullfile(subjoutdir,'output'))
         
         % copy images T
-        Timages = ['01'; '02'; '03'; '04';'05'; '06'; '07'];% constrasts of interest
+        Timages = ['03'; '04'; '05']; %; '03'; 's04';'05'; '06'; '07'];% constrasts of interest
         for y =1:size(Timages,1)
             copyfile(['con_00' (Timages(y,:)) '.nii'],[groupdir, subjX '_con-00' (Timages(y,:)) '.nii'])
         end
@@ -405,48 +405,65 @@ end
         % | CONSTRASTS FOR T-TESTS
 
         
-        % con1
-        Ctnames{1} = 'CSp_CSm';
-        weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
-        weightNeg  = ismember(conditionName, {'task1.CS.CSm'})* -1;
-        Ct(1,:)    = weightPos+weightNeg;
+%         % con1
+%         Ctnames{1} = 'CSp_eff';
+%         weightPos  = ismember(conditionName, {'task1.CS.CSpxeffort^1'}) * 1;
+%         Ct(1,:)    = weightPos;
+%         
+%         % con2
+%         Ctnames{2} = 'CSmEffort';
+%         weightNeg  = ismember(conditionName, {'task1.CS.CSmxeffort^1'})* 1;
+%         Ct(2,:)    = weightPos+weightNeg;
+
+        % con3
+        Ctnames{1} = 'BaselineEffort';
+        weightPos  = ismember(conditionName, {'task1.CS.Baselinexeffort^1'}) * 1;
+        Ct(1,:)    = weightPos;
         
-        % con2
-        Ctnames{2} = 'CSpEffort_CSmEffort';
+        % con4
+        Ctnames{2} = 'CSp_Eff-BaseEff';
         weightPos  = ismember(conditionName, {'task1.CS.CSpxeffort^1'}) * 1;
-        weightNeg  = ismember(conditionName, {'task1.CS.CSmxeffort^1'})* -1;
+        weightNeg  = ismember(conditionName, {'task1.CS.Baselinexeffort^1'})* -1;
         Ct(2,:)    = weightPos+weightNeg;
         
-        %con3
-        Ctnames{3} = 'Effort';
-        weightPos  = ismember(conditionName, {'task1.CS.CSpxeffort^1', 'task1.CS.CSmxeffort^1', 'task1.CS.Baselinexeffort^1'}) * 1;
-        Ct(3,:)    = weightPos;
-        
-                
-        % con4 
-        Ctnames{4} = 'CSpEffort_CSmEffort&BaselineEffort';
-        weightPos  = ismember(conditionName, {'task1.CS.CSpxeffort^1'}) * 1;
-        weightNeg  = ismember(conditionName, {'task1.CS.CSmxeffort^1', 'task1.CS.Baselinexeffort^1'})* -1;
-        Ct(4,:)    = weightPos+weightNeg;
-                       
         % con5
-        Ctnames{5} = 'CSp_CSm&Baseline';
-        weightPos  = ismember(conditionName, {'task1.CS.CSp', }) * 2;
-        weightNeg  = ismember(conditionName, {'task1.CS.CSm', 'task1.CS.Baseline'})* -1;
-        Ct(5,:)    = weightPos+weightNeg;
-        
-        % con6
-        Ctnames{6} = 'CSp_CSm';
-        weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
-        weightNeg  = ismember(conditionName, {'task1.CS.CSm'})* -1;
-        Ct(6,:)    = weightPos+weightNeg;
-        
-        % con7
-        Ctnames{7} = 'CSp_ITI';
-        weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
-        weightNeg  = ismember(conditionName, {'task1.CS.ITI'})* -1;
-        Ct(7,:)    = weightPos+weightNeg;
-           
+        Ctnames{3} = 'CSm_Eff-BaseEff';
+        weightPos  = ismember(conditionName, {'task1.CS.CSmxeffort^1'}) * 1;
+        weightNeg  = ismember(conditionName, {'task1.CS.Baselinexeffort^1'})* -1;
+        Ct(3,:)    = weightPos+weightNeg;
+
+
+%         
+%         %con3
+%         Ctnames{3} = 'Effort';
+%         weightPos  = ismember(conditionName, {'task1.CS.CSpxeffort^1', 'task1.CS.CSmxeffort^1', 'task1.CS.Baselinexeffort^1'}) * 1;
+%         Ct(3,:)    = weightPos;
+%         
+%                 
+%         % con4 
+%         Ctnames{4} = 'CSpEffort_CSmEffort&BaselineEffort';
+%         weightPos  = ismember(conditionName, {'task1.CS.CSpxeffort^1'}) * 1;
+%         weightNeg  = ismember(conditionName, {'task1.CS.CSmxeffort^1', 'task1.CS.Baselinexeffort^1'})* -1;
+%         Ct(4,:)    = weightPos+weightNeg;
+%                        
+%         % con5
+%         Ctnames{5} = 'CSp_CSm&Baseline';
+%         weightPos  = ismember(conditionName, {'task1.CS.CSp', }) * 2;
+%         weightNeg  = ismember(conditionName, {'task1.CS.CSm', 'task1.CS.Baseline'})* -1;
+%         Ct(5,:)    = weightPos+weightNeg;
+%         
+%         % con6
+%         Ctnames{6} = 'CSp_CSm';
+%         weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
+%         weightNeg  = ismember(conditionName, {'task1.CS.CSm'})* -1;
+%         Ct(6,:)    = weightPos+weightNeg;
+%         
+%         % con7
+%         Ctnames{7} = 'CSp_ITI';
+%         weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
+%         weightNeg  = ismember(conditionName, {'task1.CS.ITI'})* -1;
+%         Ct(7,:)    = weightPos+weightNeg;
+%            
 
 %         % con5
 %         Ctnames{5} = 'grips';
