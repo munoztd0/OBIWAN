@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# pull in subject we're working on
+# pull in subject
 subjectID=$1
 
 echo "Preparing subject ${subjectID}, first session, for FEAT"
@@ -22,9 +22,9 @@ echo "Started reorientation and brain extraction on T1 at $(date +"%T")"
 # reorient T1 to standard
 fslreorient2std ${dataDir}ses-first/anat/*T1.nii.gz ${outDir}sub-${subjectID}_ses-first_run-01_T1_reoriented
 
-# extract brain (default -f threshold 0.2, if standard -B flag isn't satisfactory try combination of -f XX -g XX -c XXX XXX XXX or use T2 brain mask)
+# extract brain (default -f threshold 0.2; if standard -B flag isn't satisfactory try combination of -f XX -g XX -c XXX XXX XXX or use T2 brain mask)
 bet ${outDir}sub-${subjectID}_ses-first_run-01_T1_reoriented ${outDir}sub-${subjectID}_ses-first_run-01_T1_reoriented_brain -f 0.2 -B
-# bet ${outDir}sub-${subjectID}_ses-first_run-01_T1_reoriented ${outDir}sub-${subjectID}_ses-first_run-01_T1_reoriented_brain -f 0.3 -g -0.2 -c 96 119 165 -m
+# bet ${outDir}sub-${subjectID}_ses-first_run-01_T1_reoriented ${outDir}sub-${subjectID}_ses-first_run-01_T1_reoriented_brain -f 0.4 -g -0.2 -c 96 134 170 -m
 # fslmaths ${outDir}sub-${subjectID}_ses-first_run-01_T1_reoriented -mas ${outDir}sub-${subjectID}_ses-first_run-01_T2_reoriented_brain_mask ${outDir}sub-${subjectID}_ses-first_run-01_T1_reoriented_brain
 
 echo "Done reorientation and brain extraction on T1 at $(date +"%T")"
@@ -38,9 +38,9 @@ echo "Started reorientation and brain extraction on T2 at $(date +"%T")"
 # reorient T2 to standard
 fslreorient2std ${dataDir}ses-first/anat/*T2.nii.gz ${outDir}sub-${subjectID}_ses-first_run-01_T2_reoriented
 
-# extract brain (default -f threshold 0.2, if standard -B flag isn't satisfactory try combination of -f XX -g XX -c XXX XXX XXX or use T1 brain mask)
+# extract brain (default -f threshold 0.2; if standard -B flag isn't satisfactory try combination of -f XX -g XX -c XXX XXX XXX or use T1 brain mask)
 bet ${outDir}sub-${subjectID}_ses-first_run-01_T2_reoriented ${outDir}sub-${subjectID}_ses-first_run-01_T2_reoriented_brain -f 0.2 -B
-# bet ${outDir}sub-${subjectID}_ses-first_run-01_T2_reoriented ${outDir}sub-${subjectID}_ses-first_run-01_T2_reoriented_brain -f 0.4 -g -0.0 -c 96 115 169 -m
+# bet ${outDir}sub-${subjectID}_ses-first_run-01_T2_reoriented ${outDir}sub-${subjectID}_ses-first_run-01_T2_reoriented_brain -f 0.5 -c 96 134 170 -m
 # fslmaths ${outDir}sub-${subjectID}_ses-first_run-01_T2_reoriented -mas ${outDir}sub-${subjectID}_ses-first_run-01_T1_reoriented_brain_mask ${outDir}sub-${subjectID}_ses-first_run-01_T2_reoriented_brain
 
 echo "Done reorientation and brain extraction on T2 at $(date +"%T")"

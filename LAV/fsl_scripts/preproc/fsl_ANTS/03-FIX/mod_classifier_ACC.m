@@ -5,8 +5,8 @@
 clear all
 myclassification = 0;
 
-subX  = 'obese202';
-sesX = 'third';
+subX  = 'obese242';
+sesX = 'second';
 %taskX = 'pavlovianlearning';
 %taskX = 'PIT';
 taskX = 'hedonicreactivity';
@@ -18,8 +18,8 @@ homePath = [home '/OBIWAN/'];
 
 
 %% define path
-% homePath = '/home/cisa/mountpoint/';
-homePath = '/Users/lavinia/mountpoint';
+homePath = '/home/cisa/mountpoint/';
+%homePath = '/Users/lavinia/mountpoint';
 
 runPath  = fullfile(homePath,'DATA/STUDY/DERIVED/ICA_ANTS/', ['sub-' subX ], ['ses-' sesX ], '/func/', ['task-' taskX '.ica/']);
 
@@ -34,7 +34,7 @@ for i = 1:length(thr)
     thrX = char(thr(i));
     
 %    fid = fopen(['fix4melview_FIX_obiwan_thr' thrX '.txt']);
-    fid = fopen(['fix4melview_FIX_obiwan_02_thr' thrX '.txt']);
+    fid = fopen(['fix4melview_FIX_obiwan_03_thr' thrX '.txt']);
     indata = textscan(fid,'%d %q %s','Delimiter', ',','HeaderLines',1);
     fclose(fid);
     
@@ -47,8 +47,8 @@ end
 
 %% load my modifed classification
 
-% fid = fopen(['fix_modified_obiwan_01_thr20.txt']);
-fid = fopen(['fix_modified_obiwan_02_thr20.txt']);
+%fid = fopen(['fix_modified_obiwan_01_thr20.txt']);
+fid = fopen(['fix_modified_obiwan_03_thr20.txt']);
 %fid = fopen(['hand_labels_noise_lavinia.txt']);
 %fid = fopen(['hand_labels_noise.txt']);
 indata = textscan(fid,'%d %q %s','Delimiter', ',','HeaderLines',1);
@@ -175,6 +175,9 @@ classifier_modification.falseAlarm         =  sum(falseAlarm.class20)*100/length
 classifier_modification.modified_data      =  100 -classifier_modification.globalACC ;
 classifier_modification.missclassDetails   = [missclassified.compID, missclassified.label_modified, missclassified.label20];
 
+x = {classifier_modification.SNR classifier_modification.globalACC classifier_modification.missed classifier_modification.falseAlarm classifier_modification.modified_data}; 
+
+writetable(cell2table(x), 'table.xls','WriteVariableNames',0)
 
 %% save validation data
 if myclassification

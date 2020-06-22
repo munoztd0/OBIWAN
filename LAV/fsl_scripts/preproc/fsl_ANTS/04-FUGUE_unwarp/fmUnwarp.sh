@@ -1,28 +1,32 @@
 #!/bin/bash
 
-# pull in the subject we should be working on
+# pull in subject
 subjectID=$1
+
+# pull in session
 sessionID=$2
+
+# pull in task
 taskID=$3
-#subjectID="control125"
-#sessionID="second"
-#taskID="pavlovianlearning"
 
 echo "Preparing subject ${subjectID} session ${sessionID} task ${taskID}"
 
 # subject directory
 subT2=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${subjectID}/ses-first/anat/sub-${subjectID}_ses-first_run-01_T2_reoriented_brain.nii.gz
+
 # directory containing functionals and fieldmaps
 funcDir=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${subjectID}/ses-${sessionID}/func/task-${taskID}.ica/
+
 # directory with run-specific files
 runDir=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${subjectID}/ses-${sessionID}/fmap/
+
 # dwell time for fugue unwarping (EffectiveEchoSpacing for EPI in json)
 dwellTime=0.00036
 
 
 #######################
 # put EPI and fieldmaps in the same voxel space
-echo "Putting fieldmaps and EPI in the same space for subject ${subjectID} session ${sessionID} task ${taskID} at $(date +"%T")"
+echo "Putting fieldmaps and EPI in the same space for subject ${subjectID}, session ${sessionID}, task ${taskID} at $(date +"%T")"
 
 funcScan=${funcDir}filtered_func_data_clean
 mapImage=${runDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_fmap_rads
@@ -51,7 +55,7 @@ flirt -in ${mapImage} -ref ${funcScan}_mean_bias -init ${magImage}_EPIalign_inve
 
 #######################
 # Unwarp functionals
-echo "Unwarping functionals for subject ${subjectID} session ${sessionID} task ${taskID} at $(date +"%T")"
+echo "Unwarping functionals for subject ${subjectID}, session ${sessionID}, task ${taskID} at $(date +"%T")"
 
 # watch out for unwarpdir: must be the SAME as for magnitude warping
 fugue -i ${funcScan} --dwell=${dwellTime} --loadfmap=${mapImage}_EPIalign --unwarpdir=y- -u ${funcScan}_unwarped

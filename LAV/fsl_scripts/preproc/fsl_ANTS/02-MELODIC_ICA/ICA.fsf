@@ -57,8 +57,9 @@ set fmri(inputtype) 2
 # Carry out pre-stats processing?
 set fmri(filtering_yn) 1
 
-# Brain/background threshold, %
+# Brain/background threshold, % (LW 200414: Default threshold is 10. Must be set to 0 if BET is turned off and alternative mask is set.) 
 set fmri(brain_thresh) 10
+##set fmri(brain_thresh) 0
 
 # Critical z for design efficiency calculation
 set fmri(critical_z) 5.3
@@ -106,8 +107,9 @@ set fmri(st) 0
 # Slice timings file
 set fmri(st_file) ""
 
-# BET brain extraction (already done during preprocessing)
-set fmri(bet_yn) 0
+# BET brain extraction (LW 200414: If already done during preprocessing, BET can be turned off. If turned off, an alternative mask must be set (in options that don't appear in GUI) and brain/background threshold must be set to 0.)
+set fmri(bet_yn) 1
+##set fmri(bet_yn) 0
 
 # Spatial smoothing FWHM (mm)
 set fmri(smooth) 0
@@ -273,7 +275,8 @@ set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
 ##set feat_files(1) "/home/evapool/PAVMOD/DATA/brain/ICA_ANTS/subXXX/RUN_RUNYYY/RUN_RUNYYY_reoriented.nii.gz"
-set feat_files(1) "/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-subXXX/ses-sesWWW/func/*task-RUNYYY_run-01_bold_reoriented_brain.nii.gz"
+##set feat_files(1) "/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-subXXX/ses-sesWWW/func/*task-RUNYYY_run-01_bold_reoriented_brain.nii.gz"
+set feat_files(1) "/home/OBIWAN/DATA/STUDY/RAW/BIDS/sub-subXXX/ses-sesWWW/func/*task-RUNYYY_run-01_bold.nii.gz"
 
 # Add confound EVs text file
 set fmri(confoundevs) 0
@@ -326,8 +329,9 @@ set fmri(subject_model_con) ""
 ##########################################################
 # Now options that don't appear in the GUI
 
-# Alternative (to BETting) mask image
+# Alternative (to BETting) mask image (LW 200414: An alternative mask must be set if BET is turned off.) 
 set fmri(alternative_mask) ""
+##set fmri(alternative_mask) "/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-subXXX/ses-sesWWW/func/sub-subXXX_ses-sesWWW_task-RUNYYY_run-01_bold_reoriented_brain_mask.nii.gz"
 
 # Initial structural space registration initialisation transform
 set fmri(init_initial_highres) ""

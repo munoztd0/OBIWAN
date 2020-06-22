@@ -1,15 +1,20 @@
 #!/bin/bash
 
-# pull in the subject we should be working on
+# pull in subject
 subjectID=$1
+
+# pull in session
 sessionID=$2
+
+# pull in task
 taskID=$3
+
 echo "Preparing subject ${subjectID}, ${sessionID} session, ${taskID} task"
 
 # directory containing scripts and templates
 codeDir=/home/OBIWAN/ANALYSIS/fsl_scripts/preproc/fsl_ANTS/02-MELODIC_ICA/
 # directory containing prepped nifti data
-dataDir=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${subjectID}/ses-${sessionID}/func/
+dataDir=/home/OBIWAN/DATA/STUDY/RAW/BIDS/sub-${subjectID}/ses-${sessionID}/func/
 # output directory for preprocessed files
 outDir=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${subjectID}/ses-${sessionID}/func/
 
@@ -32,7 +37,7 @@ sed -i -e 's/RUNYYY/'$taskID'/g' $melodicTempplate
 sed -i -e 's/sesWWW/'$sessionID'/g' $melodicTempplate
 
 # correct the number of volumes if necessary
-nvols=`fslnvols ${dataDir}*task-${taskID}_run-01_bold_reoriented_brain.nii.gz`
+nvols=`fslnvols ${dataDir}*task-${taskID}_run-01_bold.nii.gz`
 echo ${nvols}
 sed -i -e 's/ZZZ/'$nvols'/' $melodicTempplate
 

@@ -92,12 +92,12 @@ echo "done sample ANTs at $(date +"%T")"# apply warp to the sample to check qual
 echo "Apply series of transformations all the way from func to lowres atlas (in MNI space: test with 10 images only)"
 
 # FOR TESTING (use only the first 10 images)
-fslroi ${icaDir}filtered_func_data_clean_unwarped.nii.gz ${icaDir}func_firstTenTest 0 10
-
-/usr/local/ants/bin/WarpTimeSeriesImageMultiTransform 4 ${icaDir}func_firstTenTest.nii.gz ${icaDir}filtered_func_data_clean_unwarped_Coreg.nii.gz \
-	   -R ${fixed_T2lowres}.nii.gz \
-    ${outPrefix}_xfm1Warp.nii.gz ${outPrefix}_xfm0GenericAffine.mat \
-	   ${icaDir}itk_transform_Func_To_T2.txt
+# fslroi ${icaDir}filtered_func_data_clean_unwarped.nii.gz ${icaDir}func_firstTenTest 0 10
+#
+# /usr/local/ants/bin/WarpTimeSeriesImageMultiTransform 4 ${icaDir}func_firstTenTest.nii.gz ${icaDir}filtered_func_data_clean_unwarped_Coreg.nii.gz \
+# 	   -R ${fixed_T2lowres}.nii.gz \
+#     ${outPrefix}_xfm1Warp.nii.gz ${outPrefix}_xfm0GenericAffine.mat \
+# 	   ${icaDir}itk_transform_Func_To_T2.txt
 
 
 # REAL

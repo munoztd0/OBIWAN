@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# pull in the subject we're working on
+# pull in subject
 subjectID=$1
 
 # pull in session
@@ -25,12 +25,12 @@ mkdir -p ${outDir}
 echo "Started building fieldmaps for ${sessionID} session, ${tasID} task, at $(date +"%T")"
 
 # reorient the magnitude and phasediff images
-# fslreorient2std ${dataDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1 ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_reoriented
-# fslreorient2std ${dataDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_phasediff ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_phasediff_reoriented
+fslreorient2std ${dataDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1 ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_reoriented
+fslreorient2std ${dataDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_phasediff ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_phasediff_reoriented
 
-# brain extract the magnitude image
-# bet ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_reoriented.nii.gz ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_brain1 -f 0.5 -R
-bet ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_reoriented.nii.gz ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_brain1 -f 0.5 -g 0.05 -B
+# brain extract the magnitude image (default -f 0.5 -R)
+bet ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_reoriented.nii.gz ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_brain1 -f 0.5 -R
+# bet ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_reoriented.nii.gz ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_brain1 -f 0.5 -g -0.2 -B
 
 # erode the brain-extracted magnitude image once for a tight mask (recommended)
 fslmaths ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_brain1 -ero ${outDir}sub-${subjectID}_ses-${sessionID}_acq-task-${taskID}_magnitude1_brain

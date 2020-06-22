@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# pull in the subject we're working on
+# pull in subject
 subjectID=$1
 
 # pull in session
@@ -28,9 +28,8 @@ echo "Started reorientation and brain extraction on functionals for ${sessionID}
 # reorient functionals to standard
 fslreorient2std ${dataDir}*task-${taskID}_run-01_bold.nii.gz ${outDir}sub-${subjectID}_ses-${sessionID}_task-${taskID}_run-01_bold_reoriented
 
-# extract brain (order of flags matters for bet; -F applies bet to whole series; default threshold 0.25)
-bet ${outDir}sub-${subjectID}_ses-${sessionID}_task-${taskID}_run-01_bold_reoriented ${outDir}sub-${subjectID}_ses-${sessionID}_task-${taskID}_run-01_bold_reoriented_brain -R -F -f 0.3
-# bet ${outDir}sub-${subjectID}_ses-${sessionID}_task-${taskID}_run-01_bold_reoriented ${outDir}sub-${subjectID}_ses-${sessionID}_task-${taskID}_run-01_bold_reoriented_brain -R -F -f 0.4
+# extract brain (order of flags matters for bet; -F applies bet to whole series and generates mask; default threshold 0.25)
+bet ${outDir}sub-${subjectID}_ses-${sessionID}_task-${taskID}_run-01_bold_reoriented ${outDir}sub-${subjectID}_ses-${sessionID}_task-${taskID}_run-01_bold_reoriented_brain -R -F -f 0.25
 
 echo "Done reorientation and brain extraction on functionals for ${sessionID} session, ${taskID} task, at $(date +"%T")"
 
