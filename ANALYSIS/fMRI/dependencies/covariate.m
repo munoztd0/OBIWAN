@@ -6,11 +6,14 @@ function covariate(task, name_ana, name_soft, covariateNames, remove)
 
 %variables
 task = 'hedonicreactivity';
-name_ana = 'GLM-04'; % output folder for this analysis
+name_ana = 'GLM-07'; % output folder for this analysis
 name_soft = 'SPM'; % output folder for this analysis
-covariateNames = {'rew_lik'; 'con_lik'; 'rew_int'; 'con_int';'age_cov'; 'bmi_cov'}; %9
-conImage = {'con_0001'; 'con_0002'; 'con_0001'; 'con_0002'};
+%covariateNames = {'rew_lik'; 'con_lik'; 'rew_int'; 'con_int';'age_cov'; 'bmi_cov'}; %9
+covariateNames = {'bmi_cov'}; %; 'age_cov'}; %9
+%conImage = {'con_0001'; 'con_0002'; 'con_0001'; 'con_0002'};
 remove = 0;
+cova = 0;
+group = 1;
 
 dbstop if error
 %does t-test and full_factorial
@@ -87,7 +90,29 @@ for c = 1:length(covariateNames)
             l = l+1; %skip this line
         end
     end
-    
+    if group
+        if contains(covariateX, 'bmi') 
+            for i = 1:length(cov(c).dataX)
+                cd([groupdir '/group/'])
+                bmi = cov(c).dataX(i);
+                if bmi >= 25 && bmi < 35
+                    fileX = dir(['*' num2str(cov(c).IDX(i)) '*.nii' ]);
+                    for ii = 1:length(fileX)
+                        name = ['sub-obeseL_' num2str(cov(c).IDX(i)) '_con-000' num2str(ii) '.nii'];
+                        movefile(fileX(ii).name, name)
+                    end
+                elseif bmi >= 35 
+                    fileX = dir(['*' num2str(cov(c).IDX(i)) '*.nii' ]);
+                    for ii = 1:length(fileX)
+                        name = ['sub-obeseH_' num2str(cov(c).IDX(i)) '_con-000' num2str(ii) '.nii'];
+                        movefile(fileX(ii).name, name)
+                    end
+                end
+            end         
+        end
+    end
+    %x =cov(c).dataX == 0
+    %sum(double(x))
     msg = 'Error occurred.';
     if contains(covariateX, 'hw') 
         x = dir ([groupdir '/group/*control*' conImageX '*.nii' ]);
@@ -106,10 +131,20 @@ for c = 1:length(covariateNames)
             error(msg)
         end
     else
-        meanX = mean(cov(c).dataX);
-        cov(c).dataX = cov(c).dataX - meanX; 
-        if  0.01 < abs(mean(cov(c).dataX));
-            error(msg)
+        if group
+            if ~contains(covariateX, 'bmi')  
+                meanX = mean(cov(c).dataX);
+                cov(c).dataX = cov(c).dataX - meanX; 
+                if  0.01 < abs(mean(cov(c).dataX));
+                    error(msg)
+                end
+            end
+        else
+            meanX = mean(cov(c).dataX);
+            cov(c).dataX = cov(c).dataX - meanX; 
+            if  0.01 < abs(mean(cov(c).dataX));
+                error(msg)
+            end
         end
     end
       
@@ -120,18 +155,23 @@ for c = 1:length(covariateNames)
     end
     fclose(fid);
     
-    if contains(covariateX, 'rew')  || contains(covariateX, 'con')
-       contrastX =  conImage{c};
-       for i = 1:length(cov(c).IDX)
-           cd(groupdir)
-           o = dir(['*' num2str(cov(c).IDX(i))]);
-           cd([o.name '/output'] )
-           V = niftiread(contrastX);
-           cof = V *cov(c).dataX(i);
-           idx = 5 + c;
-           niftiwrite(cof,['con_000' num2str(idx) '.nii']);
-       end   
-    end 
+    if cova 
+        if contains(covariateX, 'rew')  || contains(covariateX, 'con')
+           contrastX =  conImage{c};
+           for i = 1:length(cov(c).IDX)
+               cd(groupdir)
+               o = dir(['*' num2str(cov(c).IDX(i))]);
+               cd([o.name '/output'] )
+               HeaderInfo = spm_vol([pwd '/' contrastX '.nii']);
+               vol = spm_read_vols(HeaderInfo);
+               cof = vol .* cov(c).dataX(i);
+               idx = 5 + c;
+               HeaderInfo.fname = ['con_000' num2str(idx) '.nii'];  % This is where you fill in the new filename
+               HeaderInfo.private.dat.fname = HeaderInfo.fname;
+               spm_write_vol(HeaderInfo,cof);
+           end   
+        end 
+    end
 end
 
 

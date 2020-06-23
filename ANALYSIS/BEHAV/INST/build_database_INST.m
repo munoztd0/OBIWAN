@@ -9,7 +9,7 @@ dbstop if error
 clear all
 
 analysis_name = 'OBIWAN_INST';
-task          = 'instrumentallearning';
+task          = 'inst';
 
 %% DEFINE WHAT WE WANT TO DO
 
@@ -147,6 +147,7 @@ for j = 1:length(session)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% save mat file
         func_dir = fullfile (homedir, 'DERIVATIVES', 'PREPROC', ['sub-' num2str(subjX)], ['ses-' sessionX], 'func');
+        bids_dir = fullfile (homedir, ['sub-' num2str(subjX)], ['ses-' sessionX], 'func');
         
         if ~exist(func_dir, 'dir')
             mkdir(func_dir)
@@ -197,16 +198,12 @@ for j = 1:length(session)
         %events.reward    = num2cell(events.reward);
         %events.trial    = num2cell(events.trial);
 
-
+         cd (bids_dir)
 
          eventfile = [events.onsets, events.durations, events.phase,...
             events.behavior];
 
 
-            %%% save mat file
-        %base_dir = fullfile (homedir, ['sub-' num2str(subjX)], 'ses-first', 'beh');
-        %mkdir(base_dir)
-        %cd (base_dir)
 
         % open data base
         eventfile_name = ['sub-' num2str(subjX) '_ses-' sessionX  '_task-' task '_run-01_events.tsv'];

@@ -9,7 +9,7 @@ dbstop if error
 clear all
 
 analysis_name = 'OBIWAN_PAV';
-task          = 'pavlovianlearning';
+task          = 'pav';
 
 %% DEFINE WHAT WE WANT TO DO
 
@@ -306,7 +306,7 @@ for j = 1:length(session)
         events.responseACC  = num2cell(events.responseACC);
         events.rounds  = num2cell(events.rounds);
         eventfile = [events.onsets, events.durations, events.phase,...
-            events.CSname, events.reactionTime,events.responseACC, events.rounds];
+        events.CSname, events.reactionTime,events.responseACC, events.rounds];
 
         cd (bids_dir)
         

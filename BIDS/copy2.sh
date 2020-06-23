@@ -1,16 +1,29 @@
 #!/bin/bash
+
 home=$(eval echo ~$user)/OBIWAN
 
-#small function to move and copy files
+#small script to move and copy files
 
-subjID=$1
-group=$2
-
-for taskID in hedonicreactivity PIT pavlovianlearning
-#cp ${home}/DATA/RAW/BIDS/sub-${group}${subjID}/ses-second/func/* ${home}/sub-${group}${subjID}/ses-second/func/
-  do
-  cp ${home}/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-second/func/sub-${group}${subjID}_ses-second_task-${taskID}_smoothBold.nii ${home}/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-second/func/sub-${group}${subjID}_ses-second_task-${taskID}_bold.nii
+#subjID=$1
+ses='second'
+group='control1'
+#group='obese2'
+#for subjID in	00 01 02 03	04	05	06	07	08	09	10	11	12	13	14	15 16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	44	45	46	47	48	49	50	51	52	53	54	56	58	59	61	62	63	64	65	66	67	68	69	70
+for subjID in 00 #01 02 03	04	05	06	07	08	09	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33 #00 01	02
+  do  
+  for file in ${home}/sub-${group}${subjID}/ses-${ses}/func/*pavlovianlearning*; do mv -f $file ${file//pavlovianlearning/inst} ; done
+  for file in ${home}/sub-${group}${subjID}/ses-${ses}/func/*instrumentallearning* ; do mv -f $file ${file//instrumentallearning/pav} ; done
+  for file in ${home}/sub-${group}${subjID}/ses-${ses}/fmap/*pavlovianlearning*; do mv -f $file ${file//pavlovianlearning/inst} ; done
+  for file in ${home}/sub-${group}${subjID}/ses-${ses}/fmap/*instrumentallearning* ; do mv -f $file ${file//instrumentallearning/pav} ; done
 done
+
+
+  # for file in ${home}/DATA/STUDY/RAW/BIDS/sub-${group}${subjID}/ses-${ses}/func/*pavlovianlearning*; do mv -f $file ${file//pavlovianlearning/inst} ; done
+  # for file in ${home}/DATA/STUDY/RAW/BIDS/sub-${group}${subjID}/ses-${ses}/func/*instrumentallearning* ; do mv -f $file ${file//instrumentallearning/pav} ; done
+  # for file in ${home}/DATA/STUDY/RAW/BIDS/sub-${group}${subjID}/ses-${ses}/fmap/*pavlovianlearning* ; do mv -f $file ${file//pavlovianlearning/inst} ; done
+  # for file in ${home}/DATA/STUDY/RAW/BIDS/sub-${group}${subjID}/ses-${ses}/fmap/*instrumentallearning* ; do mv -f $file ${file//instrumentallearning/pav} ; done
+# f
+
 #funcDir=${home}/DATA/STUDY/DERIVED/ICA_ANTS/sub-${group}${subjID}/ses-second/func/task-${taskID}.ica/
 #anatDir=${home}/DATA/STUDY/DERIVED/ICA_ANTS/sub-${group}${subjID}/ses-first/anat/
 #outDir=${home}/DATA/STUDY/CLEAN/sub-${group}${subjID}/
@@ -19,10 +32,6 @@ done
 #funcImage=sub-${group}${subjID}_ses-${sessionID}_task-${taskID}_run-01_bold_reoriented_brain_unwarped_Coreg
 
 
-#for subjID in 01 02 03 04 05 06 07 09 10 11 12 13 14 15 16 17 18 20 21 22 23 24 25 26
-  #do
-  #for taskID in hedonic PIT
-    #do
 
 # group='obese2'  
 # for subjID in	03	04	05	06	07	08	09	10	11	12	13	14	15 16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	44	45	46	47	48	49	50	51	52	53	54	56	58	59	61	62	63	64	65	66	67	68	69	70
