@@ -102,7 +102,6 @@ Ngroup = ddply(PIT, .(id, intervention, group2), summarise, gender=mean(as.numer
   group_by(intervention, group2) %>%
   tally() #2 = female
 
-
 # STATS # LINEAR MIXED EFFECTS : REML = FALSE -------------------------------------------------------------------
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful functions from Ben Meulman
 
@@ -110,7 +109,6 @@ source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful fun
 
 #set "better" lmer optimizer #nolimit # yoloptimizer
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
-
 
 # PLOT --------------------------------------------------------------------
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R') #helpful plot functions

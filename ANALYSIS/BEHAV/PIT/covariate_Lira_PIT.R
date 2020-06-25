@@ -8,13 +8,12 @@ analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV')
 
 setwd(analysis_path)
 
-path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-04/covariates'
+path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-02/group_covariates'
 
 PIT_full <- read.delim(file.path(analysis_path,'OBIWAN_PIT.txt'), header = T, sep ='') # read in dataset
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
 
-PIT  <- subset(PIT_full, session == 'second')
-
+PIT  <- subset(PIT_full, group == 'obese')
 #take out incomplete data ##
 #`%notin%` <- Negate(`%in%`)
 #PIT = PIT %>% filter(id %notin% c(242, 256, 114, 208))
@@ -45,9 +44,10 @@ CSp_CSm_eff_hw = eff
 CSp_CSm_eff_ob$eff[CSp_CSm_eff_ob$id < 200] <- 0
 CSp_CSm_eff_hw$eff[CSp_CSm_eff_hw$id >= 200] <- 0
 
-write.table(CSp_CSm_eff_ob, (file.path(path, "CSp_CSm_eff_ob.txt")), row.names = F, sep="\t")
-write.table(CSp_CSm_eff_hw, (file.path(path, "CSp_CSm_eff_hw.txt")), row.names = F, sep="\t")
+#write.table(CSp_CSm_eff_ob, (file.path(path, "CSp_CSm_eff_ob.txt")), row.names = F, sep="\t")
+#write.table(CSp_CSm_eff_hw, (file.path(path, "CSp_CSm_eff_hw.txt")), row.names = F, sep="\t")
 
 # INPUT FOR FMRI -------------------------------------------------------------------
-#fMRI_PIT = info %>% drop_na(intervention)
+fMRI_PIT  <- subset(info, group == 'obese')
+fMRI_PIT = info %>% drop_na(intervention)
 

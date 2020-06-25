@@ -48,7 +48,9 @@ echo "Classification for subject ${subjectID}, session ${sessionID}, task ${task
 #echo "Started cleanup for subject ${subjectID}, session ${sessionID}, task ${taskID} at $(date +"%T")"
 
 # remove noise (-a flag) using raw classifier classification and filter out movement (-m flag)
-#here # /usr/local/fix1.066/fix -a ${funcDir}fix4melview_FIX_${classifierName}_thr${threshold}.txt -m
+#here #/usr/local/fix1.066/fix -a ${funcDir}fix4melview_FIX_${classifierName}_thr${threshold}.txt -m
+
+#echo "Finished cleanup for subject ${subjectID}, session ${sessionID}, task ${taskID} $(date +"%T")"
 
 # OR
 
@@ -62,4 +64,3 @@ echo "Classification for subject ${subjectID}, session ${sessionID}, task ${task
 # /usr/local/fix1.066/fix -a ${funcDir}hand_labels_noise_lavinia.txt -m
 
 
-echo "Finished cleanup for subject ${subjectID}, session ${sessionID}, task ${taskID} $(date +"%T")"

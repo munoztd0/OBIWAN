@@ -28,8 +28,8 @@ obeseX = dir(obese);
 subj = vertcat(controlX, obeseX);
 
 %% What to do
-firstLevel    = 0;
-constrasts    = 0;
+firstLevel    = 1;
+constrasts    = 1;
 copycontrasts = 1;
 covariates = 0;
 
@@ -115,14 +115,14 @@ for i = 1:length(param.task)
 end
 
 %% apply design for first level analysis for each participant
-
+subj = subj([35 39 64 67 73],:); 
 for i = 1:length(subj)
     
     %i = i +73;
-    
-    if i ==  35 || i == 39 || i ==64 || i ==67 || i ==73 %fails at 208, 213, 239, 242, 249??
-        continue
-    end
+%     
+%     if i ==  35 || i == 39 || i ==64 || i ==67 || i ==73 %fails at 208, 213, 239, 242, 249??
+%         continue
+%     end
     
     subjT = subj(i).name;
     %subjT       =  [group subj{i}];
@@ -160,8 +160,8 @@ for i = 1:length(subj)
         cd (fullfile(subjoutdir,'output'))
 
         % copy images T
-        %Timages = ['01'; '02'; '03'; '04'; '05'];% constrasts of interest
-        Timages = ['06'; '07'; '08'];% constrasts of interest
+        Timages = ['01'; '02'; '03'; '04'; '05'];% constrasts of interest
+        %Timages = ['06'; '07'; '08'; '09'];% constrasts of interest
         for y =1:size(Timages,1)
             copyfile(['con_00' (Timages(y,:)) '.nii'],[groupdir, subjX '_con-00' (Timages(y,:)) '.nii'])
         end

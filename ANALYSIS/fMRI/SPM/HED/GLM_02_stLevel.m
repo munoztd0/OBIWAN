@@ -108,14 +108,14 @@ for i = 1:length(param.task)
 end
 
 %% apply design for first level analysis for each participant
-
+subj = subj([64 67 73],:); %60 -> 233 234 91 -> 269
 for i = 1:length(subj)
     
-    %i = i +73;
+    %i = i +73; i ~=  35 %||
     
-    if i ==  35 || i == 39 || i ==64 || i ==67 || i ==73 %fails at 208, 213, 239, 242, 249??
-        continue
-    end
+%     if  i ~= 39 %|| i ~=64 || i ~=67 || i ~=73 %fails at 208, 213, 239, 242, 249??
+%         continue
+%     end
     
     subjT = subj(i).name;
     %subjT       =  [group subj{i}];
