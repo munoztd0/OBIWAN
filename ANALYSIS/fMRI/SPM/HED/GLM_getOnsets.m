@@ -9,7 +9,7 @@ function GLM_02_getOnsets()
 
 dbstop if error
 clear all
-ana_name      = 'GLM-03';
+ana_name      = 'GLM-01_1';
 
 %% DEFINE PATH
 

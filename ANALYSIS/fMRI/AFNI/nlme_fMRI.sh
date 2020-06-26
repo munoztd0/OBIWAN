@@ -1,25 +1,37 @@
-cd /home/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01/group/
+cd /home/OBIWAN/DERIVATIVES/GLM/SPM/PIT/
 #-mask /path/to/mask/mask.nii \
-3dLME  -prefix lme -jobs 10 \
--model "CS*age" \
--qVars "age" \
--qVarsCenters "12.79" \
+3dLME  -prefix lme4.nii -jobs 20 \
+-model "CS*Time" \
 -ranEff '~1' \
 -SS_type 3 \
 -num_glt 1 \
 -gltLabel 1 'pos-neg' -gltCode 1 'CS : 1*pos -1*neg'  \
 -dataTable \
-Subj CS group age InputFile  \
-13649 pos ctl 13.59 sub-obese201_con-0001.nii \
-13649 neg ctl 13.59 sub-obese201_con-0002.nii \
-15388 pos ctl 11.64 sub-obese202_con-0001.nii \
-15341 pos ctl 12.87 sub-obese203_con-0001.nii \
-15341 neg ctl 12.87 sub-obese203_con-0002.nii \
-15350 pos pt 11.69 sub-obese204_con-0001.nii \
-15350 neg pt 11.69 sub-obese204_con-0002.nii \
-15398 neg pt 10.42 sub-obese205_con-0001.nii \
-15398 pos pt 10.42 sub-obese205_con-0002.nii \
-15403 neg pt 12.45 sub-obese206_con-0001.nii \
+Subj CS Time InputFile  \
+201pos  pre GLM-01_0/group/sub-obese201_con-0003.nii \
+201 neg pre GLM-01_0/group/sub-obese201_con-0005.nii \
+201 pos post GLM-01_1/group/sub-obese201_con-0003.nii \
+201 neg post GLM-01_1/group/sub-obese201_con-0005.nii \
+202 pos pre GLM-01_0/group/sub-obese202_con-0003.nii \
+202 neg pre GLM-01_0/group/sub-obese202_con-0005.nii \
+202 pos post GLM-01_1/group/sub-obese202_con-0003.nii \
+202 neg post GLM-01_1/group/sub-obese202_con-0005.nii \
+203 pos pre GLM-01_0/group/sub-obese203_con-0003.nii \
+203 neg pre GLM-01_0/group/sub-obese203_con-0005.nii \
+203 pos post GLM-01_1/group/sub-obese203_con-0003.nii \
+203 neg post GLM-01_1/group/sub-obese203_con-0005.nii \
+204 pos pre GLM-01_0/group/sub-obese204_con-0003.nii \
+204 neg pre GLM-01_0/group/sub-obese204_con-0005.nii \
+204 pos post GLM-01_1/group/sub-obese204_con-0003.nii \
+204 neg post GLM-01_1/group/sub-obese204_con-0005.nii \
+205 pos pre GLM-01_0/group/sub-obese205_con-0003.nii \
+205 neg pre GLM-01_0/group/sub-obese205_con-0005.nii \
+205 pos post GLM-01_1/group/sub-obese205_con-0003.nii \
+205 neg post GLM-01_1/group/sub-obese205_con-0005.nii \
+214 pos pre GLM-01_0/group/sub-obese214_con-0003.nii \
+214 neg pre GLM-01_0/group/sub-obese214_con-0005.nii \
+
+
 
 
 # 3dLME -prefix /path/to/output/output.nii -jobs 6 \
