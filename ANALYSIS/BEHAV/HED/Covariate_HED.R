@@ -8,11 +8,11 @@ analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV')
 
 setwd(analysis_path)
 
-path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-04/covariates'
+path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-04_1/covariates'
 
 HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
 
-HED  <- subset(HED_full, session == 'second')
+HED  <- subset(HED_full, session == 'third')
 
 #take out incomplete data ##
 #`%notin%` <- Negate(`%in%`)
@@ -75,42 +75,6 @@ write.table(empint, (file.path(path, "con_int.txt")), row.names = F, sep="\t")
 # R_NoR_lik <- read.delim(file.path(analysis_path, "Reward_NoReward_lik_meancent.txt"))
 
 # INPUT FOR FMRI -------------------------------------------------------------------
-bs_HED = ddply(HED, .(id, condition, session), summarise, eff = mean(gripAUC, na.rm = TRUE), auc = mean(AUC, na.rm = TRUE))
-
-#merge with info
-fMRI_HED = merge(bs_HED, info, by = "id")
-fMRI_HED$time = as.factor(revalue(fMRI_HED$session, c(second="0", third="1")))
-
-fMRI_HED <- fMRI_HED %>% 
-  group_by(id) %>% 
-  mutate(diff_bmiZ = scale(BMI_t1 - BMI_t2))
-
-fMRI_HED <- fMRI_HED %>% 
-  group_by(id) %>% 
-  mutate(bmiZ = scale(BMI_t1))
-
-fMRI_HED <- fMRI_HED %>% 
-  group_by(id) %>% 
-  mutate(ageZ = scale(age))
-
-#routine to make it nice and "simple" for 3dLME
-init = 1:length(fMRI_HED$id)
-fMRI_HED$InputFile <- init
-idx = unique(fMRI_HED$id)
-#go through each participant
-for(i in 1:length(idx)) {
-  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'CSplus' & fMRI_HED$time == 0] <- paste('GLM-01_0/group/sub-obese', idx[i], '_con-0003.nii \\', sep ='')
-  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'CSminus' & fMRI_HED$time == 0] <- paste('GLM-01_0/group/sub-obese', idx[i], '_con-0005.nii \\', sep ='')
-  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'CSplus' & fMRI_HED$time == 1] <- paste('GLM-01_1/group/sub-obese', idx[i], '_con-0003.nii \\', sep ='')
-  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'CSminus' & fMRI_HED$time == 1] <- paste('GLM-01_1/group/sub-obese', idx[i], '_con-0005.nii \\', sep ='')
-}
-
-colnames(fMRI_HED)[colnames(fMRI_HED) == 'id'] <- 'Subj'
-fMRI_HED$bmiZ = round(fMRI_HED$bmiZ, digits = 2)
-fMRI_HED$ageZ = round(fMRI_HED$ageZ, digits = 2)
-HED_LME <- fMRI_HED[names(fMRI_HED) %in% c("Subj", "condition", "intervention","time", "gender", "bmiZ", "ageZ", "InputFile")]
-path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/HED/'
-
-write.table(HED_LME, (file.path(path, "HED_LME_withcov.txt")), row.names = FALSE, sep="\t", quote=FALSE)
+#bs_HED = ddply(HED, .(id, condition, session), summarise, eff = mean(gripAUC, na.rm = TRUE), auc = mean(AUC, na.rm = TRUE))
 
 

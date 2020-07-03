@@ -5,18 +5,40 @@ home=$(eval echo ~$user)/OBIWAN
 #small script to move and copy files
 
 #subjID=$1
-ses='second'
-group='control1'
-#group='obese2'
-#for subjID in	00 01 02 03	04	05	06	07	08	09	10	11	12	13	14	15 16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	44	45	46	47	48	49	50	51	52	53	54	56	58	59	61	62	63	64	65	66	67	68	69	70
-for subjID in 00 #01 02 03	04	05	06	07	08	09	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33 #00 01	02
-  do  
-  for file in ${home}/sub-${group}${subjID}/ses-${ses}/func/*pavlovianlearning*; do mv -f $file ${file//pavlovianlearning/inst} ; done
-  for file in ${home}/sub-${group}${subjID}/ses-${ses}/func/*instrumentallearning* ; do mv -f $file ${file//instrumentallearning/pav} ; done
-  for file in ${home}/sub-${group}${subjID}/ses-${ses}/fmap/*pavlovianlearning*; do mv -f $file ${file//pavlovianlearning/inst} ; done
-  for file in ${home}/sub-${group}${subjID}/ses-${ses}/fmap/*instrumentallearning* ; do mv -f $file ${file//instrumentallearning/pav} ; done
+
+#group='control1'
+group='obese2'
+#for subjID in	00 01 02 03	04	05	06	07	08	09	10	11	12	13	14	15 16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	44	45	46	47	48	49	50	51	52	53	54	56	58	59	62	63	64	65	66	67	68	69	70
+#second
+for subjID in	28	29	30	31	32	34	35	36	37	38	39	41	44	45	46	48	49	50	51	52	53	54	56	59	62	64	65	66	68	69	70 #	00 01 02 03	04	05	06	07	08	09	11	13	15	17	18	20	21	24	25	26	27
+#third
+#for subjID in 22 #00 01 02 03	05	06	07	08	09	10 12	13	14	15	16	18	19	20	21 22 23	24	25	26	27	28	29	30	31	32	33 #
+#control
+  do 
+  for ses in third #second # 
+    do
+      rm ${home}/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-${ses}/func/*bold.nii
+      for file in ${home}/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-${ses}/func/*unsmoothedBold*; do cp -f $file ${file//unsmoothedBold/QC_bold} ; done
+  done
 done
 
+    # # input directory containing unsmoothed data
+    # FILE=/home/OBIWAN/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-${ses}/func/sub-${group}${subjID}_ses-${ses}_task-pav_smoothBold.nii
+    # #FILE=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${group}${subjID}/ses-${ses}/func/task-pav.ica/filtered_func_data_clean_unwarped_Coreg.nii.gz
+    # #FILE=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${group}${subjID}/ses-${ses}/func/task-pav.ica/filtered_func_data_clean_unwarped.nii.gz
+    # #FILE=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${group}${subjID}/ses-${ses}/func/task-pav.ica/filtered_func_data_clean.nii.gz
+    # # output directory for preprocessed data
+
+    # if test -f "$FILE"; then
+    #   echo "sub-${group}${subjID}/ses-${ses} exists."
+    # else
+    #   echo ${FILE} #"sub-${group}${subjID}/ses-${ses} DONT exists."
+    # fi
+
+  # for file in ${home}/DERIVATIVES/MRIQC/All_before/sub-${group}${subjID}/ses-${ses}/func/*instrumentallearning*; do mv -f $file ${file//instrumentallearning/pav} ; done 
+  # for file in ${home}/sub-${group}${subjID}/ses-${ses}/func/*instrumentallearning* ; do mv -f $file ${file//instrumentallearning/pav} ; done
+  # for file in ${home}/sub-${group}${subjID}/ses-${ses}/fmap/*pavlovianlearning*; do mv -f $file ${file//pavlovianlearning/inst} ; done
+  # for file in ${home}/sub-${group}${subjID}/ses-${ses}/fmap/*instrumentallearning* ; do mv -f $file ${file//instrumentallearning/pav} ; done
 
   # for file in ${home}/DATA/STUDY/RAW/BIDS/sub-${group}${subjID}/ses-${ses}/func/*pavlovianlearning*; do mv -f $file ${file//pavlovianlearning/inst} ; done
   # for file in ${home}/DATA/STUDY/RAW/BIDS/sub-${group}${subjID}/ses-${ses}/func/*instrumentallearning* ; do mv -f $file ${file//instrumentallearning/pav} ; done

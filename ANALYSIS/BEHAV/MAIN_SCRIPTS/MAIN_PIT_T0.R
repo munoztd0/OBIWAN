@@ -20,22 +20,41 @@ setwd(analysis_path)
 
 # open dataset or load('PIT.RData')
 PIT_full <- read.delim(file.path(analysis_path,'OBIWAN_PIT.txt'), header = T, sep ='') # read in dataset
-HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
+#HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
+intern <- read.delim(file.path(analysis_path,'OBIWAN_INTERNAL.txt'), header = T, sep ='') # read in dataset
 
 #subset #only group obese 
 PIT  <- subset(PIT_full, session == 'second') 
-HED  <- subset(HED_full, session == 'second') 
+#HED  <- subset(HED_full, session == 'second') 
+intern  <- subset(intern, session == 'second') 
 
 #merge with info
 PIT = merge(PIT, info, by = "id")
 
 #take out incomplete data ##218 only have the third ? influence -> 238 & 234 & 232 & 254
 `%notin%` <- Negate(`%in%`)
-PIT = PIT %>% filter(id %notin% c(242, 256, 106, 113, 114, 125, 130, 201, 218, 219, 221, 225, 230, 241,  244, 246, 247))
-HED = HED %>% filter(id %notin% c(242, 256, 106, 113, 114, 125, 130, 201, 218, 219, 221, 225, 230, 241,  244, 246, 247))
+#PIT = PIT %>% filter(id %notin% c(242, 256, 106, 113, 114, 125, 130, 201, 218, 219, 221, 225, 230, 241,  244, 246, 247))
+#HED = HED %>% filter(id %notin% c(242, 256, 106, 113, 114, 125, 130, 201, 218, 219, 221, 225, 230, 241,  244, 246, 247))
+PIT = PIT %>% filter(id %notin% c(242, 256))
+#HED = HED %>% filter(id %notin% c(242, 256))
+intern = intern %>% filter(id %notin% c(242, 256))
 #113, 114, 125, 130, 201, 218, 219, 221, 225, 230, 241,  244, 246, 247
 #242 245 bc MRI & behav
+
+# INTERNAL STATES
+baseINTERN = subset(intern, phase == 3)
+PIT = merge(x = PIT, y = baseINTERN[ , c("piss", "thirsty", 'hungry', 'id')], by = "id", all.x=TRUE)
+diffINTERN = subset(intern, phase == 3 | phase == 4) #before and after PIT
+before = subset(diffINTERN, phase == 3)
+after = subset(diffINTERN, phase == 4)
+diff = after
+diff$diff_piss = diff$piss - before$piss
+diff$diff_thirsty = diff$thirsty - before$thirsty
+diff$diff_hungry = diff$hungry - before$hungry
+
+PIT = merge(x = PIT, y = diff[ , c("diff_piss", "diff_thirsty", 'diff_hungry', 'id')], by = "id", all.x=TRUE)
+
 
 # define as.factors
 fac <- c("id", "trial", "condition", "trialxcondition", "gender", "group")
@@ -45,7 +64,7 @@ PIT[fac] <- lapply(PIT[fac], factor)
 n_tot = length(unique(PIT$id))
 bs = ddply(PIT, .(id, group), summarise, gripFreq = mean(gripFreq, na.rm = TRUE), peak = mean(peak, na.rm = TRUE), AUC = mean(AUC, na.rm = TRUE)) 
 bs$AUC = scale(bs$AUC)
-densityPlot(bs$AUC)
+#densityPlot(bs$AUC)
 #skewness(bs$AUC) not bad
 
 AGE = ddply(PIT,~group,summarise,mean=mean(age),sd=sd(age), min = min(age), max = max(age))
@@ -65,19 +84,49 @@ PIT_BL = ddply(PIT, .(id), summarise, freqA=mean(AUC), sdA=sd(AUC))
 PIT = merge(PIT, PIT_BL, by = "id")
 PIT$gripAUC = (PIT$AUC - PIT$freqA) / PIT$sdA
 
-HED_BL = ddply(HED, .(id,condition), summarise, lik=mean(perceived_liking)) 
-HED_BL = subset(HED_BL, condition == 'MilkShake') 
-HED_BL = select(HED_BL, -c(condition) )
-PIT = merge(PIT, HED_BL, by = "id")
+#HED_BL = ddply(HED, .(id,condition), summarise, lik=mean(perceived_liking)) 
+#HED_BL = subset(HED_BL, condition == 'MilkShake') 
+#HED_BL = select(HED_BL, -c(condition) )
+#PIT = merge(PIT, HED_BL, by = "id")
 
-#scale everything
+####scale everything
 PIT$gripAUCZ = scale(PIT$gripAUC)
-densityPlot(PIT$gripAUCZ)
+#densityPlot(PIT$gripAUCZ)
 
-PIT$gripFZ = scale(PIT$gripFreq)
-densityPlot(PIT$gripFZ)
+#PIT$gripFZ = scale(PIT$gripFreq)
+#densityPlot(PIT$gripFZ)
 
-bsZ = ddply(PIT, .(id, condition), summarise, gripCOUNTZ = mean(gripCOUNTZ, na.rm = TRUE), gripAUCZ = mean(gripAUCZ, na.rm = TRUE)) 
+#bsZ = ddply(PIT, .(id, condition), summarise, gripAUCZ = mean(gripAUCZ, na.rm = TRUE)) 
+
+#agragate by subj and then scale 
+PIT <- PIT %>% 
+  group_by(id) %>% 
+  mutate(pissZ = scale(piss))
+
+#agragate by subj and then scale 
+PIT <- PIT %>% 
+  group_by(id) %>% 
+  mutate(thirstyZ = scale(thirsty))
+
+#agragate by subj and then scale 
+PIT <- PIT %>% 
+  group_by(id) %>% 
+  mutate(hungryZ = scale(hungry))
+
+#agragate by subj and then scale 
+PIT <- PIT %>% 
+  group_by(id) %>% 
+  mutate(diff_pissZ = scale(diff_piss))
+
+#agragate by subj and then scale 
+PIT <- PIT %>% 
+  group_by(id) %>% 
+  mutate(diff_thirstyZ = scale(diff_thirsty))
+
+#agragate by subj and then scale 
+PIT <- PIT %>% 
+  group_by(id) %>% 
+  mutate(diff_hungryZ = scale(diff_hungry))
 
 #agragate by subj and then scale 
 PIT <- PIT %>% 
@@ -89,22 +138,12 @@ PIT <- PIT %>%
   group_by(id) %>% 
   mutate(ageZ = scale(age))
 
-#densityPlot(PIT$bmiZ) #really bad in terms of normality
-#ranktrans BMI
-PIT$bmiT = RNOmni::rankNorm(PIT$BMI_t1)
-densityPlot(PIT$bmiT)
+#agragate by subj and then scale 
+PIT <- PIT %>% 
+  group_by(id) %>% 
+  mutate(bmiZ = scale(BMI_t1))
 
-#change value of groups
-PIT$group = as.factor(revalue(PIT$group, c(control="0", obese="1")))
-
-PIT$group2 = c(1:length(PIT$group))
-PIT$group2[PIT$BMI_t1 < 30 ] <- '-1' # control BMI = 22.25636 -> 1.03
-PIT$group2[PIT$BMI_t1 >= 30 & PIT$BMI_t1 < 35] <- '0' # Class I obesity: BMI = 30 to 35. -> - 0.22
-PIT$group2[PIT$BMI_t1 >= 35] <- '1' # Class II obesity: BMI = 35 to 40. -> 0.89
-#PIT$group2[PIT$BMI_t1 > 40] <- '3' # Class III obesity: BMI 40 or higher -> 1.89
-
-N_group2 = ddply(PIT, .(id, group2), summarise, group2=mean(as.numeric(group2)))  %>%
-  group_by(group2) %>% tally()
+#densityPlot(PIT$bmiZ) #not really normal but checked with Ben, its cool as long we dont infer on bmi < 25 >30
 
 
 #change value of condition
@@ -116,26 +155,18 @@ CSPlus <- CSPlus[order(as.numeric(levels(CSPlus$id))[CSPlus$id], CSPlus$trialxco
 CSMinus <- subset(PIT, condition =="-1" )
 CSMinus <- CSMinus[order(as.numeric(levels(CSMinus$id))[CSMinus$id], CSPlus$trialxcondition),]
 
+PIT$gripZ = PIT$gripAUCZ
+densityPlot(PIT$gripZ)
 # PIT_ind = CSPlus
 # PIT_ind$gripdiff = CSPlus$gripAUCZ - CSMinus$gripAUCZ
 # 
 # mod <- lmer(gripdiff ~  group2 + gender + ageZ + likZ +(1 |id) + (1|trialxcondition) , 
 #             data = PIT_ind, control = control) #need to be fitted using ML so here I just use lmer function so its faster
 
-#visreg(mod,overlay=TRUE,points.par=list( alpha = 0.05), xvar="group2", gg=TRUE,type="contrast",ylab="Effort (z)",breaks=c(-1.03,022,0.89,1.89),xlab="")
 
-# mdl.aov = aov_4(gripdiff ~ group2 + gender + ageZ +  (1|id) ,
-#                 data = PIT_ind, observed = c("gender", "ageZ"), factorize = FALSE, fun_aggregate = mean)
-# 
-# summary(mdl.aov)
-# 
-# cont = emmeans(mod, pairwise~ group2, adjust = "mvt")
-# cont
-# 
-# 
-# model = mixed(gripdiffZ ~ bmiT + gender + ageZ  + (1|id), 
-#               data = PIT_ind, method = "LRT", control = control, REML = FALSE)
-# model
+#save RData for cluster computing
+# save.image(file = "PIT.RData", version = NULL, ascii = FALSE,
+#            compress = FALSE, safe = TRUE)
 
 # STATS # LINEAR MIXED EFFECTS : REML = FALSE -------------------------------------------------------------------
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful functions from Ben Meulman
@@ -145,9 +176,7 @@ source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful fun
 #set "better" lmer optimizer #nolimit # yoloptimizer
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
-#save RData for cluster computing
-# save.image(file = "PIT.RData", version = NULL, ascii = FALSE,
-#            compress = FALSE, safe = TRUE)
+
 
 #Calculates p-values using parametric bootstrap takes forever #set to method LRT to quick check
 # PB calculates Nsim samples of the likelihood ratio test statistic (LRT) 
@@ -155,31 +184,33 @@ control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 #takes ages even on the cluster!
 # method = "PB", control = control, REML = FALSE, args_test = list(nsim = 10))
 
-PIT$gripZ = PIT$gripAUCZ
+#quick check
+mdl.aov = aov_4(gripZ ~ condition*bmiZ*hungryZ  + thirstyZ + pissZ + (condition|id),
+                data = PIT, observed = c("thirstyZ", "hungryZ", "pissZ"), factorize = FALSE, fun_aggregate = mean)
 
+summary(mdl.aov)
 
-# mdl.aov = aov_4(gripZ ~ condition*bmiT  +  (condition|id) ,
-#                 data = PIT, observed = c("gender", "ageZ"), factorize = FALSE, fun_aggregate = mean)
-# 
-# summary(mdl.aov)
-
-model = mixed(gripZ ~ condition*bmiT  + (condition|id) + (1|trialxcondition), #doesnt change naything wiht or without covariate
+model = mixed(gripZ ~ condition*bmiZ + hungryZ + hungryZ:condition + thirstyZ + pissZ  + (condition|id) + (1|trialxcondition), 
               data = PIT, method = "LRT", control = control, REML = FALSE)
 
 model #The ‘intercept’ of the lmer model is the mean liking rate in Empty coniditon for an average subject.
 
 # Mixed Model Anova Table (Type 3 tests, LRT-method)
 # 
-#Model: gripZ ~ condition * bmiT + gender + ageZ + likZ + 
-# (condition |  id) + (1 | trialxcondition)
+# Model: gripZ ~ condition * bmiZ + hungryZ + hungryZ:condition + thirstyZ + 
+#   Model:     pissZ + +(condition | id) + (1 | trialxcondition)
 # Data: PIT
-# Df full model: 12
-# Effect df  Chisq p.value
-# 1      condition  1 5.06 *     .02
-# 2           bmiT  1   0.00    >.99
-# 3 condition:bmiT  1   2.56     .11
+# Df full model: 13
+# Effect df   Chisq p.value
+# 1         condition  1  5.35 *    .021
+# 2              bmiZ  1    0.00   >.999
+# 3           hungryZ  1    0.00   >.999
+# 4          thirstyZ  1    0.00   >.999
+# 5             pissZ  1    0.00   >.999
+# 6    condition:bmiZ  1  2.95 +    .086
+# 7 condition:hungryZ  1 7.15 **    .008
 
-mod <- lmer(gripZ ~ condition*bmiT  + gender + ageZ + likZ +(condition |id) + (1|trialxcondition) , 
+mod <- lmer(gripZ ~ condition*bmiZ + hungryZ + hungryZ:condition + thirstyZ + pissZ  +(condition |id) + (1|trialxcondition) , 
             data = PIT, control = control) #need to be fitted using ML so here I just use lmer function so its faster
 
 # COMPUTE EFFECT SIZES (COMPUTE R Squared For Mixed Models VIA NAKAGAWA ESTIMATE)
@@ -187,83 +218,52 @@ mod <- lmer(gripZ ~ condition*bmiT  + gender + ageZ + likZ +(condition |id) + (1
 # R2 #conditionCSplus 0.005    0.012    0.001
 
 #LR test for condition 
-# full <- lmer(gripZ ~ condition*bmiT + gender + ageZ + likZ +(condition |id) + (1|trialxcondition) , 
-#              data = PIT, control = control, REML = FALSE) 
-# null <- lmer(gripZ ~ condition:bmiT + gender + ageZ + likZ +(condition |id) + (1|trialxcondition) , 
-#              data = PIT, control = control, REML = FALSE) 
-# test = anova(full, null, test = "Chisq") #4.50  1    0.03388
-# #Δ AIC = 2.50
-# delta_AIC = test$AIC[1] - test$AIC[2] 
-# delta_AIC
+full <- lmer(gripZ ~ condition*bmiZ + hungryZ + hungryZ:condition + thirstyZ + pissZ  + (condition |id) + (1|trialxcondition),
+             data = PIT, control = control, REML = FALSE)
+null <- lmer(gripZ ~ condition:bmiZ + hungryZ + hungryZ:condition + thirstyZ + pissZ  + (condition |id) + (1|trialxcondition),
+             data = PIT, control = control, REML = FALSE)
+test = anova(full, null, test = "Chisq")
+#Δ AIC = 3.35
+delta_AIC = test$AIC[1] - test$AIC[2]
+delta_AIC
 
-# PLOT --------------------------------------------------------------------
-source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R') #helpful plot functions
-visreg(mod,overlay=TRUE,points.par=list( alpha = 0.05), xvar="bmiT", gg=TRUE,type="contrast",ylab="Effort (z)",breaks=c(-1.03,022,0.89,1.89),xlab="")
-#contrasts on estimated means adjusted via the Multivariate normal t distribution
-cont = emmeans(mod, pairwise~ condition|bmiT, at = list(bmiT = c(-1,0,1)), adjust = "mvt")
-cont
-#pwpp(cont$emmeans)
-plot(cont, comparisons = TRUE, horizontal = FALSE)
-df.PIT = as.data.frame(cont$contrasts) 
-df.PIT$bmiT <- as.character(df.PIT$bmiT)
+#LR test for condition:bmiZ 
+full <- lmer(gripZ ~ condition*bmiZ + hungryZ + hungryZ:condition + thirstyZ + pissZ  + (condition |id) + (1|trialxcondition),
+             data = PIT, control = control, REML = FALSE)
+null <- lmer(gripZ ~ condition + bmiZ + hungryZ + hungryZ:condition + thirstyZ + pissZ  + (condition |id) + (1|trialxcondition),
+             data = PIT, control = control, REML = FALSE)
+test = anova(full, null, test = "Chisq") # 2.9478  1    0.08599
+#Δ AIC = 3.35
+delta_AIC = test$AIC[1] - test$AIC[2]
+delta_AIC
 
-full.obs = ddply(PIT, .(id, group2, condition), summarise, estimate = mean(gripZ)) 
-plus = subset(full.obs, condition == '1')
-minus = subset(full.obs, condition == '-1')
-df.observed = minus
-df.observed$estimate = plus$estimate - minus$estimate
-df.observed$bmiT = df.observed$group2
+#get CI and pval for condition
+p_cond = emmeans(mod, pairwise~ condition, side = ">") #right sided!
+p_cond 
 
-labels <- c("-1" = "Lean", "0" = "Class I" , "1" = "II-III")
+#get CI condition
+CI_cond = confint(p_cond,level = 0.95,
+                  method = c("boot"),
+                  nsim = 5000)
+CI_cond
+# contrast estimate     SE df lower.CL upper.CL t.ratio p.value
+# 1 - -1      0.136 0.0596 80   0.0373      Inf  2.290   0.0123 
 
-# pl <-  ggplot(df.PIT, aes(x = bmiT, y = estimate)) +
-#   #geom_bar(stat="identity", alpha=0.6, width=0.3, ) +
-#   geom_errorbar(aes(ymax = estimate + SE, ymin = estimate - SE), width=0.05,  alpha=1)+
-#   geom_point(size = 0.5, color = 'blue') + 
-#   geom_hline(yintercept=0, linetype="dashed", size=0.4, alpha=0.7) + 
-#   geom_point(data = df.observed, size = 0.1, alpha = 0.4, color = 'royalblue',  position = position_jitter(width = 0.1))
+#get contrasts for groups obesity X condition (adjusted but still right sided)
+cont = emmeans(mod, pairwise~ condition|bmiZ, at = list(bmiZ = c(-1.36,0.17,0.92)), side = ">", adjust = "tukey") #those are the mean per group intercepts
+cont$contrasts
+#get CI contrasts
+CI_cont = confint(cont,level = 0.95,
+                  method = c("boot"),
+                  nsim = 5000)
+CI_cont$contrasts
+# bmiZ = -1.36:
+#   contrast estimate     SE df lower.CL upper.CL t.ratio p.value
+# 1 - -1   -0.00279 0.1013 80  -0.1713      Inf   -0.028  0.5110 
+# bmiZ =  0.17:
+# 1 - -1    0.15502 0.0606 80   0.0542      Inf   2.559  0.0062 
+# bmiZ =  0.92:
+# 1 - -1    0.23238 0.0820 80   0.0959      Inf  2.832  0.0029 
 
-pl <-  ggplot(df.PIT, aes(x = bmiT, y = estimate)) +
-  geom_point(data = df.observed, size = 0.1, alpha = 0.4, color = 'royalblue', position = position_jitter(width = 0.2)) +
-  geom_bar(stat="identity", alpha=0.6, width=0.3) +
-  geom_errorbar(data =df.PIT,  aes(ymax = estimate + SE, ymin = estimate - SE), color = 'black', width=0.05,  alpha=0.7)+
-  geom_point(size = 0.7, color = 'black') + 
-  geom_hline(yintercept=0, linetype="dashed", size=0.4, alpha=0.7) 
-
-plt = pl + 
-  scale_y_continuous(expand = c(0, 0),
-                     breaks = c(seq.int(-1,2, by = 0.5)), limits = c(-1,2)) +
-  scale_x_discrete(labels=labels) + 
-  #coord_fixed(ratio=0.9) +
-  theme_bw() +
-  theme(aspect.ratio = 1.7/1,
-    plot.margin = unit(c(1, 1, 1.2, 1), units = "cm"),
-        plot.title = element_text(hjust = 0.5),
-        plot.caption = element_text(hjust = 0.5),
-        panel.grid.major.x = element_blank(), #size=.2, color="lightgrey") ,
-        panel.grid.major.y = element_line(size=.2, color="lightgrey") ,
-        axis.text.x =  element_text(size=10,  colour = "black"), #element_blank(), #element_text(size=10,  colour = "black", vjust = 0.5),
-        axis.text.y = element_text(size=10,  colour = "black"),
-        axis.title.x =  element_text(size=16), 
-        axis.title.y = element_text(size=16),   
-        axis.ticks.x = element_blank(), 
-        axis.line.x = element_blank(),
-        strip.background = element_rect(fill="white"))+ 
-  labs(title = "PIT Effect by BMI Category", 
-      y =  "\u0394 Mobilized Effort", x = "",
-       caption = "Error bars represent SEM for the model estimated mean constrasts\n")
-#Main effect of condition, p = 0.022, \u0394 AIC = 4.42, Controling for Plesantness, Age & Gender")
-
-
-plot(plt)
-
-cairo_pdf(file.path(figures_path,paste(task, 'condXbmi.pdf',  sep = "_")),
-          width     = 5.5,
-          height    = 6)
-
-plot(plt)
-dev.off()
-
-
-# THE END - Special thanks to Ben Meulman, Eva R. Pool and Yoann Stussi -----------------------------------------------------------------
+# THE rest on plot_PIT_T0 - Special thanks to Ben Meuleman, Eva R. Pool and Yoann Stussi -----------------------------------------------------------------
 

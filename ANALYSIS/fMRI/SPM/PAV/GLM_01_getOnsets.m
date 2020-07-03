@@ -24,7 +24,7 @@ sourcefiles   = fullfile(homedir, '/DERIVATIVES/PREPROC');
 addpath (genpath(fullfile(homedir,'/CODE/ANALYSIS/fMRI/dependencies')));
 
 ana_name      = 'GLM-01';
-task          = {'pavlovianlearning'}; 
+task          = {'pav'}; 
 
 
 control = [homedir '/sub-control*'];

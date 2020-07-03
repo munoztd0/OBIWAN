@@ -24,7 +24,7 @@ warpTool=/usr/local/ants/bin/WarpImageMultiTransform
 # paths to the T1/T2 structurals, and the standard anatomical images
 subAnatDir=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${sbj}/ses-first/anat/
 #standardAnatDir=/home/OBIWAN/DATA/CANONICALS/
-standardAnatDir=/home/OBIWAN/DERIVATIVES/EXTERNALDAT/CANONICALS/
+standardAnatDir=/home/OBIWAN/DERIVATIVES/EXTERNALDATA/CANONICALS/
 
 # align the T1 and T2 anatomicals and downsample to functional resolution
 codeDir=/home/OBIWAN/ANALYSIS/fsl_scripts/preproc/fsl_ANTS/

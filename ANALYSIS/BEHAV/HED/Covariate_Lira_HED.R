@@ -8,7 +8,7 @@ analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV')
 
 setwd(analysis_path)
 
-path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-04/covariates'
+path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-04_1/covariates'
 
 HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
@@ -100,10 +100,10 @@ fMRI_HED$InputFile <- init
 idx = unique(fMRI_HED$id)
 #go through each participant
 for(i in 1:length(idx)) {
-  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'Reward' & fMRI_HED$time == 0] <- paste('/home/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-01_0/group/sub-obese', idx[i], '_con-0001.nii \\', sep ='')
-  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'Neutral' & fMRI_HED$time == 0] <- paste('/home/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-01_0/group/sub-obese', idx[i], '_con-0002.nii \\', sep ='')
-  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'Reward' & fMRI_HED$time == 1] <- paste('/home/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-01_1/group/sub-obese', idx[i], '_con-0001.nii \\', sep ='')
-  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'Neutral' & fMRI_HED$time == 1] <- paste('/home/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-01_1/group/sub-obese', idx[i], '_con-0002.nii \\', sep ='')
+  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'Reward' & fMRI_HED$time == 0] <- paste('/home/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-04_0/group/sub-obese', idx[i], '_con-0006.nii \\', sep ='')
+  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'Neutral' & fMRI_HED$time == 0] <- paste('/home/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-04_0/group/sub-obese', idx[i], '_con-0007.nii \\', sep ='')
+  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'Reward' & fMRI_HED$time == 1] <- paste('/home/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-04_1/group/sub-obese', idx[i], '_con-0006.nii \\', sep ='')
+  fMRI_HED$InputFile[fMRI_HED$id == idx[i] & fMRI_HED$condition == 'Neutral' & fMRI_HED$time == 1] <- paste('/home/OBIWAN/DERIVATIVES/GLM/SPM/hedonicreactivity/GLM-04_1/group/sub-obese', idx[i], '_con-0007.nii \\', sep ='')
 }
 
 colnames(fMRI_HED)[colnames(fMRI_HED) == 'id'] <- 'Subj'
@@ -114,6 +114,6 @@ HED_LME <- fMRI_HED[names(fMRI_HED) %in% c("Subj", "condition", "intervention","
 colnames(HED_LME)[colnames(HED_LME) == 'InputFile'] <- 'InputFile \\'
 path <-'~/OBIWAN/DERIVATIVES/GLM/AFNI/HED/'
 
-write.table(HED_LME, (file.path(path, "HED_LME_withcov.txt")), row.names = FALSE, sep="\t", quote=FALSE)
+write.table(HED_LME, (file.path(path, "HED_LME_4.txt")), row.names = FALSE, sep="\t", quote=FALSE)
 
 

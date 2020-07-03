@@ -197,7 +197,7 @@ for j = 1:length(session)
         
         BEHAVIOR.Piss = [internal1.Piss internal3.Piss internal5.Piss internal7.Piss internal9.Piss]';
         BEHAVIOR.Thirsty = [internal1.Thirsty internal3.Thirsty internal5.Thirsty internal7.Thirsty internal9.Thirsty]';
-        BEHAVIOR.Hungry = [internal1.Hungry internal3.Hungry internal5.Thirsty internal7.Hungry internal9.Hungry]';
+        BEHAVIOR.Hungry = [internal1.Hungry internal3.Hungry internal5.Hungry internal7.Hungry internal9.Hungry]';
         
         ntrials = length(BEHAVIOR.Hungry);
         %cHeader = {'Piss'; 'Thirsty'; 'Hungry'; 'BIC'; 'LME'};

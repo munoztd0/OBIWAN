@@ -27,7 +27,7 @@ ANTSPATH=/usr/local/ants/bin/
 c3d_affine_tool=/usr/local/c3d-1.1.0-Linux-gcc64/bin/c3d_affine_tool
 # paths to the subject anatomicals, and the standard anatomical images
 subAnatDir=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${sbjID}/ses-first/anat/
-standardAnatDir=/home/OBIWAN/DERIVATIVES/EXTERNALDAT/CANONICALS/
+standardAnatDir=/home/OBIWAN/DERIVATIVES/EXTERNALDATA/CANONICALS/
 
 
 # #############

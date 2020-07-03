@@ -22,7 +22,7 @@ sourcefiles   = fullfile(homedir, '/DERIVATIVES/PREPROC');
 addpath (genpath(fullfile(homedir,'/CODE/ANALYSIS/fMRI/dependencies')));
 
 ana_name      = 'GLM-02';
-task          = {'pavlovianlearning'}; 
+task          = {'pav'}; 
 
 
 control = [homedir '/sub-control*'];
@@ -131,8 +131,8 @@ for j = 1:length(task)
         durations.Baseline      = DURATIONS.baseline;
         
         %change here
-        modulators.CS.CSp.liking   = BEHAVIOR.liking.CSp;
-        modulators.CS.CSm.liking   = BEHAVIOR.liking.CSm;
+        %modulators.CS.CSp.liking   = BEHAVIOR.liking.CSp;
+        %modulators.CS.CSm.liking   = BEHAVIOR.liking.CSm;
         
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -149,13 +149,13 @@ for j = 1:length(task)
         durations.Baseline      = DURATIONS.baseline;
         
         %change here
-        modulators.CS.CSp.liking   = BEHAVIOR.liking.CSp;
-        modulators.CS.CSm.liking   = BEHAVIOR.liking.CSm;
+        %modulators.CS.CSp.liking   = BEHAVIOR.liking.CSp;
+        %modulators.CS.CSm.liking   = BEHAVIOR.liking.CSm;
         
-        modulators.Baseline        = BEHAVIOR.liking.b;
+        %modulators.Baseline        = BEHAVIOR.liking.b;
        
-        modulators.CS.CSp.RT   = BEHAVIOR.RT(strcmp ('CSplus', CONDITIONS.CS));
-        modulators.CS.CSm.RT   = BEHAVIOR.RT(strcmp ('CSminus', CONDITIONS.CS));
+        modulators.CS.CSp   = BEHAVIOR.RT.CSp;
+        modulators.CS.CSm   = BEHAVIOR.RT.CSm;
         
         modulators.Baseline = ones (length(onsets.Baseline),1);
         
@@ -163,12 +163,21 @@ for j = 1:length(task)
        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Get onsets and durations for ITI
         
-        onsets.ITI             = ONSETS.ITI;
-        durations.ITI          = DURATIONS.ITI;
-        modulators.ITI         = ones  (length(onsets.ITI),1);
+        %onsets.ITI             = ONSETS.ITI;
+        %durations.ITI          = DURATIONS.ITI;
+        %modulators.ITI         = ones  (length(onsets.ITI),1);
         
        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Get onsets and durations for swallow signal
+        
+        onsets.deliver.rew           = ONSETS.reward(strcmp ('CSplus', CONDITIONS.CS));
+        onsets.deliver.emp           = ONSETS.reward(strcmp ('CSminus', CONDITIONS.CS));
+        durations.deliver.rew        = DURATIONS.reward(strcmp ('CSplus', CONDITIONS.CS));
+        durations.deliver.emp        = DURATIONS.reward(strcmp ('CSminus', CONDITIONS.CS));
+        modulators.deliver.rew           = ones(length(onsets.deliver.emp ),1);
+        modulators.deliver.emp           = ones(length(onsets.deliver.emp ),1);
+        
+        % Get onsets and durations for reward
         
         onsets.swallow             = ONSETS.swallow;
         durations.swallow          = DURATIONS.swallow;
@@ -183,14 +192,14 @@ for j = 1:length(task)
         
         % create text file with 3 colons: onsets, durations, paretric modulators
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        name = { 'CS';  'ITI'; 'grips'; 'peaks'};
+        name = { 'CS'; 'Baseline'; 'deliver'; 'swallow'};
         
         for ii = 1:length(name)
             
             nameX = char(name(ii));
             
             if strcmp (nameX, 'CS')  % for structure that contains substuctures
-                substr = {'CSp'; 'CSm'; 'Baseline'};% specify the substructures names
+                substr = {'CSp'; 'CSm'};% specify the substructures names
                 
                 for iii = 1:length(substr)
                     substrX = char(substr(iii));
@@ -206,7 +215,23 @@ for j = 1:length(task)
                     end
                     fclose(fid);
                 end
+            elseif   strcmp (nameX, 'deliver')  % for structure that contains substuctures
+                substr = {'rew'; 'emp'};% specify the substructures names
                 
+                for iii = 1:length(substr)
+                    substrX = char(substr(iii));
+                    nameXX  = [nameX '_' substrX]; % name that combines the structure and the substructures
+                    % database with three rows of interest
+                    database.(nameXX) = [num2cell(onsets.(nameX).(substrX)), num2cell(durations.(nameX).(substrX)), num2cell(modulators.(nameX).(substrX))];
+                    % save the database in a txt file
+                    fid = fopen ([ana_name '_task-' taskX '_' nameX '_' substrX '.txt'],'wt');
+                    formatSpec = '%d   %d   %d\n';
+                    [nrows,~] = size(database.(nameXX));
+                    for row = 1:nrows
+                        fprintf(fid,formatSpec,database.(nameXX){row,:});
+                    end
+                    fclose(fid);
+                end
             else
                 % database with three rows of interest %%%% ADD MODULATORS
                 database.(nameX) = [num2cell(onsets.(nameX)), num2cell(durations.(nameX)), num2cell(modulators.(nameX))];

@@ -4,7 +4,7 @@ dbstop if error
 
 %does t-test and full_factorial for PAV
 do_ttest = 1;
-removesub = 0; %'sub-14'; % which sub do we want to remove
+removesub = 'sub-obese256'; % which sub do we want to remove
 
 %% define path
 
@@ -13,7 +13,7 @@ cd ~
 home = pwd;
 homedir = [home '/OBIWAN'];
 
-task = 'pavlovianlearning';
+task = 'pav';
 
 mdldir   = fullfile (homedir, '/DERIVATIVES/GLM/SPM', task);% mdl directory (timing and outputs of the analysis)
 name_ana = 'GLM-01'; % output folder for this analysis
@@ -60,7 +60,7 @@ if do_ttest
         contrastX = contrastNames{n};
         
         if removesub
-            contrastFolder = fullfile (groupdir, 'ttests', removesub, contrastX);
+            contrastFolder = fullfile (groupdir, 'ttests', ['removing_' removesub], contrastX);
         else
             contrastFolder = fullfile (groupdir, 'ttests', 'all', contrastX);
         end

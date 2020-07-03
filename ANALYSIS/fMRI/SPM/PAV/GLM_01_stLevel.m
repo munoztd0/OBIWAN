@@ -11,7 +11,7 @@ dbstop if error
 
 %% define task variable
 sessionX = 'second';
-task = 'pavlovianlearning';
+task = 'pav';
 name_ana = 'GLM-01'; % output folder for this analysis
 
 %% DEFINE PATH

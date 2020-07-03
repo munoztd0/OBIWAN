@@ -60,7 +60,7 @@ mod7 <- lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + fa
 # mod10 <- lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ * intZ +(condition*time*famZ*intZ|id) + (condition|trialxcondition) , 
 #              data = HED, control = control) 
 mod11 <- lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ * intZ +(condition*time + famZ*intZ|id) + (condition|trialxcondition) , 
-             data = HED, control = control) 
+              data = HED, control = control) 
 
 AIC(mod1) ; BIC(mod1)
 AIC(mod2) ; BIC(mod2)

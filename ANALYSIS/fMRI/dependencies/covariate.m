@@ -6,9 +6,9 @@ function covariate(task, name_ana, name_soft, covariateNames, remove)
 
 %variables
 task = 'hedonicreactivity';
-name_ana = 'GLM-04'; % output folder for this analysis
+name_ana = 'GLM-04_1'; % output folder for this analysis
 name_soft = 'SPM'; % output folder for this analysis
-covariateNames = {'rew_lik'; 'con_lik'; 'rew_int'; 'con_int';'age_cov'; 'bmi_cov'}; %9
+covariateNames = {'rew_lik'; 'con_lik'; 'rew_int'}; %'con_int';'age_cov'; 'bmi_cov'}; %9
 %covariateNames = {'bmi_cov'}; %; 'age_cov'}; %9
 conImage = {'con_0001'; 'con_0002'; 'con_0001'; 'con_0002'};
 remove = 0;

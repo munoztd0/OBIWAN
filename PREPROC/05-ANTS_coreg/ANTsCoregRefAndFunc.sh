@@ -34,7 +34,7 @@ runDir=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${sbj}/ses-${ses}/func/
 icaDir=/home/OBIWAN/DATA/STUDY/DERIVED/ICA_ANTS/sub-${sbj}/ses-${ses}/func/task-${task}.ica/
 # path to standard space images
 #standardAnatDir=/home/OBIWAN/DATA/CANONICALS/
-standardAnatDir=/home/OBIWAN/DERIVATIVES/EXTERNALDAT/CANONICALS/
+standardAnatDir=/home/OBIWAN/DERIVATIVES/EXTERNALDATA/CANONICALS/
 
 
 #############

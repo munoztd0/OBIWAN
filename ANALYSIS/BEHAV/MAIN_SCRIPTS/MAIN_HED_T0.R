@@ -21,9 +21,11 @@ setwd(analysis_path)
 # open dataset or load('HED.RData')
 HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
+intern <- read.delim(file.path(analysis_path,'OBIWAN_INTERNAL.txt'), header = T, sep ='') # read in dataset
 
 #subset #only group obese 
 HED  <- subset(HED_full, session == 'second') 
+intern  <- subset(intern, session == 'second') 
 
 #merge with info
 HED = merge(HED, info, by = "id")
@@ -31,12 +33,27 @@ HED = merge(HED, info, by = "id")
 #take out incomplete data ##
 `%notin%` <- Negate(`%in%`)
 HED = HED %>% filter(id %notin% c(242, 256, 114))
+intern = intern %>% filter(id %notin% c(242, 256, 114))
 
 #check for weird behaviors in BsC-> especially in ID.. 267 259 256 242
 bs = ddply(HED, .(id, condition), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), intensityZ = mean(intensityZ, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
 #Visible outliers (in descriptive stats)
 #"Loved (>80) Neutral" : 102 , 219 , 114
 #"Hated (>20) Milkshake": 109, 114, 253, 259, 203, 210
+
+# INTERNAL STATES
+baseINTERN = subset(intern, phase == 4)
+HED = merge(x = HED, y = baseINTERN[ , c("piss", "thirsty", 'hungry', 'id')], by = "id", all.x=TRUE)
+diffINTERN = subset(intern, phase == 4 | phase == 5) #before and after PIT
+before = subset(diffINTERN, phase == 4)
+after = subset(diffINTERN, phase == 5)
+diff = after
+diff$diff_piss = diff$piss - before$piss
+diff$diff_thirsty = diff$thirsty - before$thirsty
+diff$diff_hungry = diff$hungry - before$hungry
+
+HED = merge(x = HED, y = diff[ , c("diff_piss", "diff_thirsty", 'diff_hungry', 'id')], by = "id", all.x=TRUE)
+
 
 # define as.factors
 fac <- c("id", "trial", "condition", "trialxcondition", "gender", "group")
@@ -51,37 +68,61 @@ GENDER = ddply(HED, .(id, group), summarise, gender=mean(as.numeric(gender)))  %
   group_by(gender, group) %>%
   tally() #2 = female
 
+#agragate by subj and then scale 
+HED <- HED %>% 
+  group_by(id) %>% 
+  mutate(pissZ = scale(piss))
 
-#scale everything
-HED$likZ = scale(HED$perceived_liking)
-HED$famZ = scale(HED$perceived_familiarity)
-HED$intZ = scale(HED$perceived_intensity)
+#agragate by subj and then scale 
+HED <- HED %>% 
+  group_by(id) %>% 
+  mutate(thirstyZ = scale(thirsty))
+
+#agragate by subj and then scale 
+HED <- HED %>% 
+  group_by(id) %>% 
+  mutate(hungryZ = scale(hungry))
+
+#agragate by subj and then scale 
+HED <- HED %>% 
+  group_by(id) %>% 
+  mutate(diff_pissZ = scale(diff_piss))
+
+#agragate by subj and then scale 
+HED <- HED %>% 
+  group_by(id) %>% 
+  mutate(diff_thirstyZ = scale(diff_thirsty))
+
+#agragate by subj and then scale 
+HED <- HED %>% 
+  group_by(id) %>% 
+  mutate(diff_hungryZ = scale(diff_hungry))
+
+#agragate by subj and then scale 
+HED <- HED %>% 
+  group_by(id) %>% 
+  mutate(bmiZ = scale(BMI_t1))
+#densityPlot(HED$bmiZ) #not really normal but checked with Ben, its cool as long we dont infer on bmi < 25 >30
 
 #agragate by subj and then scale 
 HED <- HED %>% 
   group_by(id) %>% 
   mutate(ageZ = scale(age))
 
-#densityPlot(HED$bmiZ) #really bad in terms of normality
-#ranktrans BMI
-HED$bmiT = RNOmni::rankNorm(HED$BMI_t1)
-densityPlot(HED$bmiT)
+#scale everything
+HED$likZ = scale(HED$perceived_liking)
+HED$famZ = scale(HED$perceived_familiarity)
+HED$intZ = scale(HED$perceived_intensity)
 
-#change value of groups
-HED$group = as.factor(revalue(HED$group, c(control="0", obese="1")))
-
-HED$group2 = c(1:length(HED$group))
-HED$group2[HED$BMI_t1 < 30 ] <- '-1' # control BMI = 22.25636 -> 1.03
-HED$group2[HED$BMI_t1 >= 30 & HED$BMI_t1 < 35] <- '0' # Class I obesity: BMI = 30 to 35. -> - 0.22
-HED$group2[HED$BMI_t1 >= 35] <- '1' # Class II obesity: BMI = 35 to 40. -> 0.89
-#HED$group2[HED$BMI_t1 > 40] <- '3' # Class III obesity: BMI 40 or higher -> 1.89
-
-N_group = ddply(HED, .(id, group2), summarise, group=mean(as.numeric(group2)))  %>%
-  group_by(group) %>% tally()
 
 #change value of condition
 HED$condition = as.factor(revalue(HED$condition, c(Empty="-1", MilkShake="1")))
 HED$condition <- factor(HED$condition, levels = c("1", "-1"))
+
+#save RData for cluster computing
+save.image(file = "HED.RData", version = NULL, ascii = FALSE,
+           compress = FALSE, safe = TRUE)
+
 
 # STATS # LINEAR MIXED EFFECTS : REML = FALSE -------------------------------------------------------------------
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful functions from Ben Meulman
@@ -108,13 +149,6 @@ cont
 df.HED = as.data.frame(cont$contrasts) 
 df.HED$bmiT <- as.character(df.HED$bmiT)
 
-# CSPlus <- subset(HED, condition =="1" )
-# CSPlus <- CSPlus[order(as.numeric(levels(CSPlus$id))[CSPlus$id], CSPlus$trialxcondition),]
-# CSMinus <- subset(HED, condition =="-1" )
-# CSMinus <- CSMinus[order(as.numeric(levels(CSMinus$id))[CSMinus$id], CSPlus$trialxcondition),]
-# df.observed = CSPlus
-# df.observed$estimate = CSPlus$likZ - CSMinus$likZ
-# df.observed$bmiT = df.observed$group2
 
 full.obs = ddply(HED, .(id, group2, condition), summarise, estimate = mean(likZ))
 milk = subset(full.obs, condition == '1')

@@ -2,12 +2,14 @@
 
 # pull in subject
 subjectID=$1
+#subjectID='obese262'
 
 # pull in session
 sessionID=$2
-
+#sessionID='third'
 # pull in task
 taskID=$3
+#taskID='pav'
 
 echo "Preparing subject ${subjectID}, ${sessionID} session, ${taskID} task"
 
