@@ -30,21 +30,22 @@ str(PIT)
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
 ## BASIC RANDOM INTERCEPT MODEL
-rint = lmer(gripZ ~ condition*bmiZ + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (1|id), data = PIT, control=control)
+rint = lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (1|id), data = PIT, control=control)
 summary(rint)
 
 
 ## COMPARING RANDOM EFFECTS MODELS
-mod1 <- lmer(gripZ ~ condition*bmiZ + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (1|id) , data = PIT, control=control)
-mod2 <- lmer(gripZ ~ condition*bmiZ + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (condition|id) , data = PIT, control=control)
-mod3 <- lmer(gripZ ~ condition*bmiZ + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (1|id) + (1|trialxcondition), data = PIT, control=control)
-mod4 <- lmer(gripZ ~ condition*bmiZ + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (condition|id) + (1|trialxcondition), data = PIT, control=control)
-#after mod4 doesn't converge properly correlation = 1, negative Hessian -> we stop
+mod1 <- lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (1|id) , data = PIT, control=control)
+mod2 <- lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (condition|id) , data = PIT, control=control)
+mod3 <- lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (1|id) + (1|trialxcondition), data = PIT, control=control)
+mod4 <- lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (condition|id) + (1|trialxcondition), data = PIT, control=control)
+mod5 <- lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (condition|id) + (condition|trialxcondition), data = PIT, control=control)
 
 AIC(mod1) ; BIC(mod1)
 AIC(mod2) ; BIC(mod2)
 AIC(mod3) ; BIC(mod3)
-AIC(mod4) ; BIC(mod4)
+AIC(mod4) ; BIC(mod4) #best random structure
+AIC(mod5) ; BIC(mod5)
 
 ## BEST RANDOM SLOPE MODEL
 rslope <- mod4
@@ -79,32 +80,24 @@ residual.fitted.data %>%
 
 
 
-## PLOTTING
-mod <- rslope
-visreg(mod,points.par=list(col="darkgoldenrod3"),line.par=list(col="royalblue4",lwd=4))
-
-#for to continuous predictor by group
-#visreg(mod1,xvar="Intervention",by="Condition",gg=TRUE,type="contrast",ylab="Effort (z)",breaks=c(-2,0,2),xlab="Intervention")
-
-
 ## COMPARING FIXED EFFECTS MODELS REML FALSE
-mod0 <- lmer(gripZ ~ condition*bmiZ  + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod1 <- lmer(gripZ ~ condition*bmiZ + gender  + (condition|id) + (1|trialxcondition), data = PIT,control = control, REML = FALSE)
-mod2 <- lmer(gripZ ~ condition*bmiZ + ageZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod3 <- lmer(gripZ ~ condition*bmiZ + pissZ+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod4 <- lmer(gripZ ~ condition*bmiZ + likZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod5 <- lmer(gripZ ~ condition*bmiZ  + thirstyZ+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod6 <- lmer(gripZ ~ condition*bmiZ + pissZ+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod7 <- lmer(gripZ ~ condition*bmiZ + hungryZ+  (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod0 <- lmer(gripZ ~ condition*group  + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod1 <- lmer(gripZ ~ condition*group + gender  + (condition|id) + (1|trialxcondition), data = PIT,control = control, REML = FALSE)
+mod2 <- lmer(gripZ ~ condition*group + ageZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod3 <- lmer(gripZ ~ condition*group + pissZ+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod4 <- lmer(gripZ ~ condition*group + likZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod5 <- lmer(gripZ ~ condition*group  + thirstyZ+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod6 <- lmer(gripZ ~ condition*group + pissZ+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod7 <- lmer(gripZ ~ condition*group + hungryZ+  (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
 
-mod01 <- lmer(gripZ ~ condition*bmiZ   + thirstyZ +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod02 <- lmer(gripZ ~ condition*bmiZ   + thirstyZ*hungryZ + pissZ +        (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod03 <- lmer(gripZ ~ condition*bmiZ   + thirstyZ + hungryZ*pissZ +        (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod04 <- lmer(gripZ ~ condition*bmiZ   + thirstyZ*hungryZ*pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod05 <- lmer(gripZ ~ condition*bmiZ   + thirstyZ*hungryZ*pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod06 <- lmer(gripZ ~ condition*bmiZ   + thirstyZ + thirstyZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod07 <- lmer(gripZ ~ condition*bmiZ   + thirstyZ + hungryZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod08 <- lmer(gripZ ~ condition*bmiZ   + thirstyZ + pissZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod01 <- lmer(gripZ ~ condition*group   + thirstyZ +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod02 <- lmer(gripZ ~ condition*group   + thirstyZ*hungryZ + pissZ +        (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod03 <- lmer(gripZ ~ condition*group   + thirstyZ + hungryZ*pissZ +        (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod04 <- lmer(gripZ ~ condition*group   + thirstyZ*hungryZ*pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod05 <- lmer(gripZ ~ condition*group   + thirstyZ*hungryZ*pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod06 <- lmer(gripZ ~ condition*group   + thirstyZ + thirstyZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod07 <- lmer(gripZ ~ condition*group   + thirstyZ + hungryZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod08 <- lmer(gripZ ~ condition*group   + thirstyZ + pissZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
 
 AIC(mod0) ; BIC(mod0) 
 AIC(mod1) ; BIC(mod1) #worse than null
@@ -114,8 +107,6 @@ AIC(mod4) ; BIC(mod4) #worse than null
 AIC(mod5) ; BIC(mod5)
 AIC(mod6) ; BIC(mod6)
 AIC(mod7) ; BIC(mod7)
-
-
 
 AIC(mod01) ; BIC(mod01) 
 AIC(mod02) ; BIC(mod02)
@@ -127,9 +118,9 @@ AIC(mod07) ; BIC(mod07) #best simplest
 AIC(mod08) ; BIC(mod08) 
 
 ## BEST SIMPLE FIXED MODEL #keep it simple
-mod <- mod08
+mod <- mod07
 summary(mod)
-moddummy <- lm(gripZ ~ condition*bmiZ + thirstyZ + pissZ:condition +  hungryZ + pissZ, data = PIT)
+moddummy <- lm(gripZ ~ condition*group + thirstyZ + pissZ:condition +  hungryZ + pissZ, data = PIT)
 
 # MODEL ASSUMPTION CHECKS :  -----------------------------------
 
@@ -163,4 +154,5 @@ ggdotchart(df, x = "id", y = "cookD", sorting = "ascending",add = "segments") +
   theme(legend.position = 'none', axis.ticks.y = element_blank(),  axis.text.y = element_blank())
 
 
+# The rest on MAIN_PIT_T0 - Special thanks to Ben Meuleman, Eva R. Pool and Yoann Stussi -----------------------------------------------------------------
 

@@ -2,12 +2,13 @@
 ## following Barr et al. (2013) 
 ## last modified on April 2020 by David MUNOZ TORD
 
+
 # PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(lme4, optimx, car, visreg, ggplot2, ggpubr, sjPlot, influence.ME)
+pacman::p_load(lme4, lmerTest, optimx, car, visreg, ggplot2, ggpubr, sjPlot, glmmTMB, influence.ME)
 
 # SETUP ------------------------------------------------------------------
 
@@ -22,7 +23,7 @@ figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV')
 ## LOADING AND INSPECTING THE DATA
 load('PAV.RData')
 
-View(PAV)
+#View(PAV)
 dim(PAV)
 str(PAV)
 

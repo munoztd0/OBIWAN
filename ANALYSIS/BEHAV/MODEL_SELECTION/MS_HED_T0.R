@@ -32,34 +32,34 @@ control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
 ## BASIC RANDOM INTERCEPT MODEL
 
-rint <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+  (1|id) , data = HED, control = control) 
+rint <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+  (1|id) , data = HED, control = control) 
 
 summary(rint)
 
 
 ## COMPARING RANDOM EFFECTS MODELS
-mod1 <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (1|id) + (1|trialxcondition) , 
+mod1 <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (1|id) + (1|trialxcondition) , 
              data = HED, control = control) 
-mod2 <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition|id) , 
+mod2 <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition|id) , 
              data = HED, control = control) 
-mod3 <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ*intZ|id) + (condition|trialxcondition) , 
+mod3 <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ*intZ|id) + (condition|trialxcondition) , 
              data = HED, control = control) 
-mod4 <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ|id) + (1|trialxcondition) , 
+mod4 <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ|id) + (1|trialxcondition) , 
              data = HED, control = control) 
-mod5 <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + intZ|id) + (1|trialxcondition) , 
+mod5 <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + intZ|id) + (1|trialxcondition) , 
              data = HED, control = control) 
-mod6 <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ + intZ|id) + (1|trialxcondition) , 
+mod6 <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ + intZ|id) + (1|trialxcondition) , 
              data = HED, control = control) 
-mod7 <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ*intZ|id) + (1|trialxcondition) , 
+mod7 <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ*intZ|id) + (1|trialxcondition) , 
              data = HED, control = control) 
 #starting from here it takes aaaaages to compute
-# mod8 <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition*famZ*intZ|id) + (1|trialxcondition) , 
+# mod8 <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition*famZ*intZ|id) + (1|trialxcondition) , 
 #              data = HED, control = control)  #negative hessian
-# mod9 <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ*intZ|id) + (condition|trialxcondition) , 
+# mod9 <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ*intZ|id) + (condition|trialxcondition) , 
 #              data = HED, control = control)  #negative hessian
-# mod10 <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition*famZ*intZ|id) + (condition|trialxcondition) , 
+# mod10 <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition*famZ*intZ|id) + (condition|trialxcondition) , 
 #              data = HED, control = control) #negative hessian
-mod11 <- lmer(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ*intZ|id) + (condition|trialxcondition) , 
+mod11 <- lmer(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ+ (condition + famZ*intZ|id) + (condition|trialxcondition) , 
               data = HED, control = control) 
 
 AIC(mod1) ; BIC(mod1)
@@ -108,61 +108,61 @@ residual.fitted.data %>%
 
 ## TESTING THE RANDOM INTERCEPT
 mod1 <- update(rint, REML = FALSE)
-mod2 <- lm(likZ ~ condition*bmiZ  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ, data = HED) 
+mod2 <- lm(likZ ~ condition*group  + gender + ageZ + famZ + intZ + hungryZ+   thirstyZ, data = HED) 
 
 AIC(mod1) ; BIC(mod1) #really better with random intercept
 AIC(mod2) ; BIC(mod2) 
 
 
 ## COMPARING FIXED EFFECTS MODELS REML FALSE #takes hourssss so I reduced the error structure because it doesnt change much for main effects
-mod0 <- lmer(likZ ~ condition*bmiZ + (condition |id) + (condition|trialxcondition), data = HED,control = control, REML = FALSE)
-mod1 <- lmer(likZ ~ condition*bmiZ + gender  + (condition |id) + (condition|trialxcondition), data = HED,control = control, REML = FALSE)
-mod2 <- lmer(likZ ~ condition*bmiZ + ageZ + (condition |id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod3 <- lmer(likZ ~ condition*bmiZ + pissZ+ (condition |id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod4 <- lmer(likZ ~ condition*bmiZ + thirstyZ+ (condition |id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod5 <- lmer(likZ ~ condition*bmiZ + pissZ+ (condition |id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod6 <- lmer(likZ ~ condition*bmiZ + hungryZ+  (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod7 <- lmer(likZ ~ condition*bmiZ + famZ+  (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod8 <- lmer(likZ ~ condition*bmiZ + intZ+  (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod0 <- lmer(likZ ~ condition*group + (condition |id) + (condition|trialxcondition), data = HED,control = control, REML = FALSE)
+mod1 <- lmer(likZ ~ condition*group + gender  + (condition |id) + (condition|trialxcondition), data = HED,control = control, REML = FALSE)
+mod2 <- lmer(likZ ~ condition*group + ageZ + (condition |id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod3 <- lmer(likZ ~ condition*group + pissZ+ (condition |id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod4 <- lmer(likZ ~ condition*group + thirstyZ+ (condition |id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod5 <- lmer(likZ ~ condition*group + pissZ+ (condition |id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod6 <- lmer(likZ ~ condition*group + hungryZ+  (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod7 <- lmer(likZ ~ condition*group + famZ+  (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod8 <- lmer(likZ ~ condition*group + intZ+  (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
 
 #here a the actual full structure in case
-# mod1 <- lmer(likZ ~ condition*bmiZ + gender  + (condition + famZ*intZ|id) + (condition|trialxcondition), data = HED,control = control, REML = FALSE)
-# mod2 <- lmer(likZ ~ condition*bmiZ + ageZ + (condition + famZ*intZ|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-# mod3 <- lmer(likZ ~ condition*bmiZ + pissZ+ (condition + famZ*intZ|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-# mod4 <- lmer(likZ ~ condition*bmiZ + thirstyZ+ (condition + famZ*intZ|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-# mod5 <- lmer(likZ ~ condition*bmiZ + pissZ+ (condition + famZ*intZ|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-# mod6 <- lmer(likZ ~ condition*bmiZ + hungryZ+  (condition|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-# mod7 <- lmer(likZ ~ condition*bmiZ + famZ+  (condition|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-# mod8 <- lmer(likZ ~ condition*bmiZ + intZ+  (condition|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+# mod1 <- lmer(likZ ~ condition*group + gender  + (condition + famZ*intZ|id) + (condition|trialxcondition), data = HED,control = control, REML = FALSE)
+# mod2 <- lmer(likZ ~ condition*group + ageZ + (condition + famZ*intZ|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+# mod3 <- lmer(likZ ~ condition*group + pissZ+ (condition + famZ*intZ|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+# mod4 <- lmer(likZ ~ condition*group + thirstyZ+ (condition + famZ*intZ|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+# mod5 <- lmer(likZ ~ condition*group + pissZ+ (condition + famZ*intZ|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+# mod6 <- lmer(likZ ~ condition*group + hungryZ+  (condition|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+# mod7 <- lmer(likZ ~ condition*group + famZ+  (condition|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+# mod8 <- lmer(likZ ~ condition*group + intZ+  (condition|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
 
 
-mod01 <- lmer(likZ ~ condition*bmiZ   + thirstyZ +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod02 <- lmer(likZ ~ condition*bmiZ   + thirstyZ*hungryZ + pissZ +    (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod03 <- lmer(likZ ~ condition*bmiZ   + thirstyZ + hungryZ*pissZ +    (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod04 <- lmer(likZ ~ condition*bmiZ   + thirstyZ*hungryZ*pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod05 <- lmer(likZ ~ condition*bmiZ   + thirstyZ*hungryZ*pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod06 <- lmer(likZ ~ condition*bmiZ   + thirstyZ + thirstyZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod07 <- lmer(likZ ~ condition*bmiZ   + thirstyZ + hungryZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod08 <- lmer(likZ ~ condition*bmiZ   + thirstyZ + pissZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod01 <- lmer(likZ ~ condition*group   + thirstyZ +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod02 <- lmer(likZ ~ condition*group   + thirstyZ*hungryZ + pissZ +    (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod03 <- lmer(likZ ~ condition*group   + thirstyZ + hungryZ*pissZ +    (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod04 <- lmer(likZ ~ condition*group   + thirstyZ*hungryZ*pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod05 <- lmer(likZ ~ condition*group   + thirstyZ*hungryZ*pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod06 <- lmer(likZ ~ condition*group   + thirstyZ + thirstyZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod07 <- lmer(likZ ~ condition*group   + thirstyZ + hungryZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod08 <- lmer(likZ ~ condition*group   + thirstyZ + pissZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
 
-mod01 <- lmer(likZ ~ condition*bmiZ   + thirstyZ +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod02 <- lmer(likZ ~ condition*bmiZ   + thirstyZ*hungryZ + pissZ +    (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod03 <- lmer(likZ ~ condition*bmiZ   + thirstyZ + hungryZ*pissZ +    (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod04 <- lmer(likZ ~ condition*bmiZ   + thirstyZ*hungryZ*pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod05 <- lmer(likZ ~ condition*bmiZ   + thirstyZ*hungryZ*pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod06 <- lmer(likZ ~ condition*bmiZ   + thirstyZ + thirstyZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod07 <- lmer(likZ ~ condition*bmiZ   + thirstyZ + hungryZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
-mod08 <- lmer(likZ ~ condition*bmiZ   + thirstyZ + pissZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod01 <- lmer(likZ ~ condition*group   + thirstyZ +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod02 <- lmer(likZ ~ condition*group   + thirstyZ*hungryZ + pissZ +    (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod03 <- lmer(likZ ~ condition*group   + thirstyZ + hungryZ*pissZ +    (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod04 <- lmer(likZ ~ condition*group   + thirstyZ*hungryZ*pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod05 <- lmer(likZ ~ condition*group   + thirstyZ*hungryZ*pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod06 <- lmer(likZ ~ condition*group   + thirstyZ + thirstyZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod07 <- lmer(likZ ~ condition*group   + thirstyZ + hungryZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
+mod08 <- lmer(likZ ~ condition*group   + thirstyZ + pissZ:condition +  hungryZ + pissZ + (condition|id) + (condition|trialxcondition), data = HED, control = control, REML = FALSE)
 
 
 #same here
-mod11 <- lmer(likZ ~ condition*bmiZ  + famZ + intZ + (condition + famZ*intZ|id) + (condition|trialxcondition) , data = HED, control = control, REML = FALSE)
-mod12 <- lmer(likZ ~ condition*bmiZ  + famZ*intZ + (condition + famZ*intZ|id) + (condition|trialxcondition) , data = HED, control = control, REML = FALSE)
-mod13 <- lmer(likZ ~ condition*bmiZ  + famZ + intZ*condition + (condition + famZ*intZ|id) + (condition|trialxcondition) , data = HED, control = control, REML = FALSE)
-mod14 <- lmer(likZ ~ condition*bmiZ  + famZ*condition + intZ + (condition + famZ*intZ|id) + (condition|trialxcondition) , data = HED, control = control, REML = FALSE)
+mod11 <- lmer(likZ ~ condition*group  + famZ + intZ + (condition + famZ*intZ|id) + (condition|trialxcondition) , data = HED, control = control, REML = FALSE)
+mod12 <- lmer(likZ ~ condition*group  + famZ*intZ + (condition + famZ*intZ|id) + (condition|trialxcondition) , data = HED, control = control, REML = FALSE)
+mod13 <- lmer(likZ ~ condition*group  + famZ + intZ*condition + (condition + famZ*intZ|id) + (condition|trialxcondition) , data = HED, control = control, REML = FALSE)
+mod14 <- lmer(likZ ~ condition*group  + famZ*condition + intZ + (condition + famZ*intZ|id) + (condition|trialxcondition) , data = HED, control = control, REML = FALSE)
 
 #finally the huge model
-mod15 <- lmer(likZ ~ condition*bmiZ  + famZ + intZ+ intZ:condition + thirstyZ + hungryZ:condition +  hungryZ + pissZ 
+mod15 <- lmer(likZ ~ condition*group  + famZ + intZ+ intZ:condition + thirstyZ + hungryZ:condition +  hungryZ + pissZ 
               + (condition + famZ*intZ|id) + (condition|trialxcondition) , data = HED, control = control, REML = FALSE)
 
 
@@ -203,7 +203,7 @@ summary(mod)
 visreg(mod,points.par=list(col="darkgoldenrod3"),line.par=list(col="royalblue4",lwd=4))
 
 #for to continuous predictor by group
-#visreg(mod1,xvar="Intervention",by="Condition",gg=TRUE,type="contrast",ylab="Liking (z)",breaks=c(-2,0,2),xlab="Intervention")
+#visreg(mod1,xvar="group",by="condition",gg=TRUE,type="contrast",ylab="Liking (z)",breaks=c(-2,0,2),xlab="Intervention")
 
 
 # MODEL ASSUMPTION CHECKS :  -----------------------------------
@@ -238,3 +238,6 @@ ggdotchart(df, x = "id", y = "cookD", sorting = "ascending",add = "segments") +
   scale_x_discrete(expand=c(0,2)) +
   coord_flip() + 
   theme(legend.position = 'none', axis.ticks.y = element_blank(),  axis.text.y = element_blank())
+
+
+# The rest on MAIN_HED_T0 - Special thanks to Ben Meuleman, Eva R. Pool and Yoann Stussi -----------------------------------------------------------------

@@ -27,13 +27,30 @@ info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep =''
 intern <- read.delim(file.path(analysis_path,'OBIWAN_INTERNAL.txt'), header = T, sep ='') # read in dataset
 
 #subset #only group obese 
-PAV  <- subset(PAV_full, group == 'obese') 
+PAV  <- subset(PAV_full, session == 'second') 
+intern  <- subset(intern, session == 'second') 
 
 #merge with info
 PAV = merge(PAV, info, by = "id")
 
-#take out incomplete data 
-PAV <-  PAV[which(PAV$id != c(242, 256)),] #  influence 205 & 254 
+#take out incomplete data ##
+#exclude 242 really outlier everywhere, 256 can't do the task, 114 REALLY hated the solution and thus didn't "do" the conditioning, 228 also
+`%notin%` <- Negate(`%in%`)
+PAV = PAV %>% filter(id %notin% c(242, 256, 114, 228))
+intern = intern %>% filter(id %notin%  c(242, 256, 114, 228))
+
+# INTERNAL STATES
+baseINTERN = subset(intern, phase == 2)
+PAV = merge(x = PAV, y = baseINTERN[ , c("piss", "thirsty", 'hungry', 'id')], by = "id", all.x=TRUE)
+diffINTERN = subset(intern, phase == 2 | phase == 3) #before and after PAV
+before = subset(diffINTERN, phase == 2)
+after = subset(diffINTERN, phase == 3)
+diff = after
+diff$diff_piss = diff$piss - before$piss
+diff$diff_thirsty = diff$thirsty - before$thirsty
+diff$diff_hungry = diff$hungry - before$hungry
+
+PAV = merge(x = PAV, y = diff[ , c("diff_piss", "diff_thirsty", 'diff_hungry', 'id')], by = "id", all.x=TRUE)
 
 # define as.factors
 fac <- c("id", "trial", "condition", "session", "trialxcondition", "gender", "intervention")
@@ -42,11 +59,6 @@ PAV[fac] <- lapply(PAV[fac], factor)
 PAV$RT <- as.numeric(PAV$RT)*1000 # transform in millisecond
 
 #check demo
-n_tot = length(unique(PAV$id))
-bs = ddply(PAV, .(id, session), summarise, perceived_liking = mean(perceived_liking, na.rm = TRUE), perceived_intensity = mean(perceived_intensity, na.rm = TRUE), perceived_familiarity = mean(perceived_familiarity, na.rm = TRUE)) 
-
-n_pre = length(which(bs$session == "second"))
-n_post = length(which(bs$session == "third"))
 
 AGE = ddply(PAV,~session,summarise,mean=mean(age),sd=sd(age), min = min(age), max = max(age))
 BMI = ddply(PAV,~session,summarise,mean=mean(BMI_t1),sd=sd(BMI_t1), min = min(BMI_t1), max = max(BMI_t1))
@@ -58,7 +70,9 @@ GENDER = ddply(PAV, .(id, session), summarise, gender=mean(as.numeric(gender))) 
 # Cleaning Up -------------------------------------------------------------
 #shorter than 100ms and longer than 3sd+mean
 
-densityPlot(PAV$RT) # not that bad actually for RT
+densityPlot(PAV$RT) # bad 
+
+acc_bef = mean(PAV$ACC, na.rm = TRUE) #0.93
 
 full = length(PAV$RT)
 PAV.clean <- PAV %>% filter(RT <= mean(RT, na.rm = TRUE) + 3*sd(RT, na.rm = TRUE) &  RT >= 200) 
@@ -66,13 +80,13 @@ PAV.clean <- PAV %>% filter(RT <= mean(RT, na.rm = TRUE) + 3*sd(RT, na.rm = TRUE
 clean= length(PAV.clean$RT)
 
 dropped = full-clean
-(dropped*100)/full  #dropped 13%
+(dropped*100)/full  #dropped 6%
 
-densityPlot(PAV.clean$RT) 
+densityPlot(PAV.clean$RT) #skewed bwaaa
 
 PAV = PAV.clean 
 
-#log transform
+#log transform function
 t_log_scale <- function(x){
   if(x==0){
     y <- 1} 
@@ -80,12 +94,15 @@ t_log_scale <- function(x){
     y <- (sign(x)) * (log(abs(x)))}
   y }
 
-plot(density(sapply(PAV$RT,FUN=t_log_scale))) # but this is much better !
+plot(density(sapply(PAV$RT,FUN=t_log_scale))) # ahh this is much better !
 
 PAV$RT_T <- sapply(PAV$RT,FUN=t_log_scale)
 
-#accuracy is to 95 (was 96 before cleaning)
-mean(PAV$ACC, na.rm = TRUE)
+#accuracy is to 99 (was 93 before cleaning)
+acc_clean = mean(PAV$ACC, na.rm = TRUE)
+
+n_tot = length(unique(PAV$id))
+bs = ddply(PAV, .(id), summarise, RT = mean(RT, na.rm = TRUE)) 
 
 #scale everything
 PAV$likZ = scale(PAV$liking) #but is it nested ? ##check 
@@ -94,15 +111,38 @@ PAV$RT_TZ = scale(PAV$RT_T)
 #agragate by subj and then scale 
 PAV <- PAV %>% 
   group_by(id) %>% 
-  mutate(ageZ = scale(age))
+  mutate(pissZ = scale(piss))
 
-#create BMI diff (I have still NAN because missing data)
+#agragate by subj and then scale 
 PAV <- PAV %>% 
   group_by(id) %>% 
-  mutate(diff_bmiZ = scale(BMI_t1 - BMI_t2))
+  mutate(thirstyZ = scale(thirsty))
 
-#change value of sessions
-PAV$time = revalue(PAV$session, c(second="0", third="1"))
+#agragate by subj and then scale 
+PAV <- PAV %>% 
+  group_by(id) %>% 
+  mutate(hungryZ = scale(hungry))
+
+#agragate by subj and then scale 
+PAV <- PAV %>% 
+  group_by(id) %>% 
+  mutate(diff_pissZ = scale(diff_piss))
+
+#agragate by subj and then scale 
+PAV <- PAV %>% 
+  group_by(id) %>% 
+  mutate(diff_thirstyZ = scale(diff_thirsty))
+
+#agragate by subj and then scale 
+PAV <- PAV %>% 
+  group_by(id) %>% 
+  mutate(diff_hungryZ = scale(diff_hungry))
+
+#agragate by subj and then scale 
+PAV <- PAV %>% 
+  group_by(id) %>% 
+  mutate(ageZ = scale(age))
+
 
 # STATS # LINEAR MIXED EFFECTS : REML = FALSE -------------------------------------------------------------------
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful functions from Ben Meulman
@@ -124,7 +164,7 @@ save.image(file = "PAV.RData", version = NULL, ascii = FALSE,
 #model = mixed(RT_TZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + likZ + (condition*time|id) + (1|trialxcondition), 
 #data = PAV, method = "PB", control = control, REML = FALSE, args_test = list(nsim = 100))
 
-model = mixed(RT_TZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + likZ + (condition*time|id) + (1|trialxcondition), 
+model = mixed(RT_TZ ~ condition*group + gender + ageZ + diff_bmiZ + likZ + (condition*time|id) + (1|trialxcondition), 
               data = PAV, method = "LRT", control = control, REML = FALSE)
 
 summary(model) #The ‘intercept’ of the lmer model is the mean liking rate in Empty coniditon for an average subject. 
@@ -232,7 +272,7 @@ plot(plt3)
 dev.off()
 
 
-# THE END - Special thanks to Ben Meulman and Yoann Stussi -----------------------------------------------------------------
+# THE END - Special thanks to Ben Meuleman, Eva Pool and Yoann Stussi -----------------------------------------------------------------
 
 # 1                    condition  1    0.15     .70
 # 2                         time  1    0.36     .55
@@ -247,4 +287,3 @@ dev.off()
 # 11 condition:time:intervention  1    0.03     .87
 
 
-  
