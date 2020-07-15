@@ -1,5 +1,5 @@
 ## R code for FOR PAV OBIWAN
-# last modified on April 2020 by David MUNOZ TORD
+# last modified on April 2020 by David MUNOC TORD
 
 # PRELIMINARY STUFF ----------------------------------------
 invisible(lapply(paste0('package:', names(sessionInfo()$otherPkgs)), detach, character.only=TRUE, unload=TRUE))
@@ -8,7 +8,7 @@ if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, sjPlot, emmeans, visreg)
+pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, sjPlot, emmeans, visreg, misty)
 
 # SETUP ------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ intern  <- subset(intern, session == 'second')
 #merge with info
 PAV = merge(PAV, info, by = "id")
 
-#take out incomplete data ##
+#take out incomplete data ## look out for  122 & 110 & 254 outliers!
 #exclude 242 really outlier everywhere, 256 can't do the task, 114 REALLY hated the solution and thus didn't "do" the conditioning, 228 also
 `%notin%` <- Negate(`%in%`)
 PAV = PAV %>% filter(id %notin% c(242, 256, 114, 228))
@@ -66,7 +66,6 @@ GENDER = ddply(PAV, .(id, session), summarise, gender=mean(as.numeric(gender))) 
   group_by(gender, session) %>%
   tally() #2 = female
 
-
 # Cleaning Up -------------------------------------------------------------
 #shorter than 100ms and longer than 3sd+mean
 
@@ -88,15 +87,12 @@ PAV = PAV.clean
 
 #log transform function
 t_log_scale <- function(x){
-  if(x==0){
-    y <- 1} 
-  else {
-    y <- (sign(x)) * (log(abs(x)))}
+  if(x==0){y <- 1} 
+  else {y <- (sign(x)) * (log(abs(x)))}
   y }
 
-plot(density(sapply(PAV$RT,FUN=t_log_scale))) # ahh this is much better !
-
 PAV$RT_T <- sapply(PAV$RT,FUN=t_log_scale)
+densityPlot(PAV$RT_T) # ahh this is much better !
 
 #accuracy is to 99 (was 93 before cleaning)
 acc_clean = mean(PAV$ACC, na.rm = TRUE)
@@ -104,186 +100,93 @@ acc_clean = mean(PAV$ACC, na.rm = TRUE)
 n_tot = length(unique(PAV$id))
 bs = ddply(PAV, .(id), summarise, RT = mean(RT, na.rm = TRUE)) 
 
-#scale everything
-PAV$likZ = scale(PAV$liking) #but is it nested ? ##check 
-PAV$RT_TZ = scale(PAV$RT_T)
+# Center level-1 predictor within cluster (CWC)
+PAV$RT_TC = center(PAV$RT_T, type = "CWC", group = PAV$id)
+PAV$likC = center(PAV$liking, type = "CWC", group = PAV$condition)
 
-#agragate by subj and then scale 
-PAV <- PAV %>% 
-  group_by(id) %>% 
-  mutate(pissZ = scale(piss))
+# Center level-2 predictor at the grand mean (CGM)
+PAV <- PAV %>% group_by(id) %>% mutate(pissC = center(piss))
+PAV <- PAV %>% group_by(id) %>% mutate(thirstyC = center(thirsty))
+PAV <- PAV %>% group_by(id) %>% mutate(hungryC = center(hungry))
+PAV <- PAV %>% group_by(id) %>% mutate(diff_pissC = center(diff_piss)) 
+PAV <- PAV %>% group_by(id) %>% mutate(diff_thirstyC = center(diff_thirsty))
+PAV <- PAV %>% group_by(id) %>% mutate(diff_hungryC = center(diff_hungry))
+PAV <- PAV %>% group_by(id) %>% mutate(ageC = center(age))
 
-#agragate by subj and then scale 
-PAV <- PAV %>% 
-  group_by(id) %>% 
-  mutate(thirstyZ = scale(thirsty))
+#revalue all catego
+#change value of group
+PAV$group = as.factor(revalue(PAV$group, c(control="-1", obese="1")))
 
-#agragate by subj and then scale 
-PAV <- PAV %>% 
-  group_by(id) %>% 
-  mutate(hungryZ = scale(hungry))
-
-#agragate by subj and then scale 
-PAV <- PAV %>% 
-  group_by(id) %>% 
-  mutate(diff_pissZ = scale(diff_piss))
-
-#agragate by subj and then scale 
-PAV <- PAV %>% 
-  group_by(id) %>% 
-  mutate(diff_thirstyZ = scale(diff_thirsty))
-
-#agragate by subj and then scale 
-PAV <- PAV %>% 
-  group_by(id) %>% 
-  mutate(diff_hungryZ = scale(diff_hungry))
-
-#agragate by subj and then scale 
-PAV <- PAV %>% 
-  group_by(id) %>% 
-  mutate(ageZ = scale(age))
-
+#change value of condition
+PAV$condition = as.factor(revalue(PAV$condition, c(CSminus="-1", CSplus="1")))
+PAV$condition <- factor(PAV$condition, levels = c("1", "-1"))
 
 # STATS # LINEAR MIXED EFFECTS : REML = FALSE -------------------------------------------------------------------
-source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful functions from Ben Meulman
-
-#FOR MODEL SELECTION following Barr et al. (2013) approach SEE --> CODE/ANALYSIS/BEHAV/MODEL_SELECTION/MS_PAV.R
 
 #set "better" lmer optimizer #nolimit # yoloptimizer
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
+#increase repetitions limit
+emm_options(pbkrtest.limit = 5000)
+emm_options(lmerTest.limit = 5000)
+options(contrasts=c("contr.sum","contr.poly")) #set contrasts to sum !
 
 #save RData for cluster computing
-save.image(file = "PAV.RData", version = NULL, ascii = FALSE,
-           compress = FALSE, safe = TRUE)
+# save.image(file = "PAV.RData", version = NULL, ascii = FALSE,compress = FALSE, safe = TRUE)
 
+source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful functions from Ben Meulman
 
-#Calculates p-values using parametric bootstrap takes forever #set to method LRT to quick check
-# PB calculates Nsim samples of the likelihood ratio test statistic (LRT) 
+#FOR MODEL SELECTION we followed Barr et al. (2013) approach SEE --> CODE/ANALYSIS/BEHAV/MODEL_SELECTION/MS_PAV_T0.R
 
-#takes ages even on the cluster!
-#model = mixed(RT_TZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + likZ + (condition*time|id) + (1|trialxcondition), 
-#data = PAV, method = "PB", control = control, REML = FALSE, args_test = list(nsim = 100))
-
-model = mixed(RT_TZ ~ condition*group + gender + ageZ + diff_bmiZ + likZ + (condition*time|id) + (1|trialxcondition), 
+#set to method LRT to quick check
+model = mixed(RT_TC ~ condition*group + group:likC + likC +  (condition|id) + (1|trialxcondition),
               data = PAV, method = "LRT", control = control, REML = FALSE)
+model
 
-summary(model) #The ‘intercept’ of the lmer model is the mean liking rate in Empty coniditon for an average subject. 
-
+#Calculates p-values using parametric bootstrap takes forever
+# PB calculates Nsim samples of the likelihood ratio test statistic (LRT) 
+# #takes ages even on the cluster!
+#model = mixed(RT_TC ~ condition*group   + ageC + likC + thirstyC +  hungryC + pissC + (condition|id) + (1|trialxcondition),
+#              data = PAV, method = "PB", control = control, REML = FALSE, args_test = list(nsim = 5000))
 # Mixed Model Anova Table (Type 3 tests, LRT-method)
 # 
-# Model: RT_TZ ~ condition * time * intervention + gender + ageZ + diff_bmiZ + 
-#   Model:     likZ + (condition * time | id) + (1 | trialxcondition)
+# Model: RT_TC ~ condition * group + group:likC + likC + (condition | id) + (1 | trialxcondition)
 # Data: PAV
-# Df full model: 24
+# Df full model: 11
 # Effect df   Chisq p.value
-# 1                    condition  1    0.15     .70
-# 2                         time  1    0.36     .55
-# 3                 intervention  1    2.23     .14
-# 4                       gender  1    0.50     .48
-# 5                         ageZ  1  5.79 *     .02
-# 6                    diff_bmiZ  1    0.43     .51
-# 7                         likZ  1 9.66 **    .002
-# 8               condition:time  1    0.26     .61
-# 9       condition:intervention  1    1.84     .17
-# 10           time:intervention  1    0.08     .77
-# 11 condition:time:intervention  1    0.03     .87
+# 1       condition  1  5.06 *    .024
+# 2           group  1    0.01    .903
+# 3            likC  1 6.77 **    .009
+# 4 condition:group  1    0.14    .713
+# 5      group:likC  1    1.11    .293
 
-# COMPUTE EFFECT SIZES (COMPUTE R Squared For Mixed Models VIA NAKAGAWA ESTIMATE)
-mod <- lmer(RT_TZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + likZ + (condition*time|id) + (1|trialxcondition), 
-            data = PAV, control = control) #need to be fitted using ML so here I just use lmer function so its faster
+mod <- lmer(RT_TC ~ condition*group + group:likC + likC +  (condition|id) + (1|trialxcondition), data = PAV, control = control) # REML now for further analysis
+ref_grid(mod) #triple check everything is more or less centered at 0
 
-R2 = r2beta(mod,method="nsj") #R(m)2, the proportion of variance explained by the fixed predictors 
-R2
+#get CI and pval for condition (left sided!)
+p_cond = emmeans(mod, pairwise~ condition, side = "<") 
+p_cond
+#get CI condition
+CI_cond = confint( emmeans(mod, pairwise~ condition),level = 0.95,
+                   method = c("boot"),
+                   nsim = 5000)
+CI_cond$contrasts
+# contrast estimate     SE df lower.CL upper.CL t.ratio p.value
+# 1 - -1   -0.0285 0.0127 84.2  -0.0537 -0.00328 -2.247  0.0136 
 
-# BAYESIAN ANOVA
-# N.B. Please note that the estimated Bayes factors might (slightly) vary due to Monte Carlo sampling noise
-# PAV.aov_BF  <- anovaBF(RT_TZ ~ condition*time*intervention + id, data = PAV, whichRandom=c('id','condition:id', 'time:id', 'time:condition:id'), iterations = 5000)
-#   
-# # Interaction effect
-# PAV.aov_BF[4]/PAV.aov_BF[3]
+#get contrasts for group X condition (adjusted but still left sided)
+inter = emmeans(mod, pairwise~ condition|group, adjust = "tukey", side = "<") 
+inter$contrasts
+#get CI contrasts
+CI_inter = confint(emmeans(mod, pairwise~ condition|group),level = 0.95,method = c("boot"),nsim = 5000)
+CI_inter$contrasts
 
-
-# PLOT --------------------------------------------------------------------
-source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R') #helpful plot functions
-
-emm_options(pbkrtest.limit = 5000) #set emmeans options
-
-# interaction plot interventionXconditionXtime 
-
-#pred CI #takes forever
-pred = confint(emmeans(model,list(pairwise ~ intervention:condition:time)), level = .95, type = "response")
-df.predicted = data.frame(pred$`emmeans of intervention, condition, time`)
-
-colnames(df.predicted) <- c("intervention", "condition", "time",  "fit", "SE", "df", "lowCI", "uppCI")
-
-#custom contrasts
-# con <- list(
-#   c1 = c(0, 0, 0, 0, 1, -1, 0, 0), #Post: empty Placebo > empty- Lira
-#   c2 = c(0, 0, 0, 0, 0, 0, 1, -1), #Post: MS Placebo > MS Lira
-#   c3 = c(0, 0, 1, -1, 0, 0, 0, 0), #Pre: MS Placebo > MS Lira
-#   c4 = c(1, -1, 0, 0, 0, 0, 0, 0) #Pre: empty Placebo > empty Lira
-# )
-
-#contrasts on estimated means adjusted via the Multivariate normal t distribution
-#cont = emmeans(model, ~ intervention:condition:time, contr = con, adjust = "mvt")
-
-#facet wrap labels
-labels <- c("0" = "Pre-Test", "1" = "Post-Test")
-
-plt <-  ggplot(df.predicted, aes(x = condition, y = fit, color = intervention)) +
-  geom_point(position = position_dodge(width = 0.5)) +
-  geom_errorbar(aes(ymax = lowCI, ymin = uppCI), width=0.1,  alpha=1, size=0.4, position = position_dodge(width = 0.5))+
-  geom_line(aes(group=intervention), alpha=0.4,position = position_dodge(width = 0.5)) + 
-  facet_wrap(~ time, labeller=labeller(time = labels))
-
-plt3 = plt +  #details to make it look good
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-1,1, by = 0.5)), limits = c(-1,1)) +
-  scale_color_discrete(name = "intervention", labels = c("Placebo", "Liraglutide (3.0 mg) ")) +
-  scale_x_discrete(labels=c("CSminus" = "CS-  ", "CSplus" = "  CS+")) + 
-  guides(fill = guide_legend(override.aes = list(alpha = 0.1))) +
-  theme_bw() +
-  theme(plot.margin = unit(c(1, 1, 1.2, 1), units = "cm"),
-        panel.grid.major.x = element_blank() ,
-        panel.grid.major.y = element_line( size=.2, color="lightgrey") ,
-        axis.text.x = element_text(size=10,  colour = "black", vjust = 0.5),
-        axis.text.y = element_text(size=12,  colour = "black"),
-        axis.title.x =  element_blank(), 
-        axis.title.y = element_text(size=16),   
-        legend.position = c(0.475, -0.2), legend.title=element_blank(),
-        legend.direction = "horizontal", #legend.spacing.x = unit(1, 'cm'),
-        axis.ticks.x = element_blank(), 
-        axis.line.x = element_blank(),
-        strip.background = element_rect(fill="white"))+ 
-  labs( y = "Reaction Times (log z)", #    Post-hoc test -> No differences found\n
-        caption = "\n \n \n \n \nThree-way interaction, p = .87, \n
-        Main effect of condition, p = .70\n
-        Error bars represent 95% CI for the estimated marginal means\n
-        Placebo (N = 29), Liraglutide (N = 32)\n
-        LMM : Reaction Times ~ Condition*Time*Treatment + (Time*Condition|Id) + (1|Trial)\n
-        Controling for Liking, Age, Gender & Weight Loss (BMI pre - BMI post)")
-
-plot(plt3)
-
-cairo_pdf(file.path(figures_path,paste(task, 'condXtreatXtime_Lira.pdf',  sep = "_")),
-          width     = 5.5,
-          height    = 6)
-
-plot(plt3)
-dev.off()
+# group = control:
+#   contrast estimate     SE   df lower.CL upper.CL t.ratio p.value
+# 1 - -1    -0.0239 0.0209 83.5  -0.0654   0.0177  -1.141  0.1285 
+# 
+# group = obese:
+#   contrast estimate     SE   df lower.CL upper.CL  t.ratio p.value
+# 1 - -1    -0.0331 0.0143 85.6  -0.0616  -0.0046  -2.309  0.0117 
 
 
-# THE END - Special thanks to Ben Meuleman, Eva Pool and Yoann Stussi -----------------------------------------------------------------
-
-# 1                    condition  1    0.15     .70
-# 2                         time  1    0.36     .55
-# 3                 intervention  1    2.23     .14
-# 4                       gender  1    0.50     .48
-# 5                         ageZ  1  5.79 *     .02
-# 6                    diff_bmiZ  1    0.43     .51
-# 7                         likZ  1 9.66 **    .002
-# 8               condition:time  1    0.26     .61
-# 9       condition:intervention  1    1.84     .17
-# 10           time:intervention  1    0.08     .77
-# 11 condition:time:intervention  1    0.03     .87
-
-
+# The rest on plot_PAV_T0 - Special thanks to Ben Meuleman, Eva R. Pool and Yoann Stussi -----------------------------------------------------------------

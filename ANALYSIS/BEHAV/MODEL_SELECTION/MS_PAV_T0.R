@@ -1,6 +1,6 @@
 ## R code for FOR PAV MODEL SELECTION
 ## following Barr et al. (2013) 
-## last modified on April 2020 by David MUNOZ TORD
+## last modified on April 2020 by David MUNOC TORD
 
 
 # PRELIMINARY STUFF ----------------------------------------
@@ -31,27 +31,26 @@ str(PAV)
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
 ## BASIC RANDOM INTERCEPT MODEL
-rint = lmer(RT_TZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (1|id) + (1|trialxcondition), data = PAV, control=control)
+rint = lmer(RT_TC ~ condition*group + gender + ageC + pissC+   hungryC+   thirstyC+   likC + (1|id) + (1|trialxcondition), data = PAV, control=control)
 summary(rint)
 
 
 ## COMPARING RANDOM EFFECTS MODELS REML
-mod1 <- lmer(RT_TZ ~ condition*group + gender + ageZ  + pissZ+   hungryZ+   thirstyZ+   likZ + (1|id) + (1|trialxcondition), data = PAV, control=control)
-mod2 <- lmer(RT_TZ ~ condition*group + gender + ageZ  + pissZ+   hungryZ+   thirstyZ+   likZ + (condition|id) + (1|trialxcondition), data = PAV, control=control)
-mod3 <- lmer(RT_TZ ~ condition*group + gender + ageZ  + pissZ+   hungryZ+   thirstyZ+   likZ + (condition|id) + (condition|trialxcondition), data = PAV, control=control)
-mod4 <- lmer(RT_TZ ~ condition*group + gender + ageZ  + pissZ+   hungryZ+   thirstyZ+   likZ + (condition+likZ|id) + (1|trialxcondition), data = PAV, control=control)
-mod5 <- lmer(RT_TZ ~ condition*group + gender + ageZ  + pissZ+   hungryZ+   thirstyZ+   likZ + (condition*likZ|id) + (1|trialxcondition), data = PAV, control=control)
-
+mod1 <- lmer(RT_TC ~ condition*group + gender + ageC  + pissC+   hungryC+   thirstyC+   likC + (1|id) + (1|trialxcondition), data = PAV, control=control)
+mod2 <- lmer(RT_TC ~ condition*group + gender + ageC  + pissC+   hungryC+   thirstyC+   likC + (condition|id) + (1|trialxcondition), data = PAV, control=control)
+mod3 <- lmer(RT_TC ~ condition*group + gender + ageC  + pissC+   hungryC+   thirstyC+   likC + (condition|id) + (condition|trialxcondition), data = PAV, control=control)
+mod4 <- lmer(RT_TC ~ condition*group + gender + ageC  + pissC+   hungryC+   thirstyC+   likC + (condition+likC|id) + (1|trialxcondition), data = PAV, control=control)
+mod5 <- lmer(RT_TC ~ condition*group + gender + ageC  + pissC+   hungryC+   thirstyC+   likC + (condition*likC|id) + (1|trialxcondition), data = PAV, control=control)
 
 AIC(mod1) ; BIC(mod1)
-AIC(mod2) ; BIC(mod2)
+AIC(mod2) ; BIC(mod2) #
 AIC(mod3) ; BIC(mod3)
-AIC(mod4) ; BIC(mod4) #
+AIC(mod4) ; BIC(mod4) 
 AIC(mod5) ; BIC(mod5)
 
 
 ## BEST RANDOM SLOPE MODEL
-rslope <- mod4
+rslope <- mod2
 summary(rslope)
 ranova(rslope) #there is statistically "significant" variation in slopes between individuals and trials
 
@@ -83,53 +82,48 @@ residual.fitted.data %>%
 
 
 ## COMPARING FIXED EFFECTS MODELS REML FALSE
-mod0 <- lmer(RT_TZ ~ condition*group  + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod1 <- lmer(RT_TZ ~ condition*group + gender  + (condition|id) + (1|trialxcondition), data = PAV,control = control, REML = FALSE)
-mod2 <- lmer(RT_TZ ~ condition*group + ageZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod3 <- lmer(RT_TZ ~ condition*group + pissZ+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod4 <- lmer(RT_TZ ~ condition*group + likZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod5 <- lmer(RT_TZ ~ condition*group  + thirstyZ+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod6 <- lmer(RT_TZ ~ condition*group + pissZ+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod7 <- lmer(RT_TZ ~ condition*group + hungryZ+  (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-
-mod01 <- lmer(RT_TZ ~ condition*group   + ageZ + likZ + thirstyZ +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod02 <- lmer(RT_TZ ~ condition*group   + ageZ + likZ + thirstyZ*hungryZ + pissZ +        (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-# mod03 <- lmer(RT_TZ ~ condition*group   + ageZ + likZ + thirstyZ + hungryZ*pissZ +        (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-# mod04 <- lmer(RT_TZ ~ condition*group   + ageZ + likZ + thirstyZ*hungryZ*pissZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-# mod05 <- lmer(RT_TZ ~ condition*group   + ageZ + likZ + thirstyZ*hungryZ*pissZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-# mod06 <- lmer(RT_TZ ~ condition*group   + ageZ + likZ + thirstyZ + thirstyZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-
-mod03 <- lmer(RT_TZ ~ condition*group + ageZ + condition:likZ + thirstyZ*hungryZ*pissZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod04 <- lmer(RT_TZ ~ condition*group + ageZ + condition:likZ + thirstyZ+hungryZ+pissZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod05 <- lmer(RT_TZ ~ condition*group*likZ  + ageZ  + thirstyZ*hungryZ*pissZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod06 <- lmer(RT_TZ ~ condition*group  + ageZ  + likZ*thirstyZ*hungryZ*pissZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod07 <- lmer(RT_TZ ~ condition*group   + ageZ + likZ + thirstyZ + hungryZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-mod08 <- lmer(RT_TZ ~ condition*group   + ageZ + likZ + thirstyZ + pissZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
-
+mod0 <- lmer(RT_TC ~ condition*group  + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+mod1 <- lmer(RT_TC ~ condition*group + gender  + (condition|id) + (1|trialxcondition), data = PAV,control = control, REML = FALSE)
+mod2 <- lmer(RT_TC ~ condition*group + ageC + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+mod3 <- lmer(RT_TC ~ condition*group + pissC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+mod4 <- lmer(RT_TC ~ condition*group + likC + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+mod5 <- lmer(RT_TC ~ condition*group + thirstyC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+mod6 <- lmer(RT_TC ~ condition*group + pissC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+mod7 <- lmer(RT_TC ~ condition*group + hungryC+  (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+#variantes
+# mod5 <- lmer(RT_TC ~ condition*group + diff_thirstyC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+# mod6 <- lmer(RT_TC ~ condition*group + diff_pissC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+# mod7 <- lmer(RT_TC ~ condition*group + diff_hungryC+  (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+# mod5 <- lmer(RT_TC ~ condition*group + condition:thirstyC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+# mod6 <- lmer(RT_TC ~ condition*group + condition:pissC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+# mod7 <- lmer(RT_TC ~ condition*group + condition:hungryC+  (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+# mod5 <- lmer(RT_TC ~ condition*group + group:thirstyC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+# mod6 <- lmer(RT_TC ~ condition*group + group:pissC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+# mod7 <- lmer(RT_TC ~ condition*group + group:hungryC+  (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
 
 AIC(mod0) ; BIC(mod0) 
 AIC(mod1) ; BIC(mod1) #worse than null
-AIC(mod2) ; BIC(mod2) 
-AIC(mod3) ; BIC(mod3)
+AIC(mod2) ; BIC(mod2) #worse than null
+AIC(mod3) ; BIC(mod3) #worse than null
 AIC(mod4) ; BIC(mod4) 
-AIC(mod5) ; BIC(mod5)
-AIC(mod6) ; BIC(mod6)
-AIC(mod7) ; BIC(mod7)
+AIC(mod5) ; BIC(mod5) #worse than null
+AIC(mod6) ; BIC(mod6) #worse than null
+AIC(mod7) ; BIC(mod7) #worse than null
 
-AIC(mod01) ; BIC(mod01) #best simplest
-AIC(mod02) ; BIC(mod02)
+mod01 <- lmer(RT_TC ~ condition*group + condition:likC + likC + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+mod02 <- lmer(RT_TC ~ condition*group + group:likC + likC +  (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+mod03 <- lmer(RT_TC ~ condition*group*likC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+mod04 <- lmer(RT_TC ~ condition*group + condition:likC:group + likC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+
+AIC(mod01) ; BIC(mod01) 
+AIC(mod02) ; BIC(mod02) #best simplest
 AIC(mod03) ; BIC(mod03)
 AIC(mod04) ; BIC(mod04)
-AIC(mod05) ; BIC(mod05)
-AIC(mod06) ; BIC(mod06)
-AIC(mod07) ; BIC(mod07) 
-AIC(mod08) ; BIC(mod08) 
 
 ## BEST SIMPLE FIXED MODEL #keep it simple
-mod <- mod01
+mod <- mod02
 summary(mod)
-moddummy <- lm(RT_TZ ~condition*group   + ageZ + likZ + thirstyZ +  hungryZ + pissZ, data = PAV)
-
+moddummy <- lm(RT_TC ~ condition*group + group:likC + likC, data = PAV)
 
 ## PLOTTING
 visreg(mod,points.par=list(col="darkgoldenrod3"),line.par=list(col="royalblue4",lwd=4))
@@ -148,8 +142,8 @@ vif(mod) #well good nothing above 10 so not really a problem keeping everything
 #2)Linearity #3)Homoscedasticity AND #4)Normality of residuals
 plot_model(mod, type = "diag") #super cool sjPlots for checking assumptions -> not bad except residuals I guess but seen worst
 
-#5) Absence of influential data points -> 122 & 254 high // 110 & 120 low
-boxplot(scale(ranef(mod)$id), las=2) #simple univariate boxplots
+#5) Absence of influential data points 
+boxplot(scale(ranef(mod)$id), las=2) #simple univariate boxplots -> 122 & 254 high // 110 & 120 low
 
 set.seed(101) #disgnostic plots -> Cook's distance // 122 & 219 & 110 & 254
 alt.est <- influence(mod,maxfun=100,  group="id")   #set to 100 to really have a good estimate BUT #takes forever
@@ -167,4 +161,4 @@ ggdotchart(df, x = "id", y = "cookD", sorting = "ascending",add = "segments") +
   coord_flip() + 
   theme(legend.position = 'none', axis.ticks.y = element_blank(),  axis.text.y = element_blank())
 
-
+### THE END thanks for watching!

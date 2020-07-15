@@ -45,7 +45,7 @@ bs = ddply(HED, .(id, condition), summarise, perceived_liking = mean(perceived_l
 # INTERNAL STATES
 baseINTERN = subset(intern, phase == 4)
 HED = merge(x = HED, y = baseINTERN[ , c("piss", "thirsty", 'hungry', 'id')], by = "id", all.x=TRUE)
-diffINTERN = subset(intern, phase == 4 | phase == 5) #before and after PIT
+diffINTERN = subset(intern, phase == 4 | phase == 5) #before and after HED
 before = subset(diffINTERN, phase == 4)
 after = subset(diffINTERN, phase == 5)
 diff = after

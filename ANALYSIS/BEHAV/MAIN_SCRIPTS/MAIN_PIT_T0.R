@@ -215,14 +215,14 @@ mod <- lmer(gripZ ~ condition*group + hungryZ + hungryZ:condition + thirstyZ + p
 # delta_AIC
 
 #LR test for condition:group 
-full <- lmer(gripZ ~ condition*group + hungryZ + hungryZ:condition + thirstyZ + pissZ  + (condition |id) + (1|trialxcondition),
-             data = PIT, control = control, REML = FALSE)
-null <- lmer(gripZ ~ condition + group + hungryZ + hungryZ:condition + thirstyZ + pissZ  + (condition |id) + (1|trialxcondition),
-             data = PIT, control = control, REML = FALSE)
-test = anova(full, null, test = "Chisq") # 4.2018  1    0.04038 *
-#Δ AIC = 2.20
-delta_AIC = test$AIC[1] - test$AIC[2]
-delta_AIC
+# full <- lmer(gripZ ~ condition*group + hungryZ + hungryZ:condition + thirstyZ + pissZ  + (condition |id) + (1|trialxcondition),
+#              data = PIT, control = control, REML = FALSE)
+# null <- lmer(gripZ ~ condition + group + hungryZ + hungryZ:condition + thirstyZ + pissZ  + (condition |id) + (1|trialxcondition),
+#              data = PIT, control = control, REML = FALSE)
+# test = anova(full, null, test = "Chisq") # 4.2018  1    0.04038 *
+# #Δ AIC = 2.20
+# delta_AIC = test$AIC[1] - test$AIC[2]
+# delta_AIC
 
 #get CI and pval for condition
 p_cond = emmeans(mod, pairwise~ condition, side = ">") 
