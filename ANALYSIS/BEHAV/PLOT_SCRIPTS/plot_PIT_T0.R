@@ -1,5 +1,5 @@
 ## R code for FOR PIT PLOT
-## last modified on April 2020 by David MUNOZ TORD
+## last modified on April 2020 by David MUNOC TORD
 
 # PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
@@ -21,14 +21,9 @@ setwd(analysis_path)
 ## LOADING AND INSPECTING THE DATA
 load('PIT.RData')
 
-mod <- lmer(gripZ ~ condition*group + hungryZ + hungryZ:condition + thirstyZ + pissZ  +(condition |id) + (1|trialxcondition) , 
-            data = PIT, control = control) #need to be fitted using ML so here I just use lmer function so its faster
-
-#check groups
-# PIT$group2 = c(1:length(PIT$group))
-# PIT$group2[PIT$BMI_t1 < 30 ] <- '-1' # control BMI = 22.25636 
-# PIT$group2[PIT$BMI_t1 >= 30 & PIT$BMI_t1 < 35] <- '0' # Class I obesity: BMI = 30 to 35. 
-# PIT$group2[PIT$BMI_t1 >= 35] <- '1' # Class II obesity: BMI = 35 to 40.
+#use non centered DV for plotting
+mod <- lmer(AUC ~ condition*group + hungryC:condition  +(condition |id) + (1|trialxcondition) , 
+            data = PIT, control = control)
 
 N_group = ddply(PIT, .(id, group), summarise, group=mean(as.numeric(group)))  %>%
   group_by(group) %>% tally()
@@ -54,19 +49,20 @@ CSPlus <- CSPlus[order(as.numeric(levels(CSPlus$id))[CSPlus$id], CSPlus$trialxco
 CSMinus <- subset(PIT, condition =="-1" )
 CSMinus <- CSMinus[order(as.numeric(levels(CSMinus$id))[CSMinus$id], CSPlus$trialxcondition),]
 df = CSMinus
-df$diff = CSPlus$gripZ - CSMinus$gripZ
+df$diff = CSPlus$gripC - CSMinus$gripC
 df.observed = ddply(df, .(id, group), summarise, estimate = mean(diff, na.rm = TRUE)) 
 
 plt = ggplot(data = df.predicted, aes(x=group, y= estimate)) + 
-  geom_point(data = df.observed, size=0.7, color='royalblue', alpha=0.5, position=position_jitter(seed =123,width=0.2)) +
+  geom_point(data = df.observed, aes(color= group), size=0.7, alpha=0.5, position=position_jitter(seed =123,width=0.2)) +
+  geom_bar(stat = "identity", fill = "black", alpha = 0.3, width = 0.5) +
   geom_abline(slope=0, intercept=0, linetype='dashed', size=0.5, alpha=0.5) + 
   geom_errorbar(data = df.predicted, aes(ymin=lower.CL, ymax=upper.CL), size=0.5, width=0.1) + 
-  geom_point(shape=23, color='blue', fill='royalblue')
+  geom_point(size = 2, shape=23, fill = 'grey40')
 
 plot = plt + 
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-2,2, by = 1)), limits = c(-2,2)) +
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-150,150, by = 50)), limits = c(-150,150)) +
   scale_x_discrete(labels=c("Lean", "Obese")) +
-  #coord_fixed(ratio=0.9) +
+  scale_color_manual(values=c('tomato','royalblue')) + 
   theme_bw() +
   theme(aspect.ratio = 1.7/1,
         plot.margin = unit(c(1, 1, 1.2, 1), units = "cm"),
@@ -79,21 +75,23 @@ plot = plt +
         axis.title.x =  element_text(size=16), 
         axis.title.y = element_text(size=16),   
         axis.line.x = element_blank(),
+        legend.title=element_blank(),
+        legend.position= "none",
         strip.background = element_rect(fill="white"))+ 
   labs(title = "", 
-       y =  "\u0394 Mobilized Effort (z)", x = "",
-       caption = "Two-way interaction (GroupxPavCue): p = 0.040\n
-       Post-hoc test, Lean: p = 0.64, Obese: p = 0.0011\n 
-       Error range represent 95% CI for the model estimated \n
+       y =  "PIT - \u0394 Mobilized Effort (AUC)", x = "",
+       caption = "Two-way interaction (GroupxPavCue): p = 0.031\n
+       Post-hoc test, Lean: p = 0.77, Obese: p = 0.0038\n 
+       Error range represent 95% CI for contrast estimate \n
        prediction controling for satiety levels\n")
 
 plot(plot)
 
 cairo_pdf(file.path(figures_path,paste(task, 'condXgroup.pdf',  sep = "_")),
-          width     = 5.5,
-          height    = 6)
+          width = 5.5,
+          height = 6)
 
-plot(plt)
+plot(plot)
 dev.off()
 
 #create table

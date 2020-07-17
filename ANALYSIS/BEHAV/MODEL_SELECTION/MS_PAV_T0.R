@@ -31,8 +31,8 @@ str(PAV)
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
 ## BASIC RANDOM INTERCEPT MODEL
-rint = lmer(RT_TC ~ condition*group + gender + ageC + pissC+   hungryC+   thirstyC+   likC + (1|id) + (1|trialxcondition), data = PAV, control=control)
-summary(rint)
+mod0 = lmer(RT_TC ~ condition*group + gender + ageC + pissC+   hungryC+   thirstyC+   likC + (1|id), data = PAV, control=control)
+summary(mod0)
 
 
 ## COMPARING RANDOM EFFECTS MODELS REML
@@ -42,18 +42,17 @@ mod3 <- lmer(RT_TC ~ condition*group + gender + ageC  + pissC+   hungryC+   thir
 mod4 <- lmer(RT_TC ~ condition*group + gender + ageC  + pissC+   hungryC+   thirstyC+   likC + (condition+likC|id) + (1|trialxcondition), data = PAV, control=control)
 mod5 <- lmer(RT_TC ~ condition*group + gender + ageC  + pissC+   hungryC+   thirstyC+   likC + (condition*likC|id) + (1|trialxcondition), data = PAV, control=control)
 
+AIC(mod0) ; BIC(mod0)
 AIC(mod1) ; BIC(mod1)
 AIC(mod2) ; BIC(mod2) #
 AIC(mod3) ; BIC(mod3)
 AIC(mod4) ; BIC(mod4) 
 AIC(mod5) ; BIC(mod5)
 
-
 ## BEST RANDOM SLOPE MODEL
 rslope <- mod2
 summary(rslope)
 ranova(rslope) #there is statistically "significant" variation in slopes between individuals and trials
-
 
 # create data frames containing residuals and fitted
 # values for each model we ran above

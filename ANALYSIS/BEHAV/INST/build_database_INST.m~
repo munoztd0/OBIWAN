@@ -277,7 +277,7 @@ R.task       = db.task(:);
 
 % dependent variable
 R.grip     = num2cell(db.grip(:));
-R.auc     = num2cell(db.AUC(:));
+R.auc     = num2cell(db.auc(:));
 
 
 %% print the database

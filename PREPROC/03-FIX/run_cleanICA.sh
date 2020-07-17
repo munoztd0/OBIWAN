@@ -18,7 +18,7 @@ for subjID in 00 #01 02 03	04	05	06	07	08	09	10	11	12	13	14	15	16	17	18	19	20	21
 		for taskID in pav #PIT hedonicreactivity
 		do
 			# spawn session jobs to the cluster after the subject level work is complete
-			qsub -o /home/OBIWAN/ClusterOutput -j oe -l walltime=1:30:00,pmem=4GB -M david.munoz@etu.unige.ch -m n -l nodes=1 -q queue2 -N class_${subjectID}_${sessionID}_${taskID} -F "${subjectID} ${sessionID} ${taskID}" ${cleanScript}
+			qsub -o /home/OBIWAN/ClusterOutput -j oe -l walltime=1:30:00,pmem=4GB -M david.munoz@etu.unige.ch -m e -l nodes=1 -q queue2 -N class_${subjectID}_${sessionID}_${taskID} -F "${subjectID} ${sessionID} ${taskID}" ${cleanScript}
 
 		done
 

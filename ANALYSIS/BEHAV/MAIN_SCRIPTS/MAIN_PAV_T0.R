@@ -1,5 +1,5 @@
 ## R code for FOR PAV OBIWAN
-# last modified on April 2020 by David MUNOC TORD
+# last modified on April 2020 by David MUNOZ TORD
 
 # PRELIMINARY STUFF ----------------------------------------
 invisible(lapply(paste0('package:', names(sessionInfo()$otherPkgs)), detach, character.only=TRUE, unload=TRUE))
@@ -125,6 +125,7 @@ PAV$condition <- factor(PAV$condition, levels = c("1", "-1"))
 
 #set "better" lmer optimizer #nolimit # yoloptimizer
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
+
 #increase repetitions limit
 emm_options(pbkrtest.limit = 5000)
 emm_options(lmerTest.limit = 5000)

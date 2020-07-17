@@ -20,20 +20,11 @@ setwd(analysis_path)
 
 ## LOADING AND INSPECTING THE DATA
 load('PAV.RData')
+options(contrasts=c("contr.sum","contr.poly")) #set contrasts to sum !
 
-mod <- lmer(RT_TC ~ condition*group + group:likC + likC +  (condition|id) + (1|trialxcondition), data = PAV, control = control)
-
-modLIK <- lmer(likC ~ condition*group + (condition|id), data = PAV, control = control) 
-
-#checks
-
-
-
-#check groups
-# PAV$group2 = c(1:length(PAV$group))
-# PAV$group2[PAV$BMI_t1 < 30 ] <- '-1' # control BMI = 22.25636 
-# PAV$group2[PAV$BMI_t1 >= 30 & PAV$BMI_t1 < 35] <- '0' # Class I obesity: BMI = 30 to 35. 
-# PAV$group2[PAV$BMI_t1 >= 35] <- '1' # Class II obesity: BMI = 35 to 40.
+#use non centered DV for plotting
+mod <- lmer(RT ~ condition*group + group:likC + likC +  (condition|id) + (1|trialxcondition), data = PAV, control = control) 
+modLIK <- aov_car(liking ~ condition*group + Error(id/condition), data = PAV, fun_aggregate = mean, anova_table = list(es = "pes"))
 
 N_group = ddply(PAV, .(id, group), summarise, group=mean(as.numeric(group)))  %>%
   group_by(group) %>% tally()
@@ -48,45 +39,33 @@ source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R') #helpful plot fu
 emm_options(pbkrtest.limit = 5000)
 emm_options(lmerTest.limit = 5000)
 
-
 #get contrasts for groups obesity X condition
-CI_cond = confint(emmeans(mod, pairwise~ condition, adjust = "tukey"),level = 0.95,method = c("boot"),nsim = 5000)
-
+CI_RT = confint(emmeans(mod, pairwise~ condition, adjust = "tukey"),level = 0.95,method = c("boot"),nsim = 5000) 
 CI_lik = confint(emmeans(modLIK, pairwise~ condition, adjust = "tukey"),level = 0.95,method = c("boot"),nsim = 5000)
 
-df.predicted = data.frame(CI_cond$emmeans)
+df.predictedRT = data.frame(CI_RT$emmeans)
+df.observedRT = ddply(PAV, .(id, condition), summarise, emmean = mean(RT, na.rm = TRUE)) 
+df.predictedLIK = data.frame(CI_lik$emmeans)
+df.predictedLIK$condition = c("1", "-1")
+df.observedLIK = ddply(PAV, .(id, condition), summarise, emmean = mean(liking, na.rm = TRUE)) 
 
-df.observed = ddply(PAV, .(id, condition), summarise, emmean = mean(RT_TC, na.rm = TRUE)) 
+df.predictedRT$emmean = df.predictedRT$emmean / 5 #litlle trick to double plot
+df.predictedRT$lower.CL = df.predictedRT$lower.CL / 5 #litlle trick to double plot
+df.predictedRT$upper.CL = df.predictedRT$upper.CL / 5 #litlle trick to double plot
+df.predictedRT$SE = df.predictedRT$SE / 5 #litlle trick to double plot
 
-# df.observed$x = rep("1", length(df.observed$id))
-# df.predicted$x = "1"
 plt = ggplot() + 
-geom_bar(df.predicted, mapping = aes(x = condition, y = emmean), stat = "identity", fill = "white") +
-  geom_point(df.predicted, mapping = aes(x = condition, y = emmean)) +
-  geom_errorbar(df.predicted, mapping = aes(x = condition, y = emmean, ymin=lower.CL, ymax=upper.CL), width=.1, color = 'black')+
-  geom_line(df.predicted, mapping = aes(x = condition, y = emmean, group =1), color = 'black', lty = 4) + 
-  theme(plot.margin = margin(2, 2, 2, 2, "cm")) +
-  ylim(-0.5, 0.5) + 
-  theme_void()
-
-plt + geom_bar(df.predicted, mapping = aes(x = condition, y = emmean), stat = "identity", fill = "white") +
-  geom_point(df.predicted, mapping = aes(x = condition, y = emmean)) +
-  geom_errorbar(df.predicted, mapping = aes(x = condition, y = emmean, ymin=lower.CL, ymax=upper.CL), width=.1, color = 'black')+
-  geom_line(df.predicted, mapping = aes(x = condition, y = emmean, group =1), color = 'black', lty = 4) + 
-  theme(plot.margin = margin(2, 2, 2, 2, "cm")) +
-  ylim(-0.5, 0.5) + 
-  theme_void()
-
-plt = ggplot(data = df.predicted, aes(x=condition, y= emmean)) + 
-  geom_point(data = df.observed, size=0.7, color='royalblue', alpha=0.5, position=position_jitter(seed =123,width=0.2)) +
-  geom_abline(slope=0, intercept=0, linetype='dashed', size=0.5, alpha=0.5) + 
-  geom_errorbar(data = df.predicted, aes(ymin=lower.CL, ymax=upper.CL), size=0.5, width=0.1) + 
-  geom_point(shape=23, color='blue', fill='royalblue')
+  geom_bar(mapping = aes(x = df.predictedLIK$condition, y = df.predictedLIK$emmean), stat = "identity", fill = "black", alpha = 0.4, width=0.5) +
+  geom_errorbar(mapping = aes(x = df.predictedLIK$condition, y = df.predictedLIK$emmean, ymin=df.predictedLIK$emmean - df.predictedLIK$SE, ymax=df.predictedLIK$emmean + df.predictedLIK$SE), size=0.5, width=0.1, color = 'black', alpha = 0.8) + 
+  geom_point(mapping = aes(x = df.predictedLIK$condition, y = df.predictedLIK$emmean), size = 2, shape=23, fill = 'grey40') + 
+  geom_line(mapping = aes(x = df.predictedRT$condition, y = df.predictedRT$emmean, group =1), color = 'royalblue', lty = 4) + 
+  geom_errorbar(mapping = aes(x = df.predictedRT$condition, y = df.predictedRT$emmean, ymin=df.predictedRT$emmean - df.predictedRT$SE, ymax=df.predictedRT$emmean + df.predictedRT$SE), size=0.5, width=0.1,  color='royalblue') + 
+  geom_point(mapping = aes(x = df.predictedRT$condition, y = df.predictedRT$emmean), size = 2, shape=23,  fill='royalblue') + 
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100),
+    name = "Pleasantness Rating", sec.axis = sec_axis(~./1, name = "Latency", labels = function(b) { paste0(round(b * 5, 0))}))  
 
 plot = plt + 
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-2,2, by = 1)), limits = c(-2,2)) +
   scale_x_discrete(labels=c("CS-", "CS+")) +
-  #coord_fixed(ratio=0.9) +
   theme_bw() +
   theme(aspect.ratio = 1.7/1,
         plot.margin = unit(c(1, 1, 1.2, 1), units = "cm"),
@@ -94,26 +73,29 @@ plot = plt +
         plot.caption = element_text(hjust = 0.5),
         panel.grid.major.x = element_blank(), #element_line(size=.2, color="lightgrey") ,
         panel.grid.major.y = element_line(size=.2, color="lightgrey") ,
+        axis.line.y.right = element_line(size = 0.5, linetype = "dashed", colour = "royalblue"),
+        axis.line.y.left = element_line(size = 0.5),
         axis.text.x =  element_text(size=10,  colour = "black"), #element_blank(), #element_text(size=10,  colour = "black", vjust = 0.5),
-        axis.text.y = element_text(size=10,  colour = "black"),
+        axis.text.y.left = element_text(size=10,  colour = "black"),
+        axis.text.y.right = element_text(size=10,  colour = "royalblue"),
         axis.title.x =  element_text(size=16), 
-        axis.title.y = element_text(size=16),   
+        axis.title.y.left = element_text(size=16),  
+        axis.title.y.right = element_text(color = "royalblue", size=16),
         axis.line.x = element_blank(),
+        axis.ticks.y.right = element_line(color = "royalblue"),
         strip.background = element_rect(fill="white"))+ 
-  labs(title = "", 
-       y =  "Reaction Time (z)", x = "",
-       caption = "Two-way interaction (GroupxPavCue): p = 0.040\n
-       Post-hoc test, Lean: p = 0.64, Obese: p = 0.0011\n 
-       Error range represent 95% CI for the model estimated \n
-       prediction controling for satiety levels\n")
+  labs(title = "", y =  "", x = "",
+       caption = "Latency: CS+ < CS-, p =  0.014\n
+       Pleasantness rating: CS+ > CS-, p <  0.001\n 
+       Error range represent \u00B1 SE for the model estimated mean\n")
 
 plot(plot)
 
-cairo_pdf(file.path(figures_path,paste(task, 'condXgroup.pdf',  sep = "_")),
-          width     = 5.5,
-          height    = 6)
+cairo_pdf(file.path(figures_path,paste(task,'cond&RTpleas.pdf',  sep = "_")),
+          width = 5.5,
+          height = 6)
 
-plot(plt)
+plot(plot)
 dev.off()
 
 #create table
