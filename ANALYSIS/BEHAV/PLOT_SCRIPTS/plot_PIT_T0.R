@@ -21,8 +21,7 @@ setwd(analysis_path)
 ## LOADING AND INSPECTING THE DATA
 load('PIT.RData')
 
-#use non centered DV for plotting
-mod <- lmer(AUC ~ condition*group + hungryC:condition  +(condition |id) + (1|trialxcondition) , 
+mod <- lmer(gripC ~ condition*group + hungryC:condition  +(condition |id) + (1|trialxcondition) , 
             data = PIT, control = control)
 
 N_group = ddply(PIT, .(id, group), summarise, group=mean(as.numeric(group)))  %>%
@@ -42,27 +41,32 @@ emm_options(lmerTest.limit = 5000)
 #get contrasts for groups obesity X condition
 CI_inter = confint(emmeans(mod, pairwise~ condition|group, adjust = "tukey"),level = 0.95,method = c("boot"),nsim = 5000)
 
-df.predicted = data.frame(CI_inter$contrasts)
+df.predicted = data.frame(CI_inter$emmeans)
+df.observed = ddply(PIT, .(id, group, condition), summarise, emmean = mean(gripC, na.rm = TRUE)) 
+# position on x axis is based on combination of B and jittered A. Mix to taste.
+df.observed.jit <- df.observed %>%
+  mutate(groupjit = as.numeric(condition)*0.4 - 0.6 + jitter(as.numeric(group), 0.55),
+         grouping = interaction(id, group))
 
-CSPlus <- subset(PIT, condition =="1" )
-CSPlus <- CSPlus[order(as.numeric(levels(CSPlus$id))[CSPlus$id], CSPlus$trialxcondition),]
-CSMinus <- subset(PIT, condition =="-1" )
-CSMinus <- CSMinus[order(as.numeric(levels(CSMinus$id))[CSMinus$id], CSPlus$trialxcondition),]
-df = CSMinus
-df$diff = CSPlus$gripC - CSMinus$gripC
-df.observed = ddply(df, .(id, group), summarise, estimate = mean(diff, na.rm = TRUE)) 
+df.predicted.jit <- df.predicted %>%
+  mutate(groupjit = as.numeric(condition)*0.4 - 0.6 + jitter(as.numeric(group), 0.55),
+         grouping = interaction(1, group))
 
-plt = ggplot(data = df.predicted, aes(x=group, y= estimate)) + 
-  geom_point(data = df.observed, aes(color= group), size=0.7, alpha=0.5, position=position_jitter(seed =123,width=0.2)) +
-  geom_bar(stat = "identity", fill = "black", alpha = 0.3, width = 0.5) +
-  geom_abline(slope=0, intercept=0, linetype='dashed', size=0.5, alpha=0.5) + 
-  geom_errorbar(data = df.predicted, aes(ymin=lower.CL, ymax=upper.CL), size=0.5, width=0.1) + 
-  geom_point(size = 2, shape=23, fill = 'grey40')
+plt0 = ggplot(df.observed.jit, aes(x=group,  y=emmean,  group = grouping)) + 
+  geom_blank() +
+  geom_line(aes(groupjit), alpha = 0.1) +
+  geom_point(aes(groupjit, col=condition), size=0.8, alpha=0.5)
+
+plt = plt0 +
+  geom_bar(data = df.predicted.jit, stat = "identity", position=position_dodge2(width=1), fill = "black", alpha = 0.3, width = 0.7) +
+  geom_errorbar(data = df.predicted.jit,aes(group = condition, ymin=emmean-SE, ymax=emmean+SE), size=0.5, width=0.1,  color = "black", position=position_dodge(width = 0.7)) + 
+  geom_point(data = df.predicted.jit, size = 2, shape=23, color= "black", fill = 'grey40',  position=position_dodge2(width = 0.7))
 
 plot = plt + 
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-150,150, by = 50)), limits = c(-150,150)) +
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-80,80, by = 40)), limits = c(-80,80)) +
   scale_x_discrete(labels=c("Lean", "Obese")) +
-  scale_color_manual(values=c('tomato','royalblue')) + 
+  scale_color_manual(values=c('royalblue','aquamarine3'),labels=c("CS+", "CS-")) +
+  guides(color = guide_legend(override.aes = list(shape = 15, size = 2))) + 
   theme_bw() +
   theme(aspect.ratio = 1.7/1,
         plot.margin = unit(c(1, 1, 1.2, 1), units = "cm"),
@@ -70,20 +74,20 @@ plot = plt +
         plot.caption = element_text(hjust = 0.5),
         panel.grid.major.x = element_blank(), #element_line(size=.2, color="lightgrey") ,
         panel.grid.major.y = element_line(size=.2, color="lightgrey") ,
-        axis.text.x =  element_text(size=10,  colour = "black"), #element_blank(), #element_text(size=10,  colour = "black", vjust = 0.5),
+        axis.text.x =  element_text(size=14,  colour = "black"), #element_blank(), #element_text(size=10,  colour = "black", vjust = 0.5),
         axis.text.y = element_text(size=10,  colour = "black"),
         axis.title.x =  element_text(size=16), 
         axis.title.y = element_text(size=16),   
         axis.line.x = element_blank(),
         legend.title=element_blank(),
-        legend.position= "none",
+        legend.text=element_text(size=14),
         strip.background = element_rect(fill="white"))+ 
   labs(title = "", 
-       y =  "PIT - \u0394 Mobilized Effort (AUC)", x = "",
+       y =  "Mobilized Effort - AUC (x - \u03BC\u2071)", x = "",
        caption = "Two-way interaction (GroupxPavCue): p = 0.031\n
-       Post-hoc test, Lean: p = 0.77, Obese: p = 0.0038\n 
-       Error range represent 95% CI for contrast estimate \n
-       prediction controling for satiety levels\n")
+       CS+ > CS-; Lean, p = 0.77; Obese, p = 0.0038\n 
+       Error bar represent \u00B1 SE for the model estimated means\n
+       Prediction controling for satiety levels\n")
 
 plot(plot)
 
@@ -96,17 +100,17 @@ dev.off()
 
 #create table
 sjPlot::tab_model(mod)
-                  # show.re.var= TRUE, 
-                  # show.icc = TRUE,
-                  # show.r2 = TRUE,
-                  # show.stat = TRUE,
-                  # #rm.terms
-                  # #show.aic = TRUE,
-                  # #bootstrap = TRUE,
-                  # #iterations = 5000,
-                  # pblue.labels =c("(Intercept)", "Pavlovian Cue (CS-)", "BMI", "Hunger", "Thirst", "Need to urinate",
-                  #                 "Pavlovian Cue (CS-) X BMI", "Pavlovian Cue (CS-) X Hunger"),
-                  # dv.labels= "Moblized Effort")
+# show.re.var= TRUE, 
+# show.icc = TRUE,
+# show.r2 = TRUE,
+# show.stat = TRUE,
+# #rm.terms
+# #show.aic = TRUE,
+# #bootstrap = TRUE,
+# #iterations = 5000,
+# pblue.labels =c("(Intercept)", "Pavlovian Cue (CS-)", "BMI", "Hunger", "Thirst", "Need to urinate",
+#                 "Pavlovian Cue (CS-) X BMI", "Pavlovian Cue (CS-) X Hunger"),
+# dv.labels= "Moblized Effort")
 
 
 #using jtool to look at ICC and more

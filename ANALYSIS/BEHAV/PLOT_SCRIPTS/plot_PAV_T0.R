@@ -46,7 +46,9 @@ CI_lik = confint(emmeans(modLIK, pairwise~ condition, adjust = "tukey"),level = 
 df.predictedRT = data.frame(CI_RT$emmeans)
 df.observedRT = ddply(PAV, .(id, condition), summarise, emmean = mean(RT, na.rm = TRUE)) 
 df.predictedLIK = data.frame(CI_lik$emmeans)
-df.predictedLIK$condition = c("1", "-1")
+df.predictedLIK$condition = factor(c("1", "-1"))
+df.predictedLIK$condition = factor(df.predictedLIK$condition,levels(df.predictedLIK$condition)[c(2,1)])
+
 df.observedLIK = ddply(PAV, .(id, condition), summarise, emmean = mean(liking, na.rm = TRUE)) 
 
 df.predictedRT$emmean = df.predictedRT$emmean / 5 #litlle trick to double plot
@@ -62,10 +64,10 @@ plt = ggplot() +
   geom_errorbar(mapping = aes(x = df.predictedRT$condition, y = df.predictedRT$emmean, ymin=df.predictedRT$emmean - df.predictedRT$SE, ymax=df.predictedRT$emmean + df.predictedRT$SE), size=0.5, width=0.1,  color='royalblue') + 
   geom_point(mapping = aes(x = df.predictedRT$condition, y = df.predictedRT$emmean), size = 2, shape=23,  fill='royalblue') + 
   scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100),
-    name = "Pleasantness Rating", sec.axis = sec_axis(~./1, name = "Latency", labels = function(b) { paste0(round(b * 5, 0))}))  
+    name = "Pleasantness Ratings", sec.axis = sec_axis(~./1, name = "Latency", labels = function(b) { paste0(round(b * 5, 0))}))  
 
 plot = plt + 
-  scale_x_discrete(labels=c("CS-", "CS+")) +
+  scale_x_discrete(labels=c("CS+", "CS-")) +
   theme_bw() +
   theme(aspect.ratio = 1.7/1,
         plot.margin = unit(c(1, 1, 1.2, 1), units = "cm"),
@@ -80,14 +82,14 @@ plot = plt +
         axis.text.y.right = element_text(size=10,  colour = "royalblue"),
         axis.title.x =  element_text(size=16), 
         axis.title.y.left = element_text(size=16),  
-        axis.title.y.right = element_text(color = "royalblue", size=16),
+        axis.title.y.right = element_text(angle = 90, color = "royalblue", size=16),
         axis.line.x = element_blank(),
         axis.ticks.y.right = element_line(color = "royalblue"),
         strip.background = element_rect(fill="white"))+ 
   labs(title = "", y =  "", x = "",
        caption = "Latency: CS+ < CS-, p =  0.014\n
-       Pleasantness rating: CS+ > CS-, p <  0.001\n 
-       Error range represent \u00B1 SE for the model estimated mean\n")
+       Pleasantness ratings: CS+ > CS-, p <  0.001\n 
+       Error bar represent \u00B1 SE for the model estimated means\n")
 
 plot(plot)
 

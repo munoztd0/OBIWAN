@@ -41,20 +41,32 @@ emm_options(lmerTest.limit = 5000)
 CI_lik = confint(emmeans(mod, pairwise~ condition, adjust = "tukey"),level = 0.95,method = c("boot"),nsim = 5000)
 
 df.predicted = data.frame(CI_lik$emmeans)
+df.predicted$group <- c(1,1) #dummy group variable for ploting
 df.observed = ddply(HED, .(id, condition, group), summarise, emmean = mean(perceived_liking, na.rm = TRUE)) 
-df.observed$condition = factor(df.observed$condition,levels(df.observed$condition)[c(2,1)])
 
-plt = ggplot(data = df.predicted, aes(x = condition, y = emmean)) + 
-  geom_point(data = df.observed,aes(color = group), size=0.7, alpha=0.5, position=position_jitter(seed =123,width=0.2)) +
-  geom_bar(stat = "identity", fill = "black", alpha = 0.3, width = 0.5) +
-  geom_errorbar(aes(ymin=emmean - SE, ymax=emmean + SE), size=0.5, width=0.1, color = 'black', alpha = 0.8) + 
-  geom_point(size = 2, shape=23, fill = 'grey40') 
+df.observed.jit <- df.observed %>% mutate(condjit = jitter(as.numeric(condition), 0.25),
+         grouping = interaction(id, condition))
+
+df.predicted.jit <- df.predicted %>% mutate(condjit = jitter(as.numeric(condition), 0.25),
+         grouping = interaction(1, condition))
+
+plt0 = ggplot(df.observed.jit, aes(x=condition,  y=emmean,  group = group)) + 
+  geom_blank() +
+  geom_line(aes(condjit, group = id), alpha = 0.1) +
+  geom_point(aes(condjit, shape=group), color = 'grey', size=1, alpha=0.8)
+
+plt = plt0  + 
+  geom_bar(data = df.predicted.jit, stat = "identity", position=position_dodge2(width=0.9), fill = "black", alpha = 0.3, width = 0.5) +
+  geom_errorbar(data = df.predicted.jit, aes(group = condition, ymin=emmean - SE, ymax=emmean + SE), size=0.5, width=0.1,  color = "black", position=position_dodge(width = 0.5)) + 
+  geom_point(data = df.predicted.jit, size = 3,  shape = 23, color= "black", fill = 'grey40',  position=position_dodge2(width = 0.5))
+
 
 plot = plt + 
   scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) + 
-  scale_x_discrete(labels=c("Tasteless", "Milkshake")) +
+  scale_x_discrete(labels=c("Milkshake", "Tasteless")) +
   #scale_color_discrete() +
-  scale_color_manual(labels = c("Lean", "Obese"),values=c('tomato','royalblue')) + 
+  scale_shape_manual(labels = c("Lean", "Obese"),values=c(1,3)) + 
+  guides(shape = guide_legend(override.aes = list(size = 2, color = 'grey10'))) +
   theme_bw() +
   theme(aspect.ratio = 1.7/1,
         plot.margin = unit(c(1, 1, 1.2, 1), units = "cm"),
@@ -62,18 +74,19 @@ plot = plt +
         plot.caption = element_text(hjust = 0.5),
         panel.grid.major.x = element_blank(), #element_line(size=.2, color="lightgrey") ,
         panel.grid.major.y = element_line(size=.2, color="lightgrey") ,
-        axis.text.x =  element_text(size=10,  colour = "black"), #element_blank(), #element_text(size=10,  colour = "black", vjust = 0.5),
+        axis.text.x =  element_text(size=14,  colour = "black"), #element_blank(), #element_text(size=10,  colour = "black", vjust = 0.5),
         axis.text.y.left = element_text(size=10,  colour = "black"),
         axis.text.y.right = element_text(size=10,  colour = "royalblue"),
         axis.title.x =  element_text(size=12), 
         axis.title.y = element_text(size=16),  
         axis.line.x = element_blank(),
         legend.title=element_blank(),
+        legend.text=element_text(size=14),
         strip.background = element_rect(fill="white"))+ 
-  labs(title = "", y =  "Pleasantness Ratings", x = "Solution",
-       caption = "Two-way interaction (GroupxPavCue): p = 0.34\n
-       Milkshake > Tasteless, p <  0.001\n 
-       Error range represent \u00B1 SE for the model estimated mean\n")
+  labs(title = "", y =  "Pleasantness Ratings", x = "",
+       caption = "Two-way interaction (GroupxSolution): p = 0.34\n
+       Milkshake > Tasteless, p < 0.001\n 
+       Error bar represent \u00B1 SE for the model estimated means\n") #Solution
 
 plot(plot)
 
