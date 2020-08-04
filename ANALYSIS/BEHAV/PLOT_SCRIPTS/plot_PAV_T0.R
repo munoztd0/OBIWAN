@@ -1,5 +1,5 @@
 ## R code for FOR PAV PLOT
-## last modified on April 2020 by David MUNOC TORD
+## last modified on April 2020 by David MUNOZ TORD
 
 # PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {

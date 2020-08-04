@@ -1,6 +1,6 @@
 ## R code for FOR PAV MODEL SELECTION
 ## following Barr et al. (2013) 
-## last modified on April 2020 by David MUNOC TORD
+## last modified on April 2020 by David MUNOZ TORD
 
 
 # PRELIMINARY STUFF ----------------------------------------
@@ -81,7 +81,7 @@ residual.fitted.data %>%
 
 
 ## COMPARING FIXED EFFECTS MODELS REML FALSE
-mod0 <- lmer(RT_TC ~ condition*group  + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
+mod0 <- lmer(RT_TC ~ condition*group + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
 mod1 <- lmer(RT_TC ~ condition*group + gender  + (condition|id) + (1|trialxcondition), data = PAV,control = control, REML = FALSE)
 mod2 <- lmer(RT_TC ~ condition*group + ageC + (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
 mod3 <- lmer(RT_TC ~ condition*group + pissC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)

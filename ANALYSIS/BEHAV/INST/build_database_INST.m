@@ -131,31 +131,50 @@ for j = 1:length(session)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         %%% get the mobilized effort
-        %convert to vector
+        %unroll to vector
         ForceVector = data.mobilizedforce(:);
-        ForceVectorSTD = scaledata(ForceVector,0,1);
+        %standardize to get ngrips
+        ForceVectorN = (ForceVector - nanmean(ForceVector))/nanstd(ForceVector);
         TimeVector = data.Time(:);
         
         
+        
         % compute the threshold to determine what we consider as a response (50% of the maximal force)
-        threshold_calib = PIT.data.minimalforce+((PIT.data.maximalforce-PIT.data.minimalforce)/100*50);% value
+        %threshold = PIT.data.minimalforce+((PIT.data.maximalforce-PIT.data.minimalforce)/100*50);% value
         threshold = min(ForceVector)+((max(ForceVector)-min(ForceVector))/100*50);% value
+        %threshold = min(PIT.data.PIT.mobilizedforce)+((max(PIT.data.PIT.mobilizedforce)-min(PIT.data.PIT.mobilizedforce))/100*50);% value
+        
+        thresholdN = min(ForceVectorN)+((max(ForceVectorN)-min(ForceVectorN))/100*50);% value
         
         %sort by time
         [TimeSort, idxSort] = sort(TimeVector);
         ForceSort(idxSort) = ForceVector;
         idxForce = 1:length(ForceVector);        
 
-
-        mobilized_effort = data.mobilizedforce;
-        nlines = A;
-        ncolons = ntrials;
+        %re-roll to matrix %N
+        
+        mobilized_effort = reshape(ForceVector,A, ntrials);    %data.mobilizedforce;
+        nlines = A;    ncolons = ntrials;
         gripsFrequence (1,:) = countgrips(threshold,nlines,ncolons,mobilized_effort);
         
+        %ForceVectorSTD = scaledata(ForceVector,0,1);
+        %mobilized_effort = reshape(ForceVectorSTD,A, ntrials);
+       %(nanmean(data.mobilized_effort) / (max(ForceVectorSTD)) * 100)
+        
         % extract the area under the curve
-        BEHAVIOR.AUC = trapz(mobilized_effort>threshold);
+        BEHAVIOR.AUC = trapz(mobilized_effort>threshold); %N
         %#BEHAVIOR.AUC_calib = trapz(mobilized_effort>threshold_calib);
-        BEHAVIOR.grip = gripsFrequence';
+        [pks,locs] = findpeaks(ForceVector, 'MinPeakDistance',15,'MinPeakHeight',threshold,'MinPeakProminence', (max(ForceVector)-min(ForceVector))/50);
+        peak_idx(1:length(ForceVector)) = ismember(1:length(ForceSort),locs);
+        
+        %unsort & reshape into trials
+        peak_idx = peak_idx(idxForce);
+        peak_idx = reshape(peak_idx,A,ntrials);        
+        
+        BEHAVIOR.grip = sum(peak_idx);
+
+            %normal
+        %BEHAVIOR.grip = gripsFrequence';
         
         
         REWARD = data.RewardedResponses;

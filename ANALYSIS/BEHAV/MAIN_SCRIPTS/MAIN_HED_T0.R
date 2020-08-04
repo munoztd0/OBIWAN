@@ -142,7 +142,7 @@ model
 # 9    condition:intC  1 15.71 ***   <.001
 
 mod <- lmer(likC ~ condition*group + thirstyC + hungryC:condition + hungryC + famC + intC:condition + intC + (condition + famC+intC|id) + (1|trialxcondition) , data = HED, control = control)
-
+#ref_grid(mod)
 ##### Computing CIs and Post-Hoc contrasts
 
 #increase repetitions limit

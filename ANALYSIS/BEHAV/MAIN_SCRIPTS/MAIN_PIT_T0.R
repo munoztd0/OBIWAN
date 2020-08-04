@@ -150,7 +150,7 @@ model
 
 mod <- lmer(gripC ~ condition*group + hungryC:condition + (condition |id) + (1|trialxcondition) , 
             data = PIT, control = control) #need to be fitted using ML so here I just use lmer function so its faster
-
+#ref_grid(mod)
 ##### Computing CIs and Post-Hoc contrasts
 #increase repetitions limit
 emm_options(pbkrtest.limit = 5000)
