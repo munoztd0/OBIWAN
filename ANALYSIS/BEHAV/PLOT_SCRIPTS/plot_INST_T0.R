@@ -79,17 +79,7 @@ dev.off()
 
 #create table
 sjPlot::tab_model(mod)
-# show.re.var= TRUE, 
-# show.icc = TRUE,
-# show.r2 = TRUE,
-# show.stat = TRUE,
-# #rm.terms
-# #show.aic = TRUE,
-# #bootstrap = TRUE,
-# #iterations = 5000,
-# pblue.labels =c("(Intercept)", "Pavlovian Cue (CS-)", "BMI", "Hunger", "Thirst", "Need to urinate",
-#                 "Pavlovian Cue (CS-) X BMI", "Pavlovian Cue (CS-) X Hunger"),
-# dv.labels= "Moblized Effort")
+
 
 
 #using jtool to look at ICC and more

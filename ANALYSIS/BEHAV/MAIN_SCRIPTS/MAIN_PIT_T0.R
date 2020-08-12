@@ -13,7 +13,6 @@ pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, emmeans,
 task = 'PIT'
 
 # Set working directory
-# Set working directory
 analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV') 
 figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV') 
 
@@ -21,7 +20,7 @@ setwd(analysis_path)
 
 
 # open dataset or load('PIT.RData')
-PIT_full <- read.delim(file.path(analysis_path,'OBIWAN_PIT.txt'), header = T, sep ='') # read in dataset
+PIT_full <- 
 HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
 intern <- read.delim(file.path(analysis_path,'OBIWAN_INTERNAL.txt'), header = T, sep ='') # read in dataset

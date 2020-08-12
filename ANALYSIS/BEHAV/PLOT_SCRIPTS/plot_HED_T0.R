@@ -21,6 +21,9 @@ setwd(analysis_path)
 ## LOADING AND INSPECTING THE DATA
 load('HED.RData')
 
+#set "better" lmer optimizer #nolimit # yoloptimizer
+control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
+
 #use non centered DV for plotting
 mod <- lmer(perceived_liking ~ condition*group + thirstyC + hungryC:condition + hungryC + famC + intC:condition + intC + (condition + famC+intC|id) + (1|trialxcondition) , data = HED, control = control)
 
@@ -37,7 +40,7 @@ source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R') #helpful plot fu
 emm_options(pbkrtest.limit = 5000)
 emm_options(lmerTest.limit = 5000)
 
-#get contrasts for groups obesity X condition
+#get contrasts and means
 CI_lik = confint(emmeans(mod, pairwise~ condition, adjust = "tukey"),level = 0.95,method = c("boot"),nsim = 5000)
 
 df.predicted = data.frame(CI_lik$emmeans)
@@ -49,23 +52,28 @@ df.observed.jit <- df.observed %>% mutate(condjit = jitter(as.numeric(condition)
 
 df.predicted.jit <- df.predicted %>% mutate(condjit = jitter(as.numeric(condition), 0.25),
          grouping = interaction(1, condition))
-
+#B&W
+# plt0 = ggplot(df.observed.jit, aes(x=condition,  y=emmean,  group = group)) + 
+#   geom_blank() +
+#   geom_line(aes(condjit, group = id), alpha = 0.1) +
+#   geom_point(aes(condjit, shape=group), color = 'grey', size=1, alpha=0.8)
+#color
 plt0 = ggplot(df.observed.jit, aes(x=condition,  y=emmean,  group = group)) + 
   geom_blank() +
   geom_line(aes(condjit, group = id), alpha = 0.1) +
-  geom_point(aes(condjit, shape=group), color = 'grey', size=1, alpha=0.8)
+  geom_point(aes(condjit, shape=group, color =condition), size=1, alpha=0.8)
 
-plt = plt0  + 
+plt = plt0  +
   geom_bar(data = df.predicted.jit, stat = "identity", position=position_dodge2(width=0.9), fill = "black", alpha = 0.3, width = 0.5) +
-  geom_errorbar(data = df.predicted.jit, aes(group = condition, ymin=emmean - SE, ymax=emmean + SE), size=0.5, width=0.1,  color = "black", position=position_dodge(width = 0.5)) + 
-  geom_point(data = df.predicted.jit, size = 3,  shape = 23, color= "black", fill = 'grey40',  position=position_dodge2(width = 0.5))
+  geom_errorbar(data = df.predicted.jit, aes(group = condition, ymin=emmean - SE, ymax=emmean + SE), size=0.5, width=0.1,  color = "black", position=position_dodge(width = 0.5)) +
+  geom_point(data = df.predicted.jit, size = 2,  shape = 23, color= "black", fill = 'grey40',  position=position_dodge2(width = 0.5))
 
 
 plot = plt + 
   scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100)) + 
   scale_x_discrete(labels=c("Milkshake", "Tasteless")) +
-  #scale_color_discrete() +
   scale_shape_manual(labels = c("Lean", "Obese"),values=c(1,3)) + 
+  scale_color_manual(labels=c("Milkshake", "Tasteless"), values=c("royalblue","aquamarine3"),guide=FALSE) + 
   guides(shape = guide_legend(override.aes = list(size = 2, color = 'grey10'))) +
   theme_bw() +
   theme(aspect.ratio = 1.7/1,
@@ -106,17 +114,6 @@ visreg(mod,overlay=TRUE,points.par=list( alpha = 0.05), xvar="hungryC", by='cond
 
 #create table
 sjPlot::tab_model(mod)
-# show.re.var= TRUE, 
-# show.icc = TRUE,
-# show.r2 = TRUE,
-# show.stat = TRUE,
-# #rm.terms
-# #show.aic = TRUE,
-# #bootstrap = TRUE,
-# #iterations = 5000,
-# pblue.labels =c("(Intercept)", "Pavlovian Cue (CS-)", "BMI", "Hunger", "Thirst", "Need to urinate",
-#                 "Pavlovian Cue (CS-) X BMI", "Pavlovian Cue (CS-) X Hunger"),
-# dv.labels= "Moblized Effort")
 
 
 #using jtool to look at ICC and more

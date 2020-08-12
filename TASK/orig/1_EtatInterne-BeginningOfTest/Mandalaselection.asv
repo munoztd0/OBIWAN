@@ -1,0 +1,202 @@
+function Mandalaselection()%% 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Preliminary stuff
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+PsychDefaultSetup(1);% Here we call some default settings for setting up Psychtoolbox
+AssertOpenGL;% Check for Opengl compatibility, abort otherwise:
+KbName('UnifyKeyNames');% Make sure keyboard mapping is the same on all supported operating systems
+KbCheck; WaitSecs(0.1); GetSecs;% Do dummy calls to GetSecs, WaitSecs, KbCheck to make sure they are l
+
+%%%%%%%%%%%% Create the structure of the experiment %%%%%%%%%%%%%%%%%%%%%%%
+var.filepath = MakePathStruct();
+cd(var.filepath.scripts);
+
+%var.experimentalSetup = str2num(input('Are the pyhsiological set up and the olfactometer installed (1= yes or 0 = no) ','s'));
+var.experimentalSetup = 0;
+%var.instruction = str2num(input('Play the instructions? (1 = French or 2 = English) ','s'));
+var.instruction = 1;
+%var.training = str2num (input('training ? (0 =  non, 1 = yes)','s'));
+var.training = 0;
+
+% Date and time informations
+data.SubDate= datestr(now, 24); % Use datestr to get the date in the format dd/mm/yyyy
+data.SubHour= datestr(now, 13); % Use datestr to get the time in the format hh:mm:ss
+
+[var.resultFile, participantID] = createResultFile(var); % create results file for the participants
+var.participantID = participantID;
+
+cd(var.filepath.data);
+save (var.resultFile);
+save(var.resultFile,'data','-append');% We save immediately the session's informations
+cd(var.filepath.scripts);
+
+%var.list = counterBalanceCS(participantID); % we counterbalance the images order according to the participant ID
+
+% % % we select the more pleasant odor from the hedonicpleasure evaluation
+% [pleasantOdorTRIG,fileDoesNotExist] = selectPleasantOdor(var); 
+% if fileDoesNotExist
+%     pleasantOdorTRIG = str2num(input('The Day 1 file for this participant cannot be find, please enter manually the trigger number (trig.odor+trig.van) of neutral odor (e.g.,50,52,36,40,38,48,42,32,44,46..)','s'));
+% end
+% % % we select the more neutral odor from the hedonic pleasure evaluation
+% [neutralOdorTRIG,fileDoesNotExist] = selectNeutralOdor(var, pleasantOdorTRIG); 
+% if fileDoesNotExist
+%     neutralOdorTRIG = str2num(input('The Day 1 file for this participant cannot be find, please enter manually the trigger number (trig.odor+trig.van) of neutral odor (e.g.,50,52,36,40,38,48,42,32,44,46..)','s'));
+% end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% write instructions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if var.instruction == 1 %instruction in French
+    
+    var.TextGeneral = 'Dans cette partie de l''étude, vous verrez des images apparaître à l''écran';
+    %var.TextTraining = 'Positionnez votre index gauche sur la touche « A » \n\n et pressez la barre « espace » pour démarrer un petit entraînement.';
+    %var.WarningStart = 'L''entraînement est fini.\n\n Si vous avez des questions, vous pouvez les poser maintenant.\n\n Autrement appuyer sur la touche « 5 » pour commencer avec l''étude en tant que telle';
+    var.InstructionRating = 'Dans cette partie de l''étude, vous verrez des images apparaître à l''écran \n\n Veuillez évaluer l''agréabilité des images, sur une échelle allant de\n\n\n\n  " extrêmement désagréable"\n\n  à \n\n "extrêmement agréable \n\n\n\n utilisez les butons 2 et 4 pour bouger le curseur\n\n et 3 pour confirmer votre réponse\n\n\n\n\ La tâche d''évaluation est terminée\n\n Attendez l''experimentatrice'; 
+   % var.TextEndConditioning = 'La tâche d''association odeur image est terminée.\n\n Attendez l''experimentatrice';
+    var.textEnd = 'La tâche d''évaluation est terminée\n\n Attendez l''experimentatrice';
+    
+elseif var.instruction == 2 %instruction in English (not really here)
+    
+    var.TextGeneral = 'Dans cette partie de l''étude, vous verrez des images et sentirez des odeurs.\n\n\ Lorsque que vous verrez des images et que le signe « * » apparaîtra à l?écran,\n\n appuyez sur la touche «A» le plus rapidement possible.\n\n\ Ceci vous permettra de découvrir l?odeur associée à l?image.\n\n\n\n\ L?odeur délivrée ne dépend pas de la vitesse à laquelle vous appuyez sur la touche.\n\n En effet, si après 1 seconde vous n?avez pas appuyé sur la touche,\n\n l?odeur sera délivrée de toute manière. \n\nLa vitesse à laquelle vous appuyez sur la touche permettra d?avoir une mesure de l?attention que vous portez à la tâche.\n\n\n\n Certaines images sont plus souvent associées avec certaines odeurs,\n\n ESSAYEZ DE DECOUVRIR QUELLES SONT CES ASSOCIATIONS ';
+    var.TextTraining = 'Positionnez votre index gauche sur la touche « A » \n\n\ et pressez la barre « espace » pour démarrer un petit entraînement.';
+    var.WarningStart = 'L''entraînement est fini.\n\n\ Si vous avez des questions, vous pouvez les poser maintenant.\n\n\ Attention,l''étude en tant que telle commence (5)';
+    var.InstructionRating = 'Veuillez évaluer l''agréabilité des images, sur une échelle allant de\n\n\n\n  " extrêmement désagréable"\n\n  à \n\n "extrêmement agréable \n\n\n\n utilisez les butons 2 et 4 pour bouger le curseur\n\n et 3 pour confirmer votre réponse'; 
+    var.TextEndConditioning = 'La tâche d''association odeur image est terminée.\n\n\ Attendez l''experimentatrice';
+    var.textEnd = 'La tâche d''évaluation est terminée\n\n\Attendez l''experimentatrice';
+end
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%% Load list of variable %%%%%%%%%%%%%%%%%%%%%%%%%%
+% var.trigPhase = 0; % Not conding it here because the file is for the conditionig onla there are no multiple phases
+% 
+% pleasantOdor.side = 1;
+% pleasantOdor.stim = pleasantOdorTRIG - 30;
+% pleasantOdor.trig = pleasantOdorTRIG ;
+% 
+% neutralOdor.side = 1;
+% neutralOdor.stim = neutralOdorTRIG-30;
+% neutralOdor.trig = neutralOdorTRIG;
+% 
+% var.sideISI = 1; %right or left according to the setting %
+% var.odorDuration = 1; % for how long the odor is released in seconds
+% 
+% var.triggerStart = 5; % start has the fMRI
+% var.triggerEnd = 128; % coded on CH 8
+% var.triggerTrial = 0; % this is computed on the conditioning script (varies according to CS+ (CH6 --> 32) and CS- (CH5 --> 16))
+% var.triggerBaseline = 64; % coded on CH 7
+% 
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%     Create List      %%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% var.PavCSs =   {'CSplus.jpg';'CSminu.jpg'};
+% var.PavSide = {[target.side];[empty.side]};
+% var.PavStim = {[target.stim];[empty.stim]};
+% var.PavTrig = {[target.trig];[empty.trig]};
+
+% %%%%%%%%%%%% Set the comunication with physiological set up %%%%%%%%%%%%%%%
+% 
+% if var.experimentalSetup
+%     %var.comport = str2num(input('Enter COMPORT olfactometer ','s'));
+%     var.comport = 4;
+%     oInit(var.comport,true); % Open Olfacto library    
+%     var.ioObj = SetParallelPort();  % Open comunication with paralle port 
+% end
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%     Open PTB          %%%%%%%%%%%%%%%%%%%%%%%%%%
+HideCursor;
+PsychDefaultSetup(1);% Here we call some default settings for setting up PTB
+screenNumber = max(Screen('Screens')); % check if there are one or two screens and use the second screen if necessary
+% %[wPtr,rect]=Screen('OpenWindow',screenNumber, [200 200 200], [20 20 800 800]); %from the left; from the top; up to the right; up to the bottom
+[wPtr,rect]=Screen('OpenWindow',screenNumber, [200 200 200]); %from the left; from the top; up to the right; up to the bottom
+% 
+% % define variables for the grafical interface
+% var.thermoImage = 'ThermeterOFF.jpg';
+% wPtrRect = Screen('Rect',wPtr); % referece rect is the total window
+% width = wPtrRect(3);
+% var.Twidth = width/7.5;
+% var.hight = wPtrRect(4);
+% 
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %               PAVLOVIAN CONDITIONING PROCEDURE
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% echo off all% Prevents MATLAB from reprinting the source code when the program runs
+% % Show instructions
+% 
+% 
+% %%% INSTRUCTION AND TRAINING
+% showInstruction(wPtr, var.TextGeneral);
+% WaitSecs(0.4); 
+% KbWait(-1);
+% 
+% conditioning_training(var, wPtr, rect);
+% 
+% 
+% %%% REAL EXPERIMENT BEGINS
+% showInstruction(wPtr, var.WarningStart);% Show warning for the start of the experimenet
+% triggerscanner = 0;
+% 
+% while ~triggerscanner
+%     [down secs key d] = KbCheck(-1);
+%     if (down == 1)
+%         if strcmp('5%',KbName(key)); %% 5 is the fMRI message saying it starts...
+%             triggerscanner = 1;
+%         end
+%     end
+%     WaitSecs(.01);
+% end
+% 
+% var.time_MRI = GetSecs;
+% 
+% if var.experimentalSetup
+%     SendTrigger(var.triggerStart,var); %trigger to signal the experiment starts
+%     WaitSecs(0.03);
+%     SendTrigger(0,var);
+% end
+% 
+% conditioning (var, wPtr, rect);
+% 
+% %%%
+% SendTrigger(var.triggerEnd,var); %trigger end
+% WaitSecs(0.03);
+% SendTrigger(0,var);
+% 
+% % Show End conditioning
+% showInstruction(wPtr,var.TextEndConditioning);
+% WaitSecs(0.4);
+% KbWait(-1);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%               CONDITIONING CHECK
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+CSs =  {'CSplus.jpg';'CSminu.jpg';'Baseli.jpg'; 'Image4'; 'Image5'; 'Image6';'Image7';'Image8'};
+ 
+showInstruction(wPtr, var.InstructionRating); % end instructions
+WaitSecs(0.4);
+KbWait(-1);
+[ratingResult, imagesName] = rating (CSs,wPtr, rect); % rating procedure
+
+%save data of conditioning check
+Mandala.ratings = ratingResult;
+Mandala.imagesName = imagesName;
+cd(var.filepath.data);
+save(var.resultFile,'Mandala','-append'); 
+cd(var.filepath.scripts);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%               END
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+showInstruction(wPtr, var.textEnd ); % end instructions
+WaitSecs(0.4);
+KbWait(-1);
+
+Screen('CloseAll');% Close all the screen
+ShowCursor;% Show the mouse cursor
+
+%resetCSnames(var); % reset the images names so that the folder is ready for the next participant
+
+if var.experimentalSetup
+    oClose(); %close olfacto library
+end
+
+end

@@ -1,13 +1,13 @@
 ## R code for FOR PIT MODEL SELECTION
 ## following Barr et al. (2013) 
-## last modified on April 2020 by David MUNOZ TORD
+## last modified on April 2020 by David MUNOC TORD
 
 # PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(lme4, lmerTest, optimx, car, visreg, ggplot2, ggpubr, sjPlot, glmmTMB, influence.ME)
+pacman::p_load(lme4, lmerTest, optimx, car, visreg, ggplot2, ggpubr, sjPlot, glmmTMB, influence.ME, bayestestR)
 
 # SETUP ------------------------------------------------------------------
 
@@ -24,28 +24,25 @@ load('PIT.RData')
 
 #View(PIT)
 dim(PIT)
-str(PIT)
+#str(PIT)
 
 #set "better" optimizer
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
 ## BASIC RANDOM INTERCEPT MODEL
-rint = lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (1|id), data = PIT, control=control)
+rint = lmer(gripC ~ condition*group + gender + ageC + pissC+   hungryC+   thirstyC+   likC + (1|id), data = PIT, control=control)
 summary(rint)
 
 
 ## COMPARING RANDOM EFFECTS MODELS
-mod1 <- lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (1|id) , data = PIT, control=control)
-mod2 <- lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (condition|id) , data = PIT, control=control)
-mod3 <- lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (1|id) + (1|trialxcondition), data = PIT, control=control)
-mod4 <- lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (condition|id) + (1|trialxcondition), data = PIT, control=control)
-mod5 <- lmer(gripZ ~ condition*group + gender + ageZ + pissZ+   hungryZ+   thirstyZ+   likZ + (condition|id) + (condition|trialxcondition), data = PIT, control=control)
+mod1 <- lmer(gripC ~ condition*group + gender + ageC + pissC+   hungryC+   thirstyC+   likC + (1|id) , data = PIT, control=control)
+mod2 <- lmer(gripC ~ condition*group + gender + ageC + pissC+   hungryC+   thirstyC+   likC + (condition|id) , data = PIT, control=control)
+mod3 <- lmer(gripC ~ condition*group + gender + ageC + pissC+   hungryC+   thirstyC+   likC + (1|id) + (1|trialxcondition), data = PIT, control=control)
+mod4 <- lmer(gripC ~ condition*group + gender + ageC + pissC+   hungryC+   thirstyC+   likC + (condition|id) + (1|trialxcondition), data = PIT, control=control)
+mod5 <- lmer(gripC ~ condition*group + gender + ageC + pissC+   hungryC+   thirstyC+   likC + (condition|id) + (condition|trialxcondition), data = PIT, control=control)
 
-AIC(mod1) ; BIC(mod1)
-AIC(mod2) ; BIC(mod2)
-AIC(mod3) ; BIC(mod3)
-AIC(mod4) ; BIC(mod4) #best random structure
-AIC(mod5) ; BIC(mod5)
+# comparing BIC measures, allowing a Bayesian comparison of non-nested frequentist models (Wagenmakers, 2007)
+bayesfactor_models(mod1, mod2, mod3, mod4, mod5, denominator = mod1) #mod4 #best random structure
 
 ## BEST RANDOM SLOPE MODEL
 rslope <- mod4
@@ -81,23 +78,14 @@ residual.fitted.data %>%
 
 
 ## COMPARING FIXED EFFECTS MODELS REML FALSE
-mod0 <- lmer(gripZ ~ condition*group  + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod1 <- lmer(gripZ ~ condition*group + gender  + (condition|id) + (1|trialxcondition), data = PIT,control = control, REML = FALSE)
-mod2 <- lmer(gripZ ~ condition*group + ageZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod3 <- lmer(gripZ ~ condition*group + pissZ+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod4 <- lmer(gripZ ~ condition*group + likZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod5 <- lmer(gripZ ~ condition*group  + thirstyZ+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod6 <- lmer(gripZ ~ condition*group + pissZ+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod7 <- lmer(gripZ ~ condition*group + hungryZ+  (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-
-mod01 <- lmer(gripZ ~ condition*group   + thirstyZ +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod02 <- lmer(gripZ ~ condition*group   + thirstyZ*hungryZ + pissZ +        (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod03 <- lmer(gripZ ~ condition*group   + thirstyZ + hungryZ*pissZ +        (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod04 <- lmer(gripZ ~ condition*group   + thirstyZ*hungryZ*pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod05 <- lmer(gripZ ~ condition*group   + thirstyZ*hungryZ*pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod06 <- lmer(gripZ ~ condition*group   + thirstyZ + thirstyZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod07 <- lmer(gripZ ~ condition*group   + thirstyZ + hungryZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod08 <- lmer(gripZ ~ condition*group   + thirstyZ + pissZ:condition +  hungryZ + pissZ + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod0 <- lmer(gripC ~ condition*group  + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod1 <- lmer(gripC ~ condition*group + gender  + (condition|id) + (1|trialxcondition), data = PIT,control = control, REML = FALSE)
+mod2 <- lmer(gripC ~ condition*group + ageC + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod3 <- lmer(gripC ~ condition*group + pissC+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod4 <- lmer(gripC ~ condition*group + likC + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod5 <- lmer(gripC ~ condition*group  + thirstyC+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod6 <- lmer(gripC ~ condition*group + pissC+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod7 <- lmer(gripC ~ condition*group + hungryC+  (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
 
 AIC(mod0) ; BIC(mod0) 
 AIC(mod1) ; BIC(mod1) #worse than null
@@ -108,19 +96,21 @@ AIC(mod5) ; BIC(mod5)
 AIC(mod6) ; BIC(mod6)
 AIC(mod7) ; BIC(mod7)
 
-AIC(mod01) ; BIC(mod01) 
-AIC(mod02) ; BIC(mod02)
-AIC(mod03) ; BIC(mod03)
-AIC(mod04) ; BIC(mod04)
-AIC(mod05) ; BIC(mod05)
-AIC(mod06) ; BIC(mod06)
-AIC(mod07) ; BIC(mod07) #best simplest
-AIC(mod08) ; BIC(mod08) 
+mod01 <- lmer(gripC ~ condition*group   + thirstyC +  hungryC + pissC + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod02 <- lmer(gripC ~ condition*group   + thirstyC*hungryC + pissC +        (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod03 <- lmer(gripC ~ condition*group   + thirstyC + hungryC*pissC +        (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod04 <- lmer(gripC ~ condition*group   + thirstyC*hungryC*pissC + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod05 <- lmer(gripC ~ condition*group   + thirstyC*hungryC*pissC + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod06 <- lmer(gripC ~ condition*group   + thirstyC + thirstyC:condition +  hungryC + pissC + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod07 <- lmer(gripC ~ condition*group   + thirstyC + hungryC:condition +  hungryC + pissC + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod08 <- lmer(gripC ~ condition*group   + thirstyC + pissC:condition +  hungryC + pissC + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+
+bayesfactor_models(mod01, mod02, mod03, mod04, mod05, mod06, mod07, mod08, denominator = mod01) #mod07 is the best simplest model
 
 ## BEST SIMPLE FIXED MODEL #keep it simple
 mod <- mod07
 summary(mod)
-moddummy <- lm(gripZ ~ condition*group + thirstyZ + pissZ:condition +  hungryZ + pissZ, data = PIT)
+moddummy <- lm(gripC ~ condition*group + thirstyC + pissC:condition +  hungryC + pissC, data = PIT)
 
 # MODEL ASSUMPTION CHECKS :  -----------------------------------
 
@@ -142,7 +132,7 @@ cookD = cooks.distance(alt.est)
 df <- data.frame(id = row.names(cookD), cookD) 
 df <- arrange(df, cookD)
 df$id <- factor(df$id, levels = df$id)
-
+n_tot = length(df$id)
 cutoff = 4/(n_tot-length(moddummy$coefficients)-1) #rule of thumb cutoff
 
 ggdotchart(df, x = "id", y = "cookD", sorting = "ascending",add = "segments") +

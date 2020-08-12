@@ -1,13 +1,13 @@
 ## R code for FOR HED MODEL SELECTION
 ## following Barr et al. (2013) 
-## last modified on April 2020 by David MUNOC TORD
+## last modified on April 2020 by David MUNOZ TORD
 
 # PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(lme4, lmerTest, optimx, car, visreg, ggplot2, ggpubr, sjPlot, influence.ME)
+pacman::p_load(lme4, lmerTest, optimx, car, visreg, ggplot2, ggpubr, sjPlot, influence.ME, bayestestR)
 
 # SETUP ------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ load('HED.RData')
 
 #View(HED)
 dim(HED)
-str(HED)
+#str(HED)
 
 #set "better" optimizer
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
@@ -62,24 +62,13 @@ mod11 <- lmer(likC ~ condition*group  + gender + ageC + famC + intC + hungryC+  
 mod12 <- lmer(likC ~ condition*group  + gender + ageC + famC + intC + hungryC+   thirstyC+ (condition + famC*intC|id) + (condition|trialxcondition) , 
               data = HED, control = control) 
 
-
-AIC(mod0) ; BIC(mod0)
-AIC(mod1) ; BIC(mod1)
-AIC(mod2) ; BIC(mod2)
-AIC(mod3) ; BIC(mod3)
-AIC(mod4) ; BIC(mod4)
-AIC(mod5) ; BIC(mod5)
-AIC(mod6) ; BIC(mod6) #best
-AIC(mod7) ; BIC(mod7) 
-AIC(mod8) ; BIC(mod8)
-AIC(mod9) ; BIC(mod9)
-AIC(mod10) ; BIC(mod10)
-AIC(mod11) ; BIC(mod11) 
-AIC(mod12) ; BIC(mod12) 
+# comparing BIC measures, allowing a Bayesian comparison of non-nested frequentist models (Wagenmakers, 2007)
+bayesfactor_models(mod0, mod1, mod2, denominator = mod0) #mod2 #best simple random structure
+bayesfactor_models(mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10,mod11,mod12, denominator = mod2) #mod4 #best random structure
 
 
 ## BEST RANDOM SLOPE MODEL
-rslope <- mod6
+rslope <- mod4
 summary(rslope)
 ranova(rslope) #there is statistically "significant" variation in slopes between individuals and trials
 
@@ -111,15 +100,15 @@ residual.fitted.data %>%
 
 
 ## COMPARING FIXED EFFECTS MODELS REML FALSE #takes hourssss 
-mod0 <- lmer(likC ~ condition*group + (condition + famC+intC |id) + (1|trialxcondition), data = HED,control = control, REML = FALSE)
-mod1 <- lmer(likC ~ condition*group + gender  + (condition + famC+intC |id) + (1|trialxcondition), data = HED,control = control, REML = FALSE)
-mod2 <- lmer(likC ~ condition*group + ageC + (condition + famC+intC |id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod3 <- lmer(likC ~ condition*group + pissC+ (condition + famC+intC |id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod4 <- lmer(likC ~ condition*group + thirstyC+ (condition + famC+intC |id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod5 <- lmer(likC ~ condition*group + pissC+ (condition + famC+intC |id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod6 <- lmer(likC ~ condition*group + hungryC+  (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod7 <- lmer(likC ~ condition*group + famC+  (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod8 <- lmer(likC ~ condition*group + intC+  (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod0 <- lmer(likC ~ condition*group + (condition + famC|id) + (1|trialxcondition), data = HED,control = control, REML = FALSE)
+mod1 <- lmer(likC ~ condition*group + gender  +  (condition + famC|id) + (1|trialxcondition), data = HED,control = control, REML = FALSE)
+mod2 <- lmer(likC ~ condition*group + ageC +  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod3 <- lmer(likC ~ condition*group + pissC+  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod4 <- lmer(likC ~ condition*group + thirstyC+  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod5 <- lmer(likC ~ condition*group + pissC+  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod6 <- lmer(likC ~ condition*group + hungryC+  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod7 <- lmer(likC ~ condition*group + famC+  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod8 <- lmer(likC ~ condition*group + intC+  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
 
 AIC(mod0) ; BIC(mod0) 
 AIC(mod1) ; BIC(mod1) #worse than null
@@ -131,44 +120,32 @@ AIC(mod6) ; BIC(mod6)
 AIC(mod7) ; BIC(mod7)
 AIC(mod8) ; BIC(mod8)
 
-mod01 <- lmer(likC ~ condition*group + thirstyC +  hungryC + pissC + (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod02 <- lmer(likC ~ condition*group + thirstyC*hungryC + pissC +    (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod03 <- lmer(likC ~ condition*group + thirstyC + hungryC*pissC +    (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod04 <- lmer(likC ~ condition*group + thirstyC*hungryC*pissC + (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod05 <- lmer(likC ~ condition*group + thirstyC*hungryC*pissC + (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod06 <- lmer(likC ~ condition*group + thirstyC + thirstyC:condition +  hungryC + pissC + (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod07 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + pissC + (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod08 <- lmer(likC ~ condition*group + thirstyC + pissC:condition +  hungryC + pissC + (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod10 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod11 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition + (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
-mod12 <- lmer(likC ~ condition*group + hungryC:condition + (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod01 <- lmer(likC ~ condition*group + thirstyC +  hungryC + pissC + (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod02 <- lmer(likC ~ condition*group + thirstyC*hungryC + pissC +     (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod03 <- lmer(likC ~ condition*group + thirstyC + hungryC*pissC +     (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod04 <- lmer(likC ~ condition*group + thirstyC*hungryC*pissC +  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod05 <- lmer(likC ~ condition*group + thirstyC*hungryC*pissC +  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod06 <- lmer(likC ~ condition*group + thirstyC + thirstyC:condition +  hungryC + pissC +  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod07 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + pissC +  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod08 <- lmer(likC ~ condition*group + thirstyC + pissC:condition +  hungryC + pissC +  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod09 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC +  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod10 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
+mod11 <- lmer(likC ~ condition*group + hungryC:condition +  (condition + famC|id) + (1|trialxcondition), data = HED, control = control, REML = FALSE)
 
-AIC(mod01) ; BIC(mod01) 
-AIC(mod02) ; BIC(mod02)
-AIC(mod03) ; BIC(mod03)
-AIC(mod04) ; BIC(mod04)
-AIC(mod05) ; BIC(mod05)
-AIC(mod06) ; BIC(mod06)
-AIC(mod07) ; BIC(mod07)  
-AIC(mod08) ; BIC(mod08)
-AIC(mod09) ; BIC(mod09)
-AIC(mod10) ; BIC(mod10) #best simple1
-AIC(mod11) ; BIC(mod11)
-AIC(mod12) ; BIC(mod12)
+bayesfactor_models(mod01, mod02, mod03, mod04, mod05, mod06, mod07, mod08, mod09, mod10,mod11,  denominator = mod01) #mod09 #best simple fixed
 
-mod13 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + famC + intC + (condition + famC+intC|id) + (1|trialxcondition) , data = HED, control = control, REML = FALSE)
-mod14 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + famC + famC:condition + intC + (condition + famC+intC|id) + (1|trialxcondition) , data = HED, control = control, REML = FALSE)
-mod15 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + famC + intC:condition + intC + (condition + famC+intC|id) + (1|trialxcondition) , data = HED, control = control, REML = FALSE)
-mod16 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + famC*intC + (condition + famC+intC|id) + (1|trialxcondition) , data = HED, control = control, REML = FALSE)
 
-AIC(mod13) ; BIC(mod13) 
-AIC(mod14) ; BIC(mod14)
-AIC(mod15) ; BIC(mod15) #best simple2
-AIC(mod16) ; BIC(mod16)
+mod12 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + famC + intC + (condition + famC|id) + (1|trialxcondition) , data = HED, control = control, REML = FALSE)
+mod13 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + famC + famC:condition + intC + (condition + famC|id) + (1|trialxcondition) , data = HED, control = control, REML = FALSE)
+mod14 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + famC + intC:condition + intC + (condition + famC|id) + (1|trialxcondition) , data = HED, control = control, REML = FALSE)
+mod15 <- lmer(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + famC*intC + (condition + famC|id) + (1|trialxcondition) , data = HED, control = control, REML = FALSE)
+
+bayesfactor_models(mod09, mod12, mod13, mod14, mod15, denominator = mod09) #mod14 #best full fixed
+
 
 
 ## BEST SIMPLE FIXED MODEL #keep it "simple"
-mod <- mod15
+mod <- mod14
 summary(mod)
 moddummy <- lm(likC ~ condition*group + thirstyC + hungryC:condition +  hungryC + famC + intC:condition + intC , data = HED)
 
@@ -199,7 +176,7 @@ cookD = cooks.distance(alt.est)
 df <- data.frame(id = row.names(cookD), cookD) 
 df <- arrange(df, cookD)
 df$id <- factor(df$id, levels = df$id)
-
+n_tot = length(df$id)
 cutoff = 4/(n_tot-length(moddummy$coefficients)-1) #rule of thumb cutoff not to take to seriously
 
 

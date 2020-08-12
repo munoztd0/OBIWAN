@@ -8,24 +8,24 @@ if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(lme4, lmerTest, optimx, car, visreg, ggplot2, ggpubr, sjPlot, glmmTMB, influence.ME)
+pacman::p_load(lme4, lmerTest, optimx, car, visreg, ggplot2, ggpubr, sjPlot, glmmTMB, influence.ME, bayestestR)
 
 # SETUP ------------------------------------------------------------------
 
 task = 'PAV'
 
 # Set working directory
-setwd(analysis_path)
+
 analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV') 
 figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV') 
-
+setwd(analysis_path)
 
 ## LOADING AND INSPECTING THE DATA
 load('PAV.RData')
 
 #View(PAV)
 dim(PAV)
-str(PAV)
+#str(PAV)
 
 #set "better" optimizer
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
@@ -42,12 +42,9 @@ mod3 <- lmer(RT_TC ~ condition*group + gender + ageC  + pissC+   hungryC+   thir
 mod4 <- lmer(RT_TC ~ condition*group + gender + ageC  + pissC+   hungryC+   thirstyC+   likC + (condition+likC|id) + (1|trialxcondition), data = PAV, control=control)
 mod5 <- lmer(RT_TC ~ condition*group + gender + ageC  + pissC+   hungryC+   thirstyC+   likC + (condition*likC|id) + (1|trialxcondition), data = PAV, control=control)
 
-AIC(mod0) ; BIC(mod0)
-AIC(mod1) ; BIC(mod1)
-AIC(mod2) ; BIC(mod2) #
-AIC(mod3) ; BIC(mod3)
-AIC(mod4) ; BIC(mod4) 
-AIC(mod5) ; BIC(mod5)
+# comparing BIC measures, allowing a Bayesian comparison of non-nested frequentist models (Wagenmakers, 2007)
+bayesfactor_models(mod0, mod1, mod2, mod3, mod4, mod5, denominator = mod0) #mod2 #best simple random structure
+
 
 ## BEST RANDOM SLOPE MODEL
 rslope <- mod2
@@ -114,10 +111,7 @@ mod02 <- lmer(RT_TC ~ condition*group + group:likC + likC +  (condition|id) + (1
 mod03 <- lmer(RT_TC ~ condition*group*likC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
 mod04 <- lmer(RT_TC ~ condition*group + condition:likC:group + likC+ (condition|id) + (1|trialxcondition), data = PAV, control = control, REML = FALSE)
 
-AIC(mod01) ; BIC(mod01) 
-AIC(mod02) ; BIC(mod02) #best simplest
-AIC(mod03) ; BIC(mod03)
-AIC(mod04) ; BIC(mod04)
+bayesfactor_models(mod01, mod02, mod03, mod04, denominator = mod01) #mod02 #best simple random structure
 
 ## BEST SIMPLE FIXED MODEL #keep it simple
 mod <- mod02
@@ -151,7 +145,7 @@ df <- data.frame(id = row.names(cookD), cookD)
 df <- arrange(df, cookD)
 df$id <- factor(df$id, levels = df$id)
 cutoff = 4/(n_tot-length(moddummy$coefficients)-1)
-
+n_tot = length(df$id)
 ggdotchart(df, x = "id", y = "cookD", sorting = "ascending",add = "segments") +
   geom_hline(yintercept=cutoff, linetype="dashed", color = "red") +
   geom_text(aes(label = id, hjust = -0.5), size = 3) +

@@ -2,11 +2,12 @@
 # last modified on April 2020 by David MUNOZ TORD
 invisible(lapply(paste0('package:', names(sessionInfo()$otherPkgs)), detach, character.only=TRUE, unload=TRUE))
 # PRELIMINARY STUFF ----------------------------------------
+pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, emmeans,misty)
+
 if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, emmeans,misty)
 
 # SETUP ------------------------------------------------------------------
 

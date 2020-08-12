@@ -8,7 +8,7 @@ if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(lme4, lmerTest, optimx, car, visreg, ggplot2, ggpubr, sjPlot, glmmTMB, influence.ME, lspline)
+pacman::p_load(lme4, lmerTest, optimx, car, visreg, ggplot2, ggpubr, sjPlot, glmmTMB, influence.ME, lspline,  bayestestR)
 
 # SETUP ------------------------------------------------------------------
 
@@ -25,24 +25,24 @@ load('INST.RData')
 
 #View(INST)
 dim(INST)
-str(INST)
+#str(INST)
 
 #set "better" optimizer
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
 ## BASIC RANDOM INTERCEPT MODEL
-mod0 = lmer(gripC ~ trial*trial*group + gender + ageC + pissC+ hungryC+ thirstyC + (11|id), data = INST, control=control)
+mod0 = lmer(gripC ~ trial*trial*group + gender + ageC + pissC+ hungryC+ thirstyC + (1|id), data = INST, control=control)
 summary(mod0)
 
 ## COMPARING RANDOM EFFECTS MODELS REML
-mod1 <- lmer(gripC ~ trial*group + gender + ageC  + pissC+   hungryC+   thirstyC + (trial1|id), data = INST, control=control)
+mod1 <- lmer(gripC ~ trial*group + gender + ageC  + pissC+   hungryC+   thirstyC + (trial|id), data = INST, control=control)
 
-AIC(mod0) ; BIC(mod0) #
-AIC(mod1) ; BIC(mod1) 
+bayesfactor_models(mod0, mod1,  denominator = mod0) #mod1 #best random structure
+
 
 
 ## BEST RANDOM SLOPE MODEL
-rslope <- mod0
+rslope <- mod1
 summary(rslope)
 ranova(rslope) #there is statistically "significant" variation in slopes between individuals and trials
 
@@ -73,21 +73,15 @@ residual.fitted.data %>%
 
 
 ## COMPARING FIXED EFFECTS MODELS REML FALSE
-mod0 <- lmer(gripC ~ trial*group + (1|id) , data = INST, control = control, REML = FALSE)
-mod1 <- lmer(gripC ~ trial*group + gender  + (1|id) , data = INST,control = control, REML = FALSE)
-mod2 <- lmer(gripC ~ trial*group + ageC + (1|id) , data = INST, control = control, REML = FALSE)
-mod3 <- lmer(gripC ~ trial*group + pissC+ (1|id) , data = INST, control = control, REML = FALSE)
-mod4 <- lmer(gripC ~ trial*group + thirstyC+ (1|id) , data = INST, control = control, REML = FALSE)
-mod5 <- lmer(gripC ~ trial*group + pissC+ (1|id) , data = INST, control = control, REML = FALSE)
-mod6 <- lmer(gripC ~ trial*group + hungryC+  (1|id) , data = INST, control = control, REML = FALSE)
+mod0 <- lmer(gripC ~ trial*group + (trial|id) , data = INST, control = control, REML = FALSE)
+mod1 <- lmer(gripC ~ trial*group + gender  + (trial|id) , data = INST,control = control, REML = FALSE)
+mod2 <- lmer(gripC ~ trial*group + ageC + (trial|id) , data = INST, control = control, REML = FALSE)
+mod3 <- lmer(gripC ~ trial*group + pissC+ (trial|id) , data = INST, control = control, REML = FALSE)
+mod4 <- lmer(gripC ~ trial*group + thirstyC+ (trial|id) , data = INST, control = control, REML = FALSE)
+mod5 <- lmer(gripC ~ trial*group + pissC+ (trial|id) , data = INST, control = control, REML = FALSE)
+mod6 <- lmer(gripC ~ trial*group + hungryC+  (trial|id) , data = INST, control = control, REML = FALSE)
 
-mod0 <- lmer(gripC ~ trial*group + (1|id) , data = INST, control = control, REML = FALSE)
-mod1 <- lmer(gripC ~ trial*group + gender  + (1|id) , data = INST,control = control, REML = FALSE)
-mod2 <- lmer(gripC ~ trial*group + ageC + (1|id) , data = INST, control = control, REML = FALSE)
-mod3 <- lmer(gripC ~ trial*group + pissC+ (1|id) , data = INST, control = control, REML = FALSE)
-mod4 <- lmer(gripC ~ trial*group + thirstyC+ (1|id) , data = INST, control = control, REML = FALSE)
-mod5 <- lmer(gripC ~ trial*group + pissC+ (1|id) , data = INST, control = control, REML = FALSE)
-mod6 <- lmer(gripC ~ trial*group + hungryC+  (1|id) , data = INST, control = control, REML = FALSE)
+bayesfactor_models(mod2, mod3, mod4, mod5, mod6,  denominator = mod2) #mod4 #best random structure
 
 AIC(mod0) ; BIC(mod0) 
 AIC(mod1) ; BIC(mod1) #worse than null
