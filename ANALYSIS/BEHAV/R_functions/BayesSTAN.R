@@ -1,3 +1,13 @@
+
+#We can also use a Bayesian approach, where we regard the parametersas themselves 
+#being random variables, is assessing the values of suchparameters.  A currently 
+#popular Bayesian method is to use sequentialsampling from the conditional distribution 
+#of subsets of theparameters, given the data and the values of the other parameters.
+#The general technique is calledMarkov chain Monte Carlosampling
+
+
+
+
 library(rstanarm)
 library(see)
 

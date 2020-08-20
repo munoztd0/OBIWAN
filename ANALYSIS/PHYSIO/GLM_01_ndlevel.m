@@ -34,7 +34,7 @@ end
 
 session = {'second'}; 
 
-mkdir([homedir 'DERIVATIVES/GLM/PSPM/PAV/GLM-01/group'])
+
 df = vertcat (dfcontrol, dfobese);
 matlabbatch{1}.pspm{1}.second_level{1}.contrast.testtype.one_sample.modelfile = df;
 %matlabbatch{1}.pspm{1}.second_level{1}.contrast.testtype.two_sample.modelfile1 = dfcontrol;

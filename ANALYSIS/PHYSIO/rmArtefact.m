@@ -1,11 +1,12 @@
 %Created by Eva last modified june 2020 by david
-
+% clean data and extract onsets
 % pupil = raw pupil
 
 dbstop if error
 clear all
 
-%% DEFINE PATH %bad 101 - 207- 210 - 212 - 216  -224 -230 - 249 -269 / 2249 - 2266?
+%% DEFINE PATH 
+%bad 101 - 207- 210 - 212 - 216  -224 -230 - 249 -269 / 2249 - 2266?
 
 cd ~
 home = pwd;
@@ -41,7 +42,21 @@ for j = 1:length(session)
             continue
         end
         
-        if j == 1 %change 1
+%         if j == 1 
+%             if exist([ 'tpspm_' number '.mat'])
+%                 load([ 'tpspm_' number '.mat'])
+%             else
+%                 continue
+%             end
+%         else
+%             if exist([ 'tpspm_2' number '.mat'])
+%                 load(['tpspm_2' number '.mat'])
+%             else
+%                 continue
+%             end   
+%         end
+        
+       if j == 1 
             if exist([ 'tpspm_' number '.mat'])
                 load([ 'tpspm_' number '.mat'])
             else
@@ -112,6 +127,9 @@ for j = 1:length(session)
         % of the time to have a big impact on our analysis)
         if  missingdata > 70.00 
             x =  'attention'
+            number
+            session{j}
+            missingdata
             dispPlot = 1;
         end
         
@@ -238,12 +256,13 @@ for j = 1:length(session)
         
         data{1, 1}.data = pupilX;
         
-        onsets.CSp          = data{2, 1}.data(data{2, 1}.markerinfo.value == 32);
         onsets.CSm          = data{2, 1}.data(data{2, 1}.markerinfo.value == 16);
+        onsets.CSp          = data{2, 1}.data(data{2, 1}.markerinfo.value == 32);
         onsets.Baseline     = data{2, 1}.data(data{2, 1}.markerinfo.value == 64);
         
-        onsets.rew          = data{2, 1}.data(data{2, 1}.markerinfo.value == 2);
-        onsets.norew          = data{2, 1}.data(data{2, 1}.markerinfo.value == 4);
+        onsets.rew          = data{2, 1}.data(data{2, 1}.markerinfo.value == 1);
+        onsets.emp          = data{2, 1}.data(data{2, 1}.markerinfo.value == 2);
+        onsets.wat          = data{2, 1}.data(data{2, 1}.markerinfo.value == 3);
         
         if j == 1 
             save([ 'ptpspm_' number '.mat'], 'data', 'infos')

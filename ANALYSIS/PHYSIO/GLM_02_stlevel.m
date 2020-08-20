@@ -79,11 +79,11 @@ for j = 1:length(session)
         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(2).durations = 3;
         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(2).pmod = struct('name', {}, 'poly', {}, 'param', {});
         
-%         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(3).name = 'Base';
-%         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(3).onsets = onsets.Baseline;
-%         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(3).durations = 0;
-%         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(3).pmod = struct('name', {}, 'poly', {}, 'param', {});
-%         
+        matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(3).name = 'Base';
+        matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(3).onsets = onsets.Baseline;
+        matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(3).durations = 0;
+        matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(3).pmod = struct('name', {}, 'poly', {}, 'param', {});
+        
 %         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(4).name = 'Rew';
 %         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(4).onsets = onsets.rew;
 %         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(4).durations = 0;
@@ -93,7 +93,7 @@ for j = 1:length(session)
 %         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(5).onsets = onsets.norew;
 %         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(5).durations = 0;
 %         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.data_design.condition(5).pmod = struct('name', {}, 'poly', {}, 'param', {});
-        
+%         
         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.session.nuisancefile = {''};
         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.latency.fixed = 'fixed';
         matlabbatch{1}.pspm{1}.first_level{1}.ps{1}.glm_ps_fc.bf.psrf_fc1 = 1;
@@ -108,7 +108,7 @@ for j = 1:length(session)
         matlabbatch{2}.pspm{1}.first_level{1}.contrast.modelfile = cfg_dep('GLM for PS (fear-conditioning): Output File', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','modelfile'));
         matlabbatch{2}.pspm{1}.first_level{1}.contrast.datatype = 'param';
         matlabbatch{2}.pspm{1}.first_level{1}.contrast.con.conname = 'CSp-CSm';
-        matlabbatch{2}.pspm{1}.first_level{1}.contrast.con.convec = [1 0 -1 0];
+        matlabbatch{2}.pspm{1}.first_level{1}.contrast.con.convec = [1 0 -1 0 0 0];
         matlabbatch{2}.pspm{1}.first_level{1}.contrast.deletecon = true;
         matlabbatch{2}.pspm{1}.first_level{1}.contrast.zscored = false;
         

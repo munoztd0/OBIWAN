@@ -38,7 +38,7 @@ obeseX = dir(obese);
 
 subj = vertcat(controlX, obeseX);
 
-session = {'second'; 'third'};
+session = {'second';'third'};
 
 
 %subj    = {'101'};     % subject ID
@@ -82,32 +82,32 @@ for j = 1:length(session)
             
             if exist(behavior_dir, 'dir')
                 cd (behavior_dir)
-                if exist(['internal1_' subjX(end-2:end) '.mat' ], 'file')
-                    load (['internal1_' subjX(end-2:end) ])
+                if exist(['internal1_2' subjX(end-2:end) '.mat' ], 'file')
+                    load (['internal1_2' subjX(end-2:end) ])
                     internal1 = data;
                 else
                     internal1 = dataN;
                 end
-                if exist(['internal3_' subjX(end-2:end) '.mat' ], 'file')
-                    load (['internal3_' subjX(end-2:end) ])
+                if exist(['internal3_2' subjX(end-2:end) '.mat' ], 'file')
+                    load (['internal3_2' subjX(end-2:end) ])
                     internal3 = data;
                 else
                     internal3 = dataN;
                 end
-                if exist(['internal5_' subjX(end-2:end) '.mat' ], 'file')
-                    load (['internal5_' subjX(end-2:end) ])
+                if exist(['internal5_2' subjX(end-2:end) '.mat' ], 'file')
+                    load (['internal5_2' subjX(end-2:end) ])
                     internal5 = data;
                 else
                     internal5 = dataN;
                 end
-                if exist(['internal7_' subjX(end-2:end) '.mat' ], 'file')
-                    load (['internal7_' subjX(end-2:end) ])
+                if exist(['internal7_2' subjX(end-2:end) '.mat' ], 'file')
+                    load (['internal7_2' subjX(end-2:end) ])
                     internal7 = data;
                 else
                     internal7 = dataN;
                 end
-                if exist(['internal9_' subjX(end-2:end) '.mat' ], 'file')
-                    load (['internal9_' subjX(end-2:end) ])
+                if exist(['internal9_2' subjX(end-2:end) '.mat' ], 'file')
+                    load (['internal9_2' subjX(end-2:end) ])
                     internal9 = data;
                 else
                     internal9 = dataN;

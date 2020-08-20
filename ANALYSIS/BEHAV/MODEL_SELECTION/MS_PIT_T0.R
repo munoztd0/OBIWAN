@@ -1,6 +1,6 @@
 ## R code for FOR PIT MODEL SELECTION
 ## following Barr et al. (2013) 
-## last modified on April 2020 by David MUNOC TORD
+## last modified on April 2020 by David MUNOZ TORD
 
 # PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
@@ -78,23 +78,22 @@ residual.fitted.data %>%
 
 
 ## COMPARING FIXED EFFECTS MODELS REML FALSE
-mod0 <- lmer(gripC ~ condition*group  + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod1 <- lmer(gripC ~ condition*group + gender  + (condition|id) + (1|trialxcondition), data = PIT,control = control, REML = FALSE)
-mod2 <- lmer(gripC ~ condition*group + ageC + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod3 <- lmer(gripC ~ condition*group + pissC+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod4 <- lmer(gripC ~ condition*group + likC + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod5 <- lmer(gripC ~ condition*group  + thirstyC+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod6 <- lmer(gripC ~ condition*group + pissC+ (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
-mod7 <- lmer(gripC ~ condition*group + hungryC+  (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+mod10 <- lmer(gripC ~ condition*intervention*time + gender + ageC + pissC+   hungryC+   thirstyC+   likC + diff_bmiC + bmiC + (condition * time|id) + (1|trialxcondition), data = PIT, control=control, REML = FALSE)
+mod11 = update(mod10, . ~ . - gender)
+mod12 = update(mod10, . ~ . - ageC)
+mod13 = update(mod10, . ~ . - likC)
+mod14 = update(mod10, . ~ . - thirstyC)
+mod15 = update(mod10, . ~ . - pissC)
+mod16 = update(mod10, . ~ . - hungryC)
 
+# remove everything that is #better than Full
 AIC(mod0) ; BIC(mod0) 
-AIC(mod1) ; BIC(mod1) #worse than null
-AIC(mod2) ; BIC(mod2) #worse than null
+AIC(mod1) ; BIC(mod1) #better than Full
+AIC(mod2) ; BIC(mod2) #better than Full
 AIC(mod3) ; BIC(mod3)
-AIC(mod4) ; BIC(mod4) #worse than null
+AIC(mod4) ; BIC(mod4) #better than Full
 AIC(mod5) ; BIC(mod5)
 AIC(mod6) ; BIC(mod6)
-AIC(mod7) ; BIC(mod7)
 
 mod01 <- lmer(gripC ~ condition*group   + thirstyC +  hungryC + pissC + (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
 mod02 <- lmer(gripC ~ condition*group   + thirstyC*hungryC + pissC +        (condition|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)

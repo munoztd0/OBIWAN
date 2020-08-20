@@ -17,7 +17,7 @@ cd ~
 home = pwd;
 homedir = [home '/OBIWAN'];
 
-mdldir        = fullfile (homedir, '/DERIVATIVES/GLM/SPM');
+mdldir        = fullfile (homedir, '/DERIVATIVES/GLM/AFNI');
 sourcefiles   = fullfile(homedir, '/DERIVATIVES/PREPROC');
 addpath (genpath(fullfile(homedir,'/CODE/ANALYSIS/fMRI/dependencies')));
 

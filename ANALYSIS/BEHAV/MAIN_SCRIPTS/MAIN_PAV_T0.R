@@ -53,17 +53,17 @@ diff$diff_hungry = diff$hungry - before$hungry
 PAV = merge(x = PAV, y = diff[ , c("diff_piss", "diff_thirsty", 'diff_hungry', 'id')], by = "id", all.x=TRUE)
 
 # define as.factors
-fac <- c("id", "trial", "condition", "session", "trialxcondition", "gender", "intervention")
+fac <- c("id", "trial", "condition", "group" ,"trialxcondition", "gender", "intervention")
 PAV[fac] <- lapply(PAV[fac], factor)
 
 PAV$RT <- as.numeric(PAV$RT)*1000 # transform in millisecond
 
 #check demo
 
-AGE = ddply(PAV,~session,summarise,mean=mean(age),sd=sd(age), min = min(age), max = max(age))
-BMI = ddply(PAV,~session,summarise,mean=mean(BMI_t1),sd=sd(BMI_t1), min = min(BMI_t1), max = max(BMI_t1))
-GENDER = ddply(PAV, .(id, session), summarise, gender=mean(as.numeric(gender)))  %>%
-  group_by(gender, session) %>%
+AGE = ddply(PAV,~group,summarise,mean=mean(age),sd=sd(age), min = min(age), max = max(age))
+BMI = ddply(PAV,~group,summarise,mean=mean(BMI_t1),sd=sd(BMI_t1), min = min(BMI_t1), max = max(BMI_t1))
+GENDER = ddply(PAV, .(id, group), summarise, gender=mean(as.numeric(gender)))  %>%
+  group_by(gender, group) %>%
   tally() #2 = female
 
 # Cleaning Up -------------------------------------------------------------

@@ -7,7 +7,7 @@ if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(lme4, optimx, car, visreg, ggplot2, ggpubr, sjPlot, influence.ME)
+pacman::p_load(lme4, lmerTest, optimx, car, visreg, ggplot2, ggpubr, sjPlot, glmmTMB, influence.ME, bayestestR,interactions)
 
 # SETUP ------------------------------------------------------------------
 
@@ -20,90 +20,113 @@ figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV')
 setwd(analysis_path)
 
 ## LOADING AND INSPECTING THE DATA
-load('PIT.RData')
+load('PIT_LIRA.RData')
 
 View(PIT)
-dim(PIT)
-str(PIT)
+# dim(PIT)
+# str(PIT)
 
 #set "better" optimizer
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
-## BASIC RANDOM INTERCEPT MODEL
-rint = lmer(gripZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + (1|id) + (1|trialxcondition), data = PIT, control=control)
-summary(rint)
 
+# RANDOM STRUCTURE --------------------------------------------------------
 
-## COMPARING RANDOM EFFECTS MODELS
-mod1 <- lmer(gripZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + (1|id) + (1|trialxcondition), data = PIT, control=control)
-mod2 <- lmer(gripZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + (condition|id) + (1|trialxcondition), data = PIT, control=control)
-mod3 <- lmer(gripZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + (condition+time|id) + (1|trialxcondition), data = PIT, control=control)
-mod4 <- lmer(gripZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + (condition*time|id) + (1|trialxcondition), data = PIT, control=control)
-#mod5 <- lmer(gripZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + (condition*time+intervention|id) + (1|trialxcondition), data = PIT, control=control)
-#mod6 <- lmer(gripZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + (condition*time|id) + (condition|trialxcondition), data = PIT, control=control)
-#after mod4 doesn't converge properly correlation = 1, negative Hessian -> we stop
+## BASIC RANDOM INTERCEPT MODEL WITH EVERYTHING
+mod0 = lmer(gripC ~ condition*intervention*time + gender + ageC + pissC+   hungryC+   thirstyC+   likC + diff_bmiC + bmiC +  (1|id), data = PIT, control=control)
 
-AIC(mod1) ; BIC(mod1)
-AIC(mod2) ; BIC(mod2)
-AIC(mod3) ; BIC(mod3)
-AIC(mod4) ; BIC(mod4)
+## COMPARING RANDOM INTERCEPT MODELS
+mod1 <- lmer(gripC ~ condition*intervention*time + gender + ageC + pissC+   hungryC+   thirstyC+   likC + diff_bmiC + bmiC +  (1|id) + (1|trialxcondition), data = PIT, control=control)
+mod2 <- lmer(gripC ~ condition*intervention*time + gender + ageC + pissC+   hungryC+   thirstyC+   likC + diff_bmiC + bmiC + (1|id/trialxcondition), data = PIT, control=control)
 
+# comparing BIC measures, allowing a Bayesian comparison of non-nested frequentist models (Wagenmakers, 2007)
+bayesfactor_models(mod0, mod1, mod2,  denominator = mod0) #mod1 #best random INTERCEPT
+
+rint <- mod1
+
+## COMPARING RANDOM SLOPE MODELS
+mod4 <- lmer(gripC ~ condition*intervention*time + gender + ageC + pissC+   hungryC+   thirstyC+   likC + diff_bmiC + bmiC + (condition|id) + (1|trialxcondition), data = PIT, control=control)
+mod5 <- lmer(gripC ~ condition*intervention*time + gender + ageC + pissC+   hungryC+   thirstyC+   likC + diff_bmiC + bmiC + (1|id) + (condition|trialxcondition), data = PIT, control=control)
+mod6 <- lmer(gripC ~ condition*intervention*time + gender + ageC + pissC+   hungryC+   thirstyC+   likC + diff_bmiC + bmiC + (condition + time|id) + (1|trialxcondition), data = PIT, control=control)
+mod7 <- lmer(gripC ~ condition*intervention*time + gender + ageC + pissC+   hungryC+   thirstyC+   likC + diff_bmiC + bmiC + (condition * time|id) + (1|trialxcondition), data = PIT, control=control)
+#after that too complex
+
+bayesfactor_models(mod1, mod4, mod5, mod6, mod7, denominator = mod1) #mod7 #best random SLOPE
 
 ## BEST RANDOM SLOPE MODEL
-rslope <- mod4
+rslope <- mod7
 summary(rslope)
-ranova(rslope) #there is statistically "significant" variation in slopes between individuals and trials
-
+ranova(rslope) #there is statistically "significant" variation in slopes between times\individuals\trials
 
 # create data frames containing residuals and fitted
 # values for each model we ran above
-a <-  data_frame(
-  model = "random.slope",
-  fitted = predict(rslope),
-  residual = residuals(rslope))
+a <-  data_frame(model = "random.slope",fitted = predict(rslope),residual = residuals(rslope))
 
-b <- data_frame(
-  model = "random.intercept",
-  fitted = predict(rint),
-  residual = residuals(rint))
+b <- data_frame(model = "random.intercept",fitted = predict(rint),residual = residuals(rint))
 
 # join the two data frames together
 residual.fitted.data <- bind_rows(a,b)
-
+#residual.fitted.data = a # or plot them individually
 # plots residuals against fitted values for each model
 residual.fitted.data %>%
   ggplot(aes(fitted, residual)) +
   geom_point() +
   geom_smooth(se=F) +
   facet_wrap(~model)
-#We can see that the residuals from the random slope model XX problem here ##
-#the range of fitted values, which suggests that the assumption of 
-#homogeneity of variance is met in the random slope model
+
+#We can see that the residuals from the random slope model are much more evenly 
+#distributed across the range of fitted values, which suggests that the assumption 
+#of homogeneity of variance is met in the random slope model
 
 
+# FIXED STRUCTURE ---------------------------------------------------------
 
-## TESTING THE RANDOM INTERCEPT
-mod1 <- update(rint, REML = FALSE)
-mod2 <- lm(gripZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ, data = PIT)
+## COMPARING FIXED EFFECTS MODELS (REML=FALSE)
+mod10 <- lmer(gripC ~ condition*intervention*time + gender + ageC + pissC+   hungryC+   thirstyC+   likC + diff_bmiC + bmiC + (condition * time|id) + (1|trialxcondition), data = PIT, control=control, REML = FALSE)
+mod11 = update(mod10, . ~ . - bmiC)
+mod12 = update(mod10, . ~ . - diff_bmiC)
+mod13 = update(mod10, . ~ . - likC)
+mod14 = update(mod10, . ~ . - thirstyC)
+mod15 = update(mod10, . ~ . - hungryC)
+mod16 = update(mod10, . ~ . - pissC)
+mod17 = update(mod10, . ~ . - ageC)
+mod18 = update(mod10, . ~ . - gender)
 
-AIC(mod1) ; BIC(mod1) #really better with random intercept
-AIC(mod2) ; BIC(mod2) 
+# remove everything that is #better than Full
+AIC(mod10) ; BIC(mod10) 
+AIC(mod11) ; BIC(mod11) #better than Full
+AIC(mod12) ; BIC(mod12) 
+AIC(mod13) ; BIC(mod13) #better than Full
+AIC(mod14) ; BIC(mod14) #better than Full
+AIC(mod15) ; BIC(mod15) #better than Full
+AIC(mod16) ; BIC(mod16) #better than Full
+AIC(mod17) ; BIC(mod17) #better than Full
+AIC(mod18) ; BIC(mod18) #better than Full
+
+#look at interactions
+mod21 <- lmer(gripC ~ condition*intervention*time + diff_bmiC + (condition * time|id) + (1|trialxcondition), data = PIT, control=control, REML = FALSE)
+mod22 <- lmer(gripC ~ condition*intervention*time*diff_bmiC + (condition * time|id) + (1|trialxcondition), data = PIT, control=control, REML = FALSE)
+
+bayesfactor_models(mod21, mod22, denominator = mod21) #mod21 #best FIXED
+
+## BEST SIMPLE FIXED MODEL #keep it simple
+mod <- mod21
+summary(mod)
+moddummy <- lm(gripC ~ condition*intervention*time + diff_bmiC, data = PIT)
 
 
 ## PLOTTING
-mod <- rslope
 visreg(mod,points.par=list(col="darkgoldenrod3"),line.par=list(col="royalblue4",lwd=4))
 
 #for to continuous predictor by group
-#visreg(mod1,xvar="Intervention",by="Condition",gg=TRUE,type="contrast",ylab="Effort (z)",breaks=c(-2,0,2),xlab="Intervention")
-
+cat_plot(mod, pred = intervention, modx = condition, mod2 = time)
 # MODEL ASSUMPTION CHECKS :  -----------------------------------
 
 #explicitly check correlation (between individuals’ intercept and slope residuals)
 VarCorr(mod) #The correlation between the random intercept and slopes is pretty high, so we keep them
 
 #1) Multicollinearity / VIF larger than 10 is considered problematic. 
-vif(mod) #well good nothing above 10 so no problem keeping everything
+vif(mod) #well ... intervention should definitely by removed form the model
 
 #2)Linearity #3)Homoscedasticity AND #4)Normality of residuals
 plot_model(mod, type = "diag") #super cool sjPlots for checking assumptions -> not bad except residuals I guess but seen worst
@@ -111,14 +134,14 @@ plot_model(mod, type = "diag") #super cool sjPlots for checking assumptions -> n
 #5) Absence of influential data points 
 boxplot(scale(ranef(mod)$id), las=2) #simple univariate boxplots
  
-set.seed(101) #disgnostic plots -> Cook's distance -> 238 & 234 & 232 & 254
-alt.est <- influence(mod,maxfun=100,  group="id")   #set to 100 to really have a good estimate BUT #takes forever
+set.seed(101) #disgnostic plots -> Cook's distance -> check 266 !!
+alt.est <- influence(mod,maxfun=100,  group="id")   #set to 1000 to really have a good estimate BUT #takes forever
 cookD = cooks.distance(alt.est)
 df <- data.frame(id = row.names(cookD), cookD) 
 df <- arrange(df, cookD)
 df$id <- factor(df$id, levels = df$id)
 
-cutoff = 4/(n_tot-length(mod2$coefficients)-1) #rule of thumb cutoff
+cutoff = 4/(n_tot-length(moddummy$coefficients)-1) #rule of thumb cutoff
 
 ggdotchart(df, x = "id", y = "cookD", sorting = "ascending",add = "segments") +
   geom_hline(yintercept=cutoff, linetype="dashed", color = "red") +
@@ -128,4 +151,5 @@ ggdotchart(df, x = "id", y = "cookD", sorting = "ascending",add = "segments") +
   coord_flip() + 
   theme(legend.position = 'none', axis.ticks.y = element_blank(),  axis.text.y = element_blank())
 
+# The rest on MAIN_PIT_LIRA - Special thanks to Ben Meuleman, Eva R. Pool and Yoann Stussi -----------------------------------------------------------------
 

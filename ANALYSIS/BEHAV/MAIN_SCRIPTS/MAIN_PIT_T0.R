@@ -20,7 +20,7 @@ setwd(analysis_path)
 
 
 # open dataset or load('PIT.RData')
-PIT_full <- 
+PIT_full <- read.delim(file.path(analysis_path,'OBIWAN_PIT.txt'), header = T, sep ='') # read in dataset
 HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
 intern <- read.delim(file.path(analysis_path,'OBIWAN_INTERNAL.txt'), header = T, sep ='') # read in dataset
@@ -84,7 +84,7 @@ HED_BL = subset(HED_BL, condition == 'MilkShake')
 HED_BL = select(HED_BL, -c(condition) )
 PIT = merge(PIT, HED_BL, by = "id")
 
-#center everything
+#  center everything ------------------------------------------------------
 
 # Center level-1 predictor within cluster (CWC)
 PIT$gripC = center(PIT$AUC, type = "CWC", group = PIT$id)
@@ -116,10 +116,16 @@ PIT$condition <- factor(PIT$condition, levels = c("1", "-1"))
 # STATS # LINEAR MIXED EFFECTS : REML = FALSE -------------------------------------------------------------------
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful functions from Ben Meulman
 
-#FOR MODEL SELECTION we followed Barr et al. (2013) approach SEE --> CODE/ANALYSIS/BEHAV/MODEL_SELECTION/MS_PIT.R
+#FOR MODEL SELECTION we followed Barr et al. (2013) approach SEE --> CODE/ANALYSIS/BEHAV/MODEL_SELECTION/MS_PIT_T0.R
 
 #set "better" lmer optimizer #nolimit # yoloptimizer
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
+
+
+# mdl.aov = aov_4(gripC ~ condition*group + hungryC + hungryC:condition + thirstyC + pissC  +  (condition|id/trialxcondition) , 
+#                 data = PIT, observed = c("gender", "ageC", "diff_bmiC"), factorize = FALSE, fun_aggregate = mean)
+# 
+# summary(mdl.aov)
 
 #set to method LRT to quick check
 model = mixed(gripC ~ condition*group + hungryC + hungryC:condition + thirstyC + pissC  + (condition|id) + (1|trialxcondition),
@@ -147,10 +153,27 @@ model
 # 6   condition:group  1    4.64 *    .031
 # 7 condition:hungryC  1 11.06 ***   <.001
 
+
+#manually do COND
+main = lmer(gripC ~ condition*group + hungryC:condition + (condition |id) + (1|trialxcondition) , 
+            data = PIT, control = control, REML = FALSE)
+null = lmer(gripC ~ condition + group + hungryC:condition + (condition |id) + (1|trialxcondition) , 
+           data = PIT, control = control, REML = FALSE)
+
+#manual test to double check and to get delta AIC
+test = anova(main, null, test = 'Chisq')
+#test
+
+#get BF fro mixed see Wagenmakers, 2007
+exp((test[1,2] - test[2,2])/2) #3.734812
+
+
+
+# Computing CIs and Post-Hoc contrasts ------------------------------------
 mod <- lmer(gripC ~ condition*group + hungryC:condition + (condition |id) + (1|trialxcondition) , 
             data = PIT, control = control) #need to be fitted using ML so here I just use lmer function so its faster
-#ref_grid(mod)
-##### Computing CIs and Post-Hoc contrasts
+#lsmeans::ref_grid(mod)
+
 #increase repetitions limit
 emm_options(pbkrtest.limit = 5000)
 emm_options(lmerTest.limit = 5000)
@@ -183,7 +206,21 @@ CI_inter$contrasts
 #1 - -1     12.26 4.48 80     3.35    21.17       2.738  0.0038
 
 
+#looking at coeficients # takes a while
+coef.out <- function(merMod) { coef(merMod)$id[,2] } #column 2 is coeficient for diff of CS- from CS+
+set.seed(123)
+system.time(boot.out <- bootMer(mod,FUN=coef.out,nsim=1000,use.u=TRUE))
+coef.conf = confint(boot.out,method="boot",boot.type="perc",level=0.95)
+coef.conf
+
+#This paints a slightly more interesting picture. We have 11 person 
+#with no significant decreases  (95%) in grips for the CS- stimulus,
+#In other words, the proportion of people showing a PIT effect is 
+#estimated to be XX% (15/24)!. -
+
 #### The rest on plot_PIT_T0 - Special thanks to Ben Meuleman, Eva R. Pool and Yoann Stussi -----------------------------------------------------------------
+
+
 
 
 

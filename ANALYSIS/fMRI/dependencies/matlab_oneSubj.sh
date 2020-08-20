@@ -13,7 +13,7 @@ MATLAB=/usr/local/MATLAB/R2017a/bin/matlab
 PBS_O_WORKDIR=$2
 
 echo Working directory is $PBS_O_WORKDIR
-cd $PBS_O_WORKDIR
+cd /home/OBIWAN/CODE/ANALYSIS/fMRI/SPM/PIT #$PBS_O_WORKDIR;
 
 NPROCS=`wc -l < $PBS_NODEFILE`
 

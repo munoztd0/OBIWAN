@@ -6,8 +6,9 @@ function DOcovariateCON(task, name_ana, name_soft, covariateNames, remove)
 
 %variables
 task = 'hedonicreactivity';
-name_ana = 'GLM-04'; % output folder for this analysis
-name_soft = 'SPM'; % output folder for this analysis
+name_ana = 'GLM-01_0'; % output folder for this analysis
+name_soft = 'AFNI'; % output folder for this analysis
+
 covariateNames = {'rew_lik_clean'; 'con_lik_clean'; 'rew_int_clean'; 'con_int_clean'}; %9
 conImage = {'con-0001'; 'con-0002'; 'con-0001'; 'con-0002'};
 remove = 0;

@@ -1,5 +1,5 @@
-## R code for FOR PIT PLOT
-## last modified on April 2020 by David MUNOC TORD
+## R code for FOR PIT PLOT TO
+## last modified on April 2020 by David MUNOZ TORD
 
 # PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
@@ -42,7 +42,21 @@ emm_options(lmerTest.limit = 5000)
 CI_inter = confint(emmeans(mod, pairwise~ condition|group, adjust = "tukey"),level = 0.95,method = c("boot"),nsim = 5000)
 
 df.predicted = data.frame(CI_inter$emmeans)
-df.observed = ddply(PIT, .(id, group, condition), summarise, emmean = mean(gripC, na.rm = TRUE)) 
+
+#get predicted by ind
+rand = ranef(mod)
+ran = data.frame(rand$id)
+fix = t(data.frame(fixef(mod)))
+df = ran + fix[col(ran)]
+df$CSp = df$X.Intercept.
+df$base = df$CSp + df$condition0
+df$CSm = df$CSp + df$condition.1
+df = select(df, c(CSp,base, CSm))
+df$id = as.factor(c(1:length(df$CSm)))
+df.observed <- gather(df, condition, emmean, CSp:CSm, factor_key=TRUE)
+
+#df.observed = ddply(PIT, .(id, group, condition), summarise, emmean = mean(gripC, na.rm = TRUE)) 
+
 # position on x axis is based on combination of B and jittered A. Mix to taste.
 df.observed.jit <- df.observed %>%
   mutate(groupjit = as.numeric(condition)*0.4 - 0.6 + jitter(as.numeric(group), 0.55),
@@ -83,7 +97,7 @@ plot = plt +
         legend.text=element_text(size=14),
         strip.background = element_rect(fill="white"))+ 
   labs(title = "", 
-       y =  "Mobilized Effort - AUC (x - \u03BC\u2071)", x = "",
+       y =  "Mobilized Effort \u2013 AUC (x - \u03BC\u2071)", x = "",
        caption = "Two-way interaction (GroupxPavCue): p = 0.031\n
        CS+ > CS-; Lean, p = 0.77; Obese, p = 0.0038\n 
        Error bar represent \u00B1 SE for the model estimated means\n
