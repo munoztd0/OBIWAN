@@ -5,14 +5,13 @@ function DOcovariateCON(task, name_ana, name_soft, covariateNames, remove)
 % last modified on July 2020 by David Munoz
 
 %variables
-task = 'PIT';
-name_soft = 'AFNI'; % output folder for this analysis
+task = 'hedonicreactivity'; %PIT
+name_soft = 'SPM'; % output folder for this analysis
 name_ana = 'GLM-01_0'; % output folder for this analysis
-
-
-covariateNames = {'CSp_eff'; 'CSm_eff'}; %9
+covariateNames = {'REW_lik'; 'NEU_lik'}; %{'CSp_eff'; 'CSm_eff'}; %9
 conImage = {'con-0001'; 'con-0002'};
 remove = 0;
+covariate=1;
 
 dbstop if error
 
@@ -79,24 +78,34 @@ for c = 1:length(covariateNames)
         continue
     end
     cd(groupdir)
-    mkdir('cov')
-   for i = 1:length(cov(c).ID)
-       cd(groupdir)
-       o = dir(['*' num2str(cov(c).ID{i})]);
-       HeaderInfo = spm_vol([pwd '/sub-obese' num2str(cov(c).ID{i}) '_' conImageX '.nii']);
-       vol = spm_read_vols(HeaderInfo);
-       cof = vol .* cov(c).data(i);
-       mkdir('cov')
-       cd('cov')
-       
-       HeaderInfo.fname = ['sub-obese' cov(c).ID{i} '_con-000' num2str(c) '.nii'];  % This is where you fill in the new filename
-       HeaderInfo.private.dat.fname = HeaderInfo.fname;
-       spm_write_vol(HeaderInfo,cof);
-   end   
+    if covariate
+        mkdir('cov')
+       for i = 1:length(cov(c).ID)
+           cd(groupdir)
+           o = dir(['*' num2str(cov(c).ID{i})]);
+           HeaderInfo = spm_vol([pwd '/sub-obese' num2str(cov(c).ID{i}) '_' conImageX '.nii']);
+           vol = spm_read_vols(HeaderInfo);
+           cof = vol .* cov(c).data(i);
+           cd('cov')
 
+           HeaderInfo.fname = ['sub-obese' cov(c).ID{i} '_con-000' num2str(c) '.nii'];  % This is where you fill in the new filename
+           HeaderInfo.private.dat.fname = HeaderInfo.fname;
+           spm_write_vol(HeaderInfo,cof);
+       end   
+    else
+           mkdir('no_cov')
+       for i = 1:length(cov(c).ID)
+           cd(groupdir)
+           o = dir(['*' num2str(cov(c).ID{i})]);
+           HeaderInfo = spm_vol([pwd '/sub-obese' num2str(cov(c).ID{i}) '_' conImageX '.nii']);
+           cof = spm_read_vols(HeaderInfo);
+           cd('no_cov')
 
-    
-    
+           HeaderInfo.fname = ['sub-obese' cov(c).ID{i} '_con-000' num2str(c) '.nii'];  % This is where you fill in the new filename
+           HeaderInfo.private.dat.fname = HeaderInfo.fname;
+           spm_write_vol(HeaderInfo,cof);
+       end  
+    end
     
     
     

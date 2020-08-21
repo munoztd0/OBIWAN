@@ -154,7 +154,7 @@ for i = 1:length(subj)
         cd (fullfile(subjoutdir,'output'))
         
         % copy images T
-        Timages = ['01'; '02'; '03'; '04'; '05'];% constrasts of interest
+        Timages = ['01'; '02'];% constrasts of interest
         for y =1:size(Timages,1)
             copyfile(['con_00' (Timages(y,:)) '.nii'],[groupdir, subjX '_con-00' (Timages(y,:)) '.nii'])
         end
@@ -415,36 +415,45 @@ end
         Ct = []; Ctnames = []; ntask = size(param.task,1);
         
         % | CONSTRASTS FOR T-TESTS
-        
         % con1
-        Ctnames{1} = 'CSp_CSm';
+        Ctnames{1} = 'CSp';
         weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
-        weightNeg  = ismember(conditionName, {'task1.CS.CSm'})* -1;
-        Ct(1,:)    = weightPos+weightNeg;
+        Ct(1,:)    = weightPos;
         
         % con2
-        Ctnames{2} = 'action';
-        weightPos  = ismember(conditionName, {'task1.action'}) * 1;
+        Ctnames{2} = 'CSm';
+        weightPos  = ismember(conditionName, {'task1.CS.CSm'}) * 1;
         Ct(2,:)    = weightPos;
         
-        % con3
-        Ctnames{3} = 'reward_control';
-        weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 1;
-        weightNeg  = ismember(conditionName, {'task1.taste.control'})* -1;
-        Ct(3,:)    = weightPos+weightNeg;
-        
-        % con4 
-        Ctnames{4} = 'action_RT';
-        weightPos  = ismember(conditionName, {'task1.actionxaction^1'}) * 1;
-        Ct(4,:)    = weightPos;
-        
-        
-        % con5
-        Ctnames{5} = 'CSp_Baseline';
-        weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
-        weightNeg  = ismember(conditionName, {'task1.baseline'})* -1;
-        Ct(5,:)    = weightPos+weightNeg;
-        
+%         % con1
+%         Ctnames{1} = 'CSp_CSm';
+%         weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
+%         weightNeg  = ismember(conditionName, {'task1.CS.CSm'})* -1;
+%         Ct(1,:)    = weightPos+weightNeg;
+%         
+%         % con2
+%         Ctnames{2} = 'action';
+%         weightPos  = ismember(conditionName, {'task1.action'}) * 1;
+%         Ct(2,:)    = weightPos;
+%         
+%         % con3
+%         Ctnames{3} = 'reward_control';
+%         weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 1;
+%         weightNeg  = ismember(conditionName, {'task1.taste.control'})* -1;
+%         Ct(3,:)    = weightPos+weightNeg;
+%         
+%         % con4 
+%         Ctnames{4} = 'action_RT';
+%         weightPos  = ismember(conditionName, {'task1.actionxaction^1'}) * 1;
+%         Ct(4,:)    = weightPos;
+%         
+%         
+%         % con5
+%         Ctnames{5} = 'CSp_Baseline';
+%         weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
+%         weightNeg  = ismember(conditionName, {'task1.baseline'})* -1;
+%         Ct(5,:)    = weightPos+weightNeg;
+%         
         % define F constrasts
         %------------------------------------------------------------------
         Cf = []; Cfnames = [];

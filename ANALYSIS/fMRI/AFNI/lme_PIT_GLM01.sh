@@ -45,6 +45,8 @@ do
 /usr/local/abin/3dAFNItoNIFTI -prefix lme_full_withcov_con${i} lme_full_withcov+tlrc[${i}]
 done
 
+
+
 # ++ Smallest FDR q [0 (Intercept)  F] = 1.62341e-14
 # ++ Smallest FDR q [1 condition  F] = 0.000231921
 # ++ Smallest FDR q [2 time  F] = 0.011967

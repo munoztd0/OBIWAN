@@ -111,7 +111,7 @@ PIT$condition <- factor(PIT$condition, levels = c("1", "-1"))
 #change value of sessions
 PIT$time = as.factor(revalue(PIT$session, c(second="0", third="1")))
 
-#save RData for cluster computing
+# save RData for cluster computing
 # save.image(file = "PIT_LIRA.RData", version = NULL, ascii = FALSE,
 #            compress = FALSE, safe = TRUE)
 
@@ -125,6 +125,8 @@ control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
 # mdl.aov = aov_4(gripC ~ condition*intervention*time + diff_bmiC +  (condition * time |id) ,
 #                 data = PIT, observed = "diff_bmiC", factorize = FALSE, fun_aggregate = mean)
+# mdl.aov = aov_4(gripC ~ condition*intervention*time +  (condition * time |id) ,
+#                 data = PIT, factorize = FALSE, fun_aggregate = mean)
 # 
 # summary(mdl.aov)
 

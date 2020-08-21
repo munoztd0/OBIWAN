@@ -9,9 +9,9 @@ analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV')
 setwd(analysis_path)
 
 
-
-
 load('PIT_LIRA.RData')
+
+PIT = PIT %>% filter(id %notin% c(210, 214, 216, 218, 219, 222, 223, 224, 233, 240, 247, 249, 258, 263, 267)) #& 266??
 
 bs = ddply(PIT, .(id, condition, time, intervention, gender), summarise, eff = mean(AUC, na.rm = TRUE))
 bs$eff = scale(bs$eff)
@@ -19,17 +19,17 @@ cov = PIT %>% group_by(id) %>% summarise_if(is.numeric, mean)
 cov = select(cov, c(id, ageC, likC, bmiC, diff_bmiC, hungryC, thirstyC, pissC))
 
 # COVARIATE ------------------------------------------------------------------
-bd$id = as.numeric(bs$id)
+
 CSp_eff_t0 = subset(bs, time == '0' & condition == 1)
 CSp_eff_t1 = subset(bs, time == '1'& condition == 1)
 CSm_eff_t0 = subset(bs, time == '0' & condition == -1)
 CSm_eff_t1 = subset(bs, time == '1'& condition == -1)
 
 
-path <-'~/OBIWAN/DERIVATIVES/GLM/AFNI/PIT/T0'
+path <-'~/OBIWAN/DERIVATIVES/GLM/AFNI/PIT/GLM-01_0'
 write.table(CSp_eff_t0, (file.path(path, "CSp_eff.txt")), row.names = F, sep="\t")
 write.table(CSm_eff_t0, (file.path(path, "CSm_eff.txt")), row.names = F, sep="\t")
-path <-'~/OBIWAN/DERIVATIVES/GLM/AFNI/PIT/T1'
+path <-'~/OBIWAN/DERIVATIVES/GLM/AFNI/PIT/GLM-01_1'
 write.table(CSp_eff_t1, (file.path(path, "CSp_eff.txt")), row.names = F, sep="\t")
 write.table(CSm_eff_t1, (file.path(path, "CSm_eff.txt")), row.names = F, sep="\t")
 
@@ -76,4 +76,7 @@ fMRI_PIT[is.na(fMRI_PIT)] <- 0
 path <-'~/OBIWAN/DERIVATIVES/GLM/AFNI/PIT/GLM-01'
 write.table(fMRI_PIT, (file.path(path, "PIT_LME_withcov.txt")), row.names = F, sep="\t")
 
-
+# for id in  202 203 204 209 213 217 220 224 225 235 236 237 238 239 241 246 250 259 264 265 266 269 270
+# do
+# mv *${id}* placebo/
+# done

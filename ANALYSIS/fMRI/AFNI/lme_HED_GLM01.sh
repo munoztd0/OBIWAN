@@ -17,9 +17,9 @@ cd /home/OBIWAN/DERIVATIVES/GLM/AFNI/HED
 -dataTable @HED_LME_withcov.txt\
 
 #AFNItoNIFTI -prefix test lme+tlrc[5]
-for i in 1 2 3 4 5 6 7 8 9 10 12 12 13 14 15 16 17 18 19
+for i in 1 2 3 4 5 6 7 8 9 #10 12 12 13 14 15 16 17 18 19
 do
-/usr/local/abin/3dAFNItoNIFTI -prefix lme_full_con${i} lme_full+tlrc[${i}]
+/usr/local/abin/3dAFNItoNIFTI -prefix lme_full_con${i} lme_full_nocov+tlrc[${i}]
 done
 
 ++ Smallest FDR q [0 (Intercept)  F] = 1.62341e-14
