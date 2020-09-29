@@ -136,6 +136,11 @@ options(contrasts=c("contr.sum","contr.poly")) #set contrasts to sum !
 
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful functions from Ben Meulman
 
+# mdl.aov = aov_4(RT_TC ~ condition*group +  (condition|id) ,
+#                 data = PAV, factorize = FALSE, fun_aggregate = mean)
+# 
+# summary(mdl.aov)
+
 #FOR MODEL SELECTION we followed Barr et al. (2013) approach SEE --> CODE/ANALYSIS/BEHAV/MODEL_SELECTION/MS_PAV_T0.R
 
 #set to method LRT to quick check
@@ -162,6 +167,19 @@ model
 
 mod <- lmer(RT_TC ~ condition*group + group:likC + likC +  (condition|id) + (1|trialxcondition), data = PAV, control = control) # REML now for further analysis
 ref_grid(mod) #triple check everything is more or less centered at 0
+
+#manually do COND
+main = lmer(RT_TC ~ condition*group:likC + likC +  (condition|id) + (1|trialxcondition), 
+            data = PAV, control = control, REML = FALSE)
+null = lmer(RT_TC ~ group + group:likC + likC +  (condition|id) + (1|trialxcondition), 
+            data = PAV, control = control, REML = FALSE)
+
+#manual test to double check and to get delta AIC
+test = anova(main, null, test = 'Chisq')
+#test
+
+#get BF fro mixed see Wagenmakers, 2007
+exp((test[1,2] - test[2,2])/2) #7.336808
 
 #get CI and pval for condition (left sided!)
 p_cond = emmeans(mod, pairwise~ condition, side = "<") 

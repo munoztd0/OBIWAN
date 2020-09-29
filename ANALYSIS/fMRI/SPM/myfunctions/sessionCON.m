@@ -1,17 +1,19 @@
-function DOcovariateCON(task, name_ana, name_soft, covariateNames, remove)
+function sessionCON(task, name_ana, name_soft, covariateNames, remove)
 
 % intended for REWOD hedonic reactivity GROUP X COND
-% 2nd level behavioral covariate demeaned by groups
+% 2nd level behavioral covariate zscored
 % last modified on July 2020 by David Munoz
 
 %variables
-task = 'PIT'; %PIT hedonicreactivity
+task = 'pav'; %PIT hedonicreactivity
 name_soft = 'SPM'; % output folder for this analysis
-name_ana = 'GLM-01_HW'; % output folder for this analysis
-covariateNames = {'CSp_eff'; 'CSm_eff'}; %{'REW_lik'; 'NEU_lik'}; %{'CSp_eff'; 'CSm_eff'}; %9
+name_ana = 'GLM-01_0'; % output folder for this analysis
+name_ana1 = 'GLM-01_1'; % output folder for this analysis
+name_ana2 = 'GLM-01_LIRA'; % output folder for this analysis
+covariateNames = {'CSp_RT'; 'CSm_RT'} %{'REW_lik'; 'NEU_lik'}; %{'CSp_eff'; 'CSm_eff'}; % %{'CSp_eff'; 'CSm_eff'}; %9
 conImage = {'con-0001'; 'con-0002'};
-group = 'control' %'obese'
-covariate=1
+group = 'obese' %'obese'
+covariate=0
 
 
 dbstop if error
@@ -27,7 +29,8 @@ homedir = [home '/OBIWAN'];
 mdldir   = fullfile (homedir, '/DERIVATIVES/GLM/', name_soft, task);% mdl directory (timing and outputs of the analysis)
 covdir   = fullfile (homedir, 'DERIVATIVES/GLM/', name_soft, task, name_ana); % director with the extracted second level covariates
 groupdir = fullfile (mdldir,name_ana, 'group');
-
+groupdir1 = fullfile (mdldir,name_ana1, 'group');
+LIRA = fullfile (mdldir,name_ana2, 'group');
 
 
 %% specify spm param
@@ -92,6 +95,32 @@ for c = 1:length(covariateNames)
            HeaderInfo.fname = ['sub-' group cov(c).ID{i} '_con-000' num2str(c) '.nii'];  % This is where you fill in the new filename
            HeaderInfo.private.dat.fname = HeaderInfo.fname;
            spm_write_vol(HeaderInfo,cof);
+           
+           volT0 = spm_read_vols(HeaderInfo);
+           
+           cd(groupdir1)
+           o = dir(['*' num2str(cov(c).ID{i})]);
+           HeaderInfo = spm_vol([pwd '/sub-' group num2str(cov(c).ID{i}) '_' conImageX '.nii']);
+           vol = spm_read_vols(HeaderInfo);
+           cof = vol .* cov(c).data(i);
+           cd('cov')
+
+           HeaderInfo.fname = ['sub-' group cov(c).ID{i} '_con-000' num2str(c) '.nii'];  % This is where you fill in the new filename
+           HeaderInfo.private.dat.fname = HeaderInfo.fname;
+           spm_write_vol(HeaderInfo,cof);
+           
+           volT1 = spm_read_vols(HeaderInfo);       
+           
+           cd(LIRA)
+           mkdir('cov')
+           cd('cov')
+           
+           vol_LIRA =  volT1 - volT0;
+           HeaderInfo.fname = ['sub-' group cov(c).ID{i} '_con-000' num2str(c) '.nii'];  % This is where you fill in the new filename
+           HeaderInfo.private.dat.fname = HeaderInfo.fname;
+           spm_write_vol(HeaderInfo,vol_LIRA);
+           
+           
        end   
     else
            mkdir('no_cov')
@@ -99,12 +128,37 @@ for c = 1:length(covariateNames)
            cd(groupdir)
            o = dir(['*' num2str(cov(c).ID{i})]);
            HeaderInfo = spm_vol([pwd '/sub-' group num2str(cov(c).ID{i}) '_' conImageX '.nii']);
-           cof = spm_read_vols(HeaderInfo);
+           vol = spm_read_vols(HeaderInfo);
+           cof = vol .* cov(c).data(i);
            cd('no_cov')
 
            HeaderInfo.fname = ['sub-' group cov(c).ID{i} '_con-000' num2str(c) '.nii'];  % This is where you fill in the new filename
            HeaderInfo.private.dat.fname = HeaderInfo.fname;
            spm_write_vol(HeaderInfo,cof);
+           
+           volT0 = spm_read_vols(HeaderInfo);
+           
+           cd(groupdir1)
+           o = dir(['*' num2str(cov(c).ID{i})]);
+           HeaderInfo = spm_vol([pwd '/sub-' group num2str(cov(c).ID{i}) '_' conImageX '.nii']);
+           vol = spm_read_vols(HeaderInfo);
+           cof = vol ;
+           cd('no_cov')
+
+           HeaderInfo.fname = ['sub-' group cov(c).ID{i} '_con-000' num2str(c) '.nii'];  % This is where you fill in the new filename
+           HeaderInfo.private.dat.fname = HeaderInfo.fname;
+           spm_write_vol(HeaderInfo,cof);
+           
+           volT1 = spm_read_vols(HeaderInfo);       
+           
+           cd(LIRA)
+           mkdir('no_cov')
+           cd('no_cov')
+           
+           vol_LIRA =  volT1 - volT0;
+           HeaderInfo.fname = ['sub-' group cov(c).ID{i} '_con-000' num2str(c) '.nii'];  % This is where you fill in the new filename
+           HeaderInfo.private.dat.fname = HeaderInfo.fname;
+           spm_write_vol(HeaderInfo,vol_LIRA);
        end  
     end
     

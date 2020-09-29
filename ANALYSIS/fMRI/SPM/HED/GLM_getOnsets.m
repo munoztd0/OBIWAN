@@ -9,7 +9,7 @@ function GLM_getOnsets()
 
 dbstop if error
 clear all
-ana_name      = 'GLM-04_1';
+ana_name      = 'GLM-01_HW';
 
 %% DEFINE PATH
 
@@ -30,9 +30,9 @@ obese = [homedir '/sub-obese*'];
 controlX = dir(control);
 obeseX = dir(obese);
 
-subj = vertcat(controlX, obeseX);
+subj = vertcat(controlX);
 
-session = {'third'}; % 'third'};
+session = {'second'}; % 'third'};
 %subj          = {'100'};
 %group         = {'control'};
 %subj          = {'100'    ;'102'    ;'105'    ;'106'    ;'107'    ;'108'    ;'109'    ;'110'    ;'112'    ;'113'    ;'114'    ;'115'    ;'116'    ;'118'    ;'119'    ;'120'    ;'121'    ;'122'    ;'125'    ;'126'    ;'127'    ;'128'    ;'129'    ;'130'    ;'131'    ;'132'    ;'133'    };     % subject ID

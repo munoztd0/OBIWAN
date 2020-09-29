@@ -6,7 +6,7 @@ if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, sjPlot, emmeans, visreg, RNOmni, jtools, interactions, sjstats)
+pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, sjPlot, emmeans, visreg, jtools, interactions, sjstats)
 
 # SETUP ------------------------------------------------------------------
 
@@ -20,6 +20,7 @@ setwd(analysis_path)
 
 ## LOADING AND INSPECTING THE DATA
 load('PAV_LIRA.RData')
+PAV = PAV %>% filter(id %notin% c(230, 248)) #remove 230 because he doesnt have CSm session T1 and 248 bc huge outlier
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
 
 
@@ -44,99 +45,43 @@ modLIK <- aov_car(liking ~ condition*intervention*time + Error(id/condition*time
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R') #helpful plot functions
 
 #get CI and pval for inter
+p_inter = emmeans(mod, ~ condition:time)
+con_inter <- contrast(p_inter, interaction = 'pairwise', by = c('time'), side = "<")
+con_inter
 
-p_inter = emmeans(mod, ~ condition:intervention:time)
-df.predictedRT = data.frame(p_inter)
+df.predicted = data.frame(con_inter)
+df.predicted$estimate = df.predicted$estimate * -1
 
-p_lik = emmeans(modLIK, ~ condition:intervention:time)
-df.predictedLIK = data.frame(p_lik)
-df.predictedLIK$condition <- ifelse(df.predictedLIK$condition == "X1",'1','-1')
-df.predictedLIK$time <- ifelse(df.predictedLIK$time == "X0",'0','1')
+df = ddply(PAV, .(id, intervention, condition, time), summarise, estimate = mean(RT, na.rm = TRUE)) 
 
+CSp = subset(df, condition == '1')
+CSm = subset(df, condition == '-1')
+df.observed = CSp
+df.observed$estimate =  CSm$estimate - CSp$estimate
+df.observed$time = as.factor(df.observed$time)
 
-df.observedRT = ddply(PAV, .(id, intervention, condition, time), summarise, emmean = mean(RT, na.rm = TRUE)) 
-df.observedRT$time = as.factor(df.observedRT$time)
+df.observed.jit <- df.observed %>% mutate(timejit = jitter(as.numeric(time), 0.3),
+                                          grouping = interaction(id, time))
 
-df.observedLIk = ddply(PAV, .(id, intervention, condition, time), summarise, emmean = mean(liking, na.rm = TRUE)) 
+plt0 <- ggplot(df.observed.jit, aes(x = as.numeric(time), y = estimate, fill = time)) + 
+  geom_hline(yintercept=0, linetype="dashed", size=0.4, alpha=0.8) +
+  geom_line(aes(timejit, group = id), alpha = 0.1) +
+  geom_point(aes(x=timejit,y=estimate, shape = intervention),size=1, alpha=.5, fill = "black") +
+  geom_flat_violin(aes(x=as.numeric(time),y=estimate),position=position_nudge(x=0.15),adjust=1.5,trim=FALSE,alpha=.6,colour=NA) +
+  geom_errorbar(data = df.predicted,aes(group=as.numeric(time), ymin=estimate-SE, ymax=estimate+SE),position=position_nudge(x=0.15), size=0.5, width=0.15,  color = "black") + 
+  geom_point(data = df.predicted, aes(x=as.numeric(time),y=estimate),size=1.5,shape=23,position=position_nudge(x=0.15)) +
+  geom_boxplot(aes(x=as.numeric(time),y=estimate),fatten = 0.5, outlier.shape=NA, alpha=.6,width=.1,colour="black") 
 
-labelsSES <- c("0" = "\u2800 \u2800 \u2800 Pre-Test", "1" = "\u2800 \u2800 \u2800 Post-Test")
+labelsSES <- c("0" = "   Pre-Test", "1" = "   Post-Test")
 labelsTRE <- c( "0" = "Placebo" , "1" = "Liraglutide")
 labelsCON <- c( "-1" = "CS-" , "1" = "CS+")
 
-cat_plot(mod, pred = time, modx = condition, mod2 = intervention)
-
-plt0 <- ggplot(df.observedRT, aes(x = time, y = emmean, fill = condition)) + 
-  #geom_hline(yintercept=0, linetype="dashed", size=0.4, alpha=0.5) +
-  geom_point(aes(x=time,y=emmean, color = condition),size=2,shape=20, alpha=.5, position=position_jitter(width=0.05, seed = 59)) +
-  geom_flat_violin(aes(x=time,y=emmean),position=position_nudge(x=0.15),adjust=1.5,trim=FALSE,alpha=.5,colour=NA) +
-  geom_errorbar(data = df.predictedRT,aes(group = condition, ymin=emmean-SE, ymax=emmean+SE),position=position_nudge(x=0.15), size=0.5, width=0.1,  color = "black") + 
-  #geom_boxplot(aes(x=time,y=emmean),position=position_dodge(width =0.15),fatten = NULL, outlier.shape=NA, alpha=.5,width=.1,colour="black") +
-  #stat_summary(fun = mean, geom = "errorbar", aes(ymax = ..y.., ymin = ..y..),width = 0.1, size = 0.5, linetype = "solid", position=position_nudge(x=0.15)) + 
-  #stat_summary(fun = mean, geom = "point", size=2,shape=23, position=position_nudge(x=0.15)) +
-  facet_wrap(~ intervention, labeller=labeller(intervention = labelsTRE))
-
-
-plt0 <- ggplot(df.observedRT, aes(x = condition, y = emmean, fill = time)) + 
-  geom_hline(yintercept=0, linetype="dashed", size=0.4, alpha=0.5) +
-  geom_point(aes(x=condition,y=emmean),size=2,shape=20, alpha=.5, position=position_jitter(width=0.05, seed = 59)) +
-  geom_flat_violin(aes(x=condition,y=emmean),position=position_nudge(x=0.15),adjust=1.5,trim=FALSE,alpha=.5,colour=NA) +
-  #geom_errorbar(data = df.predicted,aes(group = time, ymin=emmean-SE, ymax=emmean+SE),position=position_nudge(x=0.15), size=0.5, width=0.1,  color = "black") + 
-  geom_boxplot(aes(x=condition,y=emmean),position=position_nudge(x=0.15),fatten = NULL, outlier.shape=NA, alpha=.5,width=.1,colour="black") +
-  stat_summary(fun = mean, geom = "errorbar", aes(ymax = ..y.., ymin = ..y..),width = 0.1, size = 0.5, linetype = "solid", position=position_nudge(x=0.15)) + 
-  stat_summary(fun = mean, geom = "point", size=2,shape=23, position=position_nudge(x=0.15)) +
-  facet_wrap(~ intervention, labeller=labeller(intervention = labelsTRE))
-
-
-
-
-df.predictedRT$emmean = df.predictedRT$emmean / 5 #litlle trick to double plot
-df.predictedRT$SE = df.predictedRT$SE / 5 #litlle trick to double plot
-
-plt = ggplot() + 
-  geom_bar(mapping = aes(fill = time,x = df.predictedLIK$condition, y = df.predictedLIK$emmean), stat = "identity", fill = "black", alpha = 0.4, width=0.5) +
-  geom_errorbar(mapping = aes(x = df.predictedLIK$condition, y = df.predictedLIK$emmean, ymin=df.predictedLIK$emmean - df.predictedLIK$SE, ymax=df.predictedLIK$emmean + df.predictedLIK$SE), size=0.5, width=0.1, color = 'black', alpha = 0.8) + 
-  geom_point(mapping = aes(color = time, x = df.predictedLIK$condition, y = df.predictedLIK$emmean), size = 2, shape=23, fill = 'grey40') + 
-  geom_line(mapping = aes(x = df.predictedRT$condition, y = df.predictedRT$emmean, group =1), color = 'royalblue', lty = 4) + 
-  geom_errorbar(mapping = aes(x = df.predictedRT$condition, y = df.predictedRT$emmean, ymin=df.predictedRT$emmean - df.predictedRT$SE, ymax=df.predictedRT$emmean + df.predictedRT$SE), size=0.5, width=0.1,  color='royalblue') + 
-  geom_point(mapping = aes(x = df.predictedRT$condition, y = df.predictedRT$emmean), size = 2, shape=23,  fill='royalblue') + 
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100),
-                     name = "Pleasantness Ratings", sec.axis = sec_axis(~./1, name = "Latency", labels = function(b) { paste0(round(b * 5, 0))}))  +
-  facet_wrap(~ intervention, labeller=labeller(intervention = labelsTRE))
-
-
-
-
-
-
-#get contrasts for groups obesity X condition
-CI_RT = confint(emmeans(mod, pairwise~ condition, adjust = "tukey"),level = 0.95,method = c("boot"),nsim = 5000) 
-CI_lik = confint(emmeans(modLIK, pairwise~ condition, adjust = "tukey"),level = 0.95,method = c("boot"),nsim = 5000)
-
-df.predictedRT = data.frame(CI_RT$emmeans)
-df.observedRT = ddply(PAV, .(id, condition), summarise, emmean = mean(RT, na.rm = TRUE)) 
-df.predictedLIK = data.frame(CI_lik$emmeans)
-df.predictedLIK$condition = factor(c("1", "-1"))
-df.predictedLIK$condition = factor(df.predictedLIK$condition,levels(df.predictedLIK$condition)[c(2,1)])
-
-df.observedLIK = ddply(PAV, .(id, condition), summarise, emmean = mean(liking, na.rm = TRUE)) 
-
-df.predictedRT$emmean = df.predictedRT$emmean / 5 #litlle trick to double plot
-df.predictedRT$lower.CL = df.predictedRT$lower.CL / 5 #litlle trick to double plot
-df.predictedRT$upper.CL = df.predictedRT$upper.CL / 5 #litlle trick to double plot
-df.predictedRT$SE = df.predictedRT$SE / 5 #litlle trick to double plot
-
-plt = ggplot() + 
-  geom_bar(mapping = aes(x = df.predictedLIK$condition, y = df.predictedLIK$emmean), stat = "identity", fill = "black", alpha = 0.4, width=0.5) +
-  geom_errorbar(mapping = aes(x = df.predictedLIK$condition, y = df.predictedLIK$emmean, ymin=df.predictedLIK$emmean - df.predictedLIK$SE, ymax=df.predictedLIK$emmean + df.predictedLIK$SE), size=0.5, width=0.1, color = 'black', alpha = 0.8) + 
-  geom_point(mapping = aes(x = df.predictedLIK$condition, y = df.predictedLIK$emmean), size = 2, shape=23, fill = 'grey40') + 
-  geom_line(mapping = aes(x = df.predictedRT$condition, y = df.predictedRT$emmean, group =1), color = 'royalblue', lty = 4) + 
-  geom_errorbar(mapping = aes(x = df.predictedRT$condition, y = df.predictedRT$emmean, ymin=df.predictedRT$emmean - df.predictedRT$SE, ymax=df.predictedRT$emmean + df.predictedRT$SE), size=0.5, width=0.1,  color='royalblue') + 
-  geom_point(mapping = aes(x = df.predictedRT$condition, y = df.predictedRT$emmean), size = 2, shape=23,  fill='royalblue') + 
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 20)), limits = c(0,100),
-                     name = "Pleasantness Ratings", sec.axis = sec_axis(~./1, name = "Latency", labels = function(b) { paste0(round(b * 5, 0))}))  
-
-plot = plt + 
-  scale_x_discrete(labels=c("CS+", "CS-")) +
+plot = plt0 + 
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-100,300, by = 100)), limits = c(-100,300)) +
+  scale_x_continuous(limits = c(0.7,2.6)) +
+  #scale_x_discrete(labels=labelsSES) +
+  scale_fill_manual(values=c('royalblue','aquamarine3'),labels=labelsSES) +
+  scale_shape_manual(labels = labelsTRE,values=c(21,24))   + 
   theme_bw() +
   theme(aspect.ratio = 1.7/1,
         plot.margin = unit(c(1, 1, 1.2, 1), units = "cm"),
@@ -144,30 +89,32 @@ plot = plt +
         plot.caption = element_text(hjust = 0.5),
         panel.grid.major.x = element_blank(), #element_line(size=.2, color="lightgrey") ,
         panel.grid.major.y = element_line(size=.2, color="lightgrey") ,
-        axis.line.y.right = element_line(size = 0.5, linetype = "dashed", colour = "royalblue"),
-        axis.line.y.left = element_line(size = 0.5),
-        axis.text.x =  element_text(size=10,  colour = "black"), #element_blank(), #element_text(size=10,  colour = "black", vjust = 0.5),
-        axis.text.y.left = element_text(size=10,  colour = "black"),
-        axis.text.y.right = element_text(size=10,  colour = "royalblue"),
+        axis.text.x =  element_text(size=14,  colour = "black"), #element_blank(), #element_text(size=10,  colour = "black", vjust = 0.5),
+        axis.text.y = element_text(size=10,  colour = "black"),
         axis.title.x =  element_text(size=16), 
-        axis.title.y.left = element_text(size=16),  
-        axis.title.y.right = element_text(angle = 90, color = "royalblue", size=16),
+        axis.title.y = element_text(size=16),   
         axis.line.x = element_blank(),
-        axis.ticks.y.right = element_line(color = "royalblue"),
+        axis.ticks.x = element_blank(),
+        legend.title=element_blank(),legend.text=element_text(size=14),
         strip.background = element_rect(fill="white"))+ 
-  labs(title = "", y =  "", x = "",
-       caption = "Latency: CS+ < CS-, p =  0.014\n
-       Pleasantness ratings: CS+ > CS-, p <  0.001\n 
-       Error bar represent \u00B1 SE for the model emmeand means\n")
+  labs(title = "", 
+       y =  "\u0394 Latency (ms)", x = "",
+       caption = "CS- > CS+, p < 0 .001\n 
+       condition*time  p = 0.007 \n  
+       Error bar represent \u00B1 SE for the model estimated means\n
+       Prediction controling for satiety levels\n")
 
 plot(plot)
 
-cairo_pdf(file.path(figures_path,paste(task,'cond&RTpleas.pdf',  sep = "_")),
+cairo_pdf(file.path(figures_path,paste(task, 'condXtime.pdf',  sep = "_")),
           width = 5.5,
           height = 6)
 
 plot(plot)
 dev.off()
+
+
+
 
 #create table
 sjPlot::tab_model(mod)

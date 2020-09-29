@@ -71,8 +71,7 @@ GENDER = ddply(PIT, .(id, session), summarise, gender=mean(as.numeric(gender))) 
   group_by(gender, session) %>%
   tally() #2 = female
 
-N_inter = ddply(PIT, .(id, intervention), summarise, intervention=mean(as.numeric(intervention)))  %>%
-  group_by(intervention) %>% tally() # 1 = placebo 2 = treart
+PIT$idXsession = as.numeric(PIT$id) * as.numeric(PIT$session)
 
 #remove the baseline from other trials and then scale  by id  
 PIT =  subset(PIT, condition != 'BL') 
@@ -87,19 +86,19 @@ PIT = merge(PIT, HED_BL, by = "id")
 #  center everything ------------------------------------------------------
 
 # Center level-1 predictor within cluster (CWC)
-PIT$gripC = center(PIT$AUC, type = "CWC", group = PIT$id) #nested within session?
+PIT$gripC = center(PIT$AUC, type = "CWC", group = PIT$idXsession) #nested within session?
 #densityPlot(PIT$gripC)
 
 # Center level-2 predictor at the grand mean (CGM)
-PIT <- PIT %>% group_by(id) %>% mutate(pissC = center(piss))
-PIT <- PIT %>% group_by(id) %>% mutate(thirstyC = center(thirsty))
-PIT <- PIT %>% group_by(id) %>% mutate(hungryC = center(hungry))
-PIT <- PIT %>% group_by(id) %>% mutate(diff_pissC = center(diff_piss))
-PIT <- PIT %>% group_by(id) %>% mutate(diff_thirstyC = center(diff_thirsty))
-PIT <- PIT %>% group_by(id) %>% mutate(diff_hungryC = center(diff_hungry))
+PIT <- PIT %>% group_by(idXsession) %>% mutate(pissC = center(piss))
+PIT <- PIT %>% group_by(idXsession) %>% mutate(thirstyC = center(thirsty))
+PIT <- PIT %>% group_by(idXsession) %>% mutate(hungryC = center(hungry))
+PIT <- PIT %>% group_by(idXsession) %>% mutate(diff_pissC = center(diff_piss))
+PIT <- PIT %>% group_by(idXsession) %>% mutate(diff_thirstyC = center(diff_thirsty))
+PIT <- PIT %>% group_by(idXsession) %>% mutate(diff_hungryC = center(diff_hungry))
+PIT <- PIT %>% group_by(idXsession) %>% mutate(likC = center(lik))
 PIT <- PIT %>% group_by(id) %>% mutate(diff_bmiC = center(BMI_t1 - BMI_t2))
 PIT <- PIT %>% group_by(id) %>% mutate(bmiC = center(BMI_t1))
-PIT <- PIT %>% group_by(id) %>% mutate(likC = center(lik))
 PIT <- PIT %>% group_by(id) %>% mutate(ageC = center(age))
 
 
@@ -138,9 +137,25 @@ model = mixed(gripC ~ condition*intervention*time + diff_bmiC + (condition * tim
 
 model 
 
+# Mixed Model Anova Table (Type 3 tests, LRT-method)
+# 
+# Model: gripC ~ condition * intervention * time + diff_bmiC + (condition * 
+#                                                                 Model:     time | id) + (1 | trialxcondition)
+# Data: PIT
+# Df full model: 21
+# Effect df  Chisq p.value
+# 1                   condition  1 5.42 *    .020
+# 2                intervention  1   0.00    .999
+# 3                        time  1   0.77    .379
+# 4                   diff_bmiC  1   0.00    .995
+# 5      condition:intervention  1   0.09    .762
+# 6              condition:time  1   0.50    .479
+# 7           intervention:time  1   0.97    .325
+# 8 condition:intervention:time  1   0.88    .350
+
 
 #manually test cond
-main = lmer(gripC ~ condition*intervention*time + diff_bmiC + (condition * time|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
+main = lmer(gripC ~ condition + time + intervention + diff_bmiC + (condition + time|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)
 null = update(main, . ~ . - condition)
 
 #manual test to double check and to get delta AIC
@@ -148,7 +163,7 @@ test = anova(main, null, test = 'Chisq')
 #test
 
 #get BF fro mixed see Wagenmakers, 2007
-exp((test[1,2] - test[2,2])/2) #
+exp((test[1,2] - test[2,2])/2) #6.877719
 
 #INTER
 main1 = lmer(gripC ~ condition*intervention*time + diff_bmiC + (condition * time|id) + (1|trialxcondition), data = PIT, control = control, REML = FALSE)

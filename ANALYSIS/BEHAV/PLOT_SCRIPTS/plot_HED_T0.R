@@ -30,8 +30,7 @@ mod <- lmer(perceived_liking ~ condition*group + thirstyC + hungryC:condition + 
 N_group = ddply(HED, .(id, group), summarise, group=mean(as.numeric(group)))  %>%
   group_by(group) %>% tally()
 
-BMI_group = ddply(HED, .(group), summarise, bmi=mean(group)) 
-
+BMI_group = ddply(HED, .(group), summarise, bmi=mean(BMI_t1))
 
 # PLOT --------------------------------------------------------------------
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R') #helpful plot functions
@@ -90,6 +89,7 @@ plot = plt +
         axis.line.x = element_blank(),
         legend.title=element_blank(),
         legend.text=element_text(size=14),
+        axis.ticks.x = element_blank(),
         strip.background = element_rect(fill="white"))+ 
   labs(title = "", y =  "Pleasantness Ratings", x = "",
        caption = "Two-way interaction (GroupxSolution): p = 0.34\n

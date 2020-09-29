@@ -34,53 +34,39 @@ BMI_group = ddply(PIT, .(group), summarise, bmi=mean(BMI_t1))
 source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R') #helpful plot functions
 
 #increase repetitions limit
-emm_options(pbkrtest.limit = 5000)
-emm_options(lmerTest.limit = 5000)
+emm_options(pbkrtest.limit = 5000, lmerTest.limit = 5000)
+
+#get contrasts and means
+SE_eff = emmeans(mod, pairwise~ condition|group, adjust = "tukey")
+
+df.predicted = data.frame(SE_eff$contrasts)
+
+df.observed = ddply(PIT, .(id, condition, group), summarise, estimate = mean(gripC, na.rm = TRUE)) 
+CSp = subset(df.observed, condition == 1)
+CSm = subset(df.observed, condition == -1)
+diff = CSp
+diff$estimate = CSp$estimate - CSm$estimate
+
+df.observed = diff
+
+df.observed.jit <- df.observed %>% mutate(groupjit = jitter(as.numeric(group), 0.25),
+                                          grouping = interaction(id, group))
 
 
-#get contrasts for groups obesity X condition
-CI_inter = confint(emmeans(mod, pairwise~ condition|group, adjust = "tukey"),level = 0.95,method = c("boot"),nsim = 5000)
+plt0 <- ggplot(df.observed.jit, aes(x = group, y = estimate, fill = group)) + 
+  geom_hline(yintercept=0, linetype="dashed", size=0.4, alpha=0.8) +
+  geom_point(aes(x=group,y=estimate),size=2,shape=20, alpha=.5, position=position_jitter(width=0.05, seed = 59)) +
+  geom_flat_violin(aes(x=group,y=estimate),position=position_nudge(x=0.15),adjust=1.5,trim=FALSE,alpha=.6,colour=NA) +
+  geom_errorbar(data = df.predicted,aes(group = group, ymin=estimate-SE, ymax=estimate+SE),position=position_nudge(x=0.15), size=0.5, width=0.1,  color = "black") + 
+  geom_point(data = df.predicted, aes(x=group,y=estimate),size=1.5,shape=23,position=position_nudge(x=0.15)) +
+  geom_boxplot(aes(x=group,y=estimate),fatten = 0.5, outlier.shape=NA, alpha=.6,width=.1,colour="black") 
 
-df.predicted = data.frame(CI_inter$emmeans)
+labels <- c("-1" = "   Lean", "1" = "   Obese")
 
-#get predicted by ind
-rand = ranef(mod)
-ran = data.frame(rand$id)
-fix = t(data.frame(fixef(mod)))
-df = ran + fix[col(ran)]
-df$CSp = df$X.Intercept.
-df$base = df$CSp + df$condition0
-df$CSm = df$CSp + df$condition.1
-df = select(df, c(CSp,base, CSm))
-df$id = as.factor(c(1:length(df$CSm)))
-df.observed <- gather(df, condition, emmean, CSp:CSm, factor_key=TRUE)
-
-#df.observed = ddply(PIT, .(id, group, condition), summarise, emmean = mean(gripC, na.rm = TRUE)) 
-
-# position on x axis is based on combination of B and jittered A. Mix to taste.
-df.observed.jit <- df.observed %>%
-  mutate(groupjit = as.numeric(condition)*0.4 - 0.6 + jitter(as.numeric(group), 0.55),
-         grouping = interaction(id, group))
-
-df.predicted.jit <- df.predicted %>%
-  mutate(groupjit = as.numeric(condition)*0.4 - 0.6 + jitter(as.numeric(group), 0.55),
-         grouping = interaction(1, group))
-
-plt0 = ggplot(df.observed.jit, aes(x=group,  y=emmean,  group = grouping)) + 
-  geom_blank() +
-  geom_line(aes(groupjit), alpha = 0.1) +
-  geom_point(aes(groupjit, col=condition), size=0.8, alpha=0.5)
-
-plt = plt0 +
-  geom_bar(data = df.predicted.jit, stat = "identity", position=position_dodge2(width=1), fill = "black", alpha = 0.3, width = 0.7) +
-  geom_errorbar(data = df.predicted.jit,aes(group = condition, ymin=emmean-SE, ymax=emmean+SE), size=0.5, width=0.1,  color = "black", position=position_dodge(width = 0.7)) + 
-  geom_point(data = df.predicted.jit, size = 2, shape=23, color= "black", fill = 'grey40',  position=position_dodge2(width = 0.7))
-
-plot = plt + 
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-80,80, by = 40)), limits = c(-80,80)) +
-  scale_x_discrete(labels=c("Lean", "Obese")) +
-  scale_color_manual(values=c('royalblue','aquamarine3'),labels=c("CS+", "CS-")) +
-  guides(color = guide_legend(override.aes = list(shape = 15, size = 2))) + 
+plot = plt0 + 
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(-150,150, by = 50)), limits = c(-150,150)) +
+  scale_x_discrete(labels=labels) +
+  scale_fill_manual(values=c('royalblue','aquamarine3'),labels=labels) +
   theme_bw() +
   theme(aspect.ratio = 1.7/1,
         plot.margin = unit(c(1, 1, 1.2, 1), units = "cm"),
@@ -93,11 +79,11 @@ plot = plt +
         axis.title.x =  element_text(size=16), 
         axis.title.y = element_text(size=16),   
         axis.line.x = element_blank(),
-        legend.title=element_blank(),
-        legend.text=element_text(size=14),
+        axis.ticks.x = element_blank(),
+        legend.position = "none", #legend.title=element_blank(),legend.text=element_text(size=14),
         strip.background = element_rect(fill="white"))+ 
   labs(title = "", 
-       y =  "Mobilized Effort \u2013 AUC (x - \u03BC\u2071)", x = "",
+       y =  "\u0394 Mobilized Effort (AUC)", x = "",
        caption = "Two-way interaction (GroupxPavCue): p = 0.031\n
        CS+ > CS-; Lean, p = 0.77; Obese, p = 0.0038\n 
        Error bar represent \u00B1 SE for the model estimated means\n

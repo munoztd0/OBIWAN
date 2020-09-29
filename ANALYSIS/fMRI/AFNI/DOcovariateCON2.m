@@ -1,4 +1,4 @@
-function DOcovariateCON(task, name_ana, name_soft, covariateNames, remove)
+function DOcovariateCON2(task, name_ana, name_soft, covariateNames, remove)
 
 % intended for REWOD hedonic reactivity GROUP X COND
 % 2nd level behavioral covariate demeaned by groups
@@ -8,11 +8,10 @@ function DOcovariateCON(task, name_ana, name_soft, covariateNames, remove)
 task = 'PIT'; %PIT hedonicreactivity
 name_soft = 'SPM'; % output folder for this analysis
 name_ana = 'GLM-01_HW'; % output folder for this analysis
-covariateNames = {'CSp_eff'; 'CSm_eff'}; %{'REW_lik'; 'NEU_lik'}; %{'CSp_eff'; 'CSm_eff'}; %9
+covariateNames = {'CSp_eff'; 'CSm_eff'}; %{'CSp_eff'; 'CSm_eff'}; %9
 conImage = {'con-0001'; 'con-0002'};
 group = 'control' %'obese'
-covariate=1
-
+covariate=1;
 
 dbstop if error
 remove = 0;
@@ -78,12 +77,15 @@ for c = 1:length(covariateNames)
         disp('error')
         continue
     end
-    cd(groupdir)
+    cd(covdir)
     if covariate
+        mkdir('group')
+        cd(groupdir)
         mkdir('cov')
        for i = 1:length(cov(c).ID)
-           cd(groupdir)
+           cd ..
            o = dir(['*' num2str(cov(c).ID{i})]);
+           
            HeaderInfo = spm_vol([pwd '/sub-' group num2str(cov(c).ID{i}) '_' conImageX '.nii']);
            vol = spm_read_vols(HeaderInfo);
            cof = vol .* cov(c).data(i);

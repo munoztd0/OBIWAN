@@ -1,7 +1,7 @@
 ## R code for FOR PAV OBIWAN LIRA
 # last modified on April 2020 by David MUNOZ TORD
 
-# PRELIMINARY STUFF ----------------------------------------
+# REMOVE STUFF ----------------------------------------
 invisible(lapply(paste0('package:', names(sessionInfo()$otherPkgs)), detach, character.only=TRUE, unload=TRUE))
 # PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
@@ -104,7 +104,7 @@ bs = ddply(PAV, .(id), summarise, RT = mean(RT, na.rm = TRUE))
 
 # Center level-1 predictor within cluster (CWC)
 PAV$RT_TC = center(PAV$RT_T, type = "CWC", group = PAV$idXsession)
-PAV$likC = center(PAV$liking, type = "CWC", group = PAV$condition)
+PAV$likC = center(PAV$liking, type = "CWC", group = PAV$idXsession)
 
 # Center level-2 predictor at the grand mean (CGM)
 PAV <- PAV %>% group_by(idXsession) %>% mutate(pissC = center(piss))
@@ -113,9 +113,9 @@ PAV <- PAV %>% group_by(idXsession) %>% mutate(hungryC = center(hungry))
 PAV <- PAV %>% group_by(idXsession) %>% mutate(diff_pissC = center(diff_piss)) 
 PAV <- PAV %>% group_by(idXsession) %>% mutate(diff_thirstyC = center(diff_thirsty))
 PAV <- PAV %>% group_by(idXsession) %>% mutate(diff_hungryC = center(diff_hungry))
-PAV <- PAV %>% group_by(idXsession) %>% mutate(ageC = center(age))
-PAV <- PAV %>% group_by(idXsession) %>% mutate(diff_bmiC = center(BMI_t1 - BMI_t2))
-PAV <- PAV %>% group_by(idXsession) %>% mutate(bmiC = center(BMI_t1))
+PAV <- PAV %>% group_by(id) %>% mutate(ageC = center(age))
+PAV <- PAV %>% group_by(id) %>% mutate(diff_bmiC = center(BMI_t1 - BMI_t2))
+PAV <- PAV %>% group_by(id) %>% mutate(bmiC = center(BMI_t1))
 
 #revalue all catego
 #change value of group
@@ -142,10 +142,13 @@ source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful fun
 
 #FOR MODEL SELECTION we followed Barr et al. (2013) approach SEE --> CODE/ANALYSIS/BEHAV/MODEL_SELECTION/MS_PAV_LIRA.R
 
-# mdl.aov = aov_4(RT_TC ~ condition*intervention*time + diff_bmiC + likC +  (condition * time |id) ,
-#                 data = PAV, observed = c("diff_bmiC", "age", "likC"), factorize = FALSE, fun_aggregate = mean)
-# 
-# summary(mdl.aov)
+mdl.aov = aov_4(RT_TC ~ condition*intervention*time + diff_bmiC + likC +  (condition * time |id) ,
+                data = PAV, observed = c("diff_bmiC", "age", "likC"), factorize = FALSE, fun_aggregate = mean)
+
+mdl.aov = aov_4(RT_TC ~ condition*intervention*time +  (condition * time |id) ,
+                data = PAV, factorize = FALSE, fun_aggregate = mean)
+
+summary(mdl.aov)
 
 #set to method LRT to quick check
 model = mixed(RT_TC ~ condition*intervention*time  + diff_bmiC+ likC+ (condition*time|id) + (1|trialxcondition),
@@ -175,6 +178,19 @@ emm_options(pbkrtest.limit = 15000, lmerTest.limit = 15000)
 mod <- lmer(RT_TC ~ condition*intervention*time + likC + diff_bmiC + (condition*time|id) + (1|trialxcondition), data = PAV, control=control)
 ref_grid(mod) #triple check everything is more or less centered at 0
 
+#manullay
+main = lmer(RT_TC ~ condition*intervention*time + likC + diff_bmiC + (condition*time|id) + (1|trialxcondition), 
+            data = PAV, control = control, REML = FALSE)
+null = lmer(RT_TC ~ condition + intervention*time + likC + diff_bmiC + (condition*time|id) + (1|trialxcondition), 
+            data = PAV, control = control, REML = FALSE)
+
+#manual test to double check and to get BF
+test = anova(main, null, test = 'Chisq')
+#test
+
+#get BF from mixed see Wagenmakers, 2007
+exp((test[1,2] - test[2,2])/2) # 10.41099
+
 #get CI and pval for condition (left sided!)
 p_cond = emmeans(mod, pairwise~ condition, side = "<") 
 p_cond
@@ -182,7 +198,8 @@ p_cond
 CI_cond = confint( emmeans(mod, pairwise~ condition),level = 0.95,method = c("boot"),nsim = 5000)
 CI_cond$contrasts
 # contrast estimate     SE df lower.CL upper.CL t.ratio p.value
-
+# contrast estimate   SE  df z.ratio p.value
+# 1 - -1        -24 4.88 Inf -4.925  <.0001 
 
 #INTER
 con <- list(

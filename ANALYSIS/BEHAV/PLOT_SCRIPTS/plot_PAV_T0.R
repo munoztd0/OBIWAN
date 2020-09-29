@@ -85,6 +85,7 @@ plot = plt +
         axis.title.y.right = element_text(angle = 90, color = "royalblue", size=16),
         axis.line.x = element_blank(),
         axis.ticks.y.right = element_line(color = "royalblue"),
+        axis.ticks.x = element_blank(),
         strip.background = element_rect(fill="white"))+ 
   labs(title = "", y =  "", x = "",
        caption = "Latency: CS+ < CS-, p =  0.014\n

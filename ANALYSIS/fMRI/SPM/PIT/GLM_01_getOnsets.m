@@ -17,11 +17,11 @@ cd ~
 home = pwd;
 homedir = [home '/OBIWAN'];
 
-mdldir        = fullfile (homedir, '/DERIVATIVES/GLM/AFNI');
+mdldir        = fullfile (homedir, '/DERIVATIVES/GLM/SPM');
 sourcefiles   = fullfile(homedir, '/DERIVATIVES/PREPROC');
 addpath (genpath(fullfile(homedir,'/CODE/ANALYSIS/fMRI/dependencies')));
 
-ana_name      = 'GLM-01_1';
+ana_name      = 'GLM-01_HW';
 task          = {'PIT'}; 
 
 
@@ -32,9 +32,9 @@ controlX = dir(control);
 obeseX = dir(obese);
 
 %subj = controlX; 
-subj = vertcat(obeseX); %, controlX);
+subj = vertcat(controlX); %, controlX);
 
-session = {'third'};
+session = {'second'};
 
 %subj          = {'129'    ;'131'    ;'132'    ;'133'    ;'213'  ;'216'  ;'219'  ;'220'  ;'221'  };     % subject ID
 %group         = {'control';'control';'control';'control';'obese';'obese';'obese';'obese';'obese'}; % control or obsese

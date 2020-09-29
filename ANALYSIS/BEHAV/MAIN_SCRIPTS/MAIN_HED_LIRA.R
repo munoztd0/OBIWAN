@@ -6,7 +6,7 @@ if(!require(pacman)) {
   install.packages("pacman")
   library(pacman)
 }
-pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, ggplot2, sjPlot, emmeans)
+pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, ggplot2, sjPlot, emmeans, misty)
 
 # SETUP ------------------------------------------------------------------
 
@@ -21,9 +21,11 @@ figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV')
 # open dataset or load('HED_LIRA.RData')
 HED_full <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # read in dataset
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
+intern <- read.delim(file.path(analysis_path,'OBIWAN_INTERNAL.txt'), header = T, sep ='') # read in dataset
 
 #subset #only group obese 
 HED  <- subset(HED_full, group == 'obese') 
+intern  <- subset(intern, group == 'obese') 
 
 #merge with info
 HED = merge(HED, info, by = "id")
@@ -31,7 +33,21 @@ HED = merge(HED, info, by = "id")
 #take out incomplete data #234 only have third session?
 `%notin%` <- Negate(`%in%`)
 HED = HED %>% filter(id %notin% c(242, 256))
+intern = intern %>% filter(id %notin% c(242, 256))
 
+
+# INTERNAL STATES
+baseINTERN = subset(intern, phase == 2)
+HED = merge(x = HED, y = baseINTERN[ , c("piss", "thirsty", 'hungry', 'id')], by = "id", all.x=TRUE)
+diffINTERN = subset(intern, phase == 2 | phase == 3) #before and after HED
+before = subset(diffINTERN, phase == 2)
+after = subset(diffINTERN, phase == 3)
+diff = after
+diff$diff_piss = diff$piss - before$piss
+diff$diff_thirsty = diff$thirsty - before$thirsty
+diff$diff_hungry = diff$hungry - before$hungry
+
+HED = merge(x = HED, y = diff[ , c("diff_piss", "diff_thirsty", 'diff_hungry', 'id')], by = "id", all.x=TRUE)
 
 # define as.factors
 fac <- c("id", "trial", "condition", "session", "trialxcondition", "gender", "intervention")
@@ -51,21 +67,24 @@ GENDER = ddply(HED, .(id, session), summarise, gender=mean(as.numeric(gender))) 
   group_by(gender, session) %>%
   tally() #2 = female
 
+HED$idXsession = as.numeric(HED$id) * as.numeric(HED$session)
 
-#scale everything
-HED$likZ = scale(HED$perceived_liking)
-HED$famZ = scale(HED$perceived_familiarity)
-HED$intZ = scale(HED$perceived_intensity)
+# Center level-1 predictor within cluster (CWC)
+HED$likC = center(HED$perceived_liking, type = "CWC", group = HED$idXsession)
+HED$famC = center(HED$perceived_familiarity, type = "CWC", group = HED$idXsession)
+HED$intC = center(HED$perceived_intensity, type = "CWC", group = HED$idXsession)
 
-#agragate by subj and then scale 
-HED <- HED %>% 
-  group_by(id) %>% 
-  mutate(ageZ = scale(HED$age))
+# Center level-2 predictor at the grand mean (CGM)
+HED <- HED %>% group_by(idXsession) %>% mutate(pissC = center(piss))
+HED <- HED %>% group_by(idXsession) %>% mutate(thirstyC = center(thirsty))
+HED <- HED %>% group_by(idXsession) %>% mutate(hungryC = center(hungry))
+HED <- HED %>% group_by(idXsession) %>% mutate(diff_pissC = center(diff_piss)) 
+HED <- HED %>% group_by(idXsession) %>% mutate(diff_thirstyC = center(diff_thirsty))
+HED <- HED %>% group_by(idXsession) %>% mutate(diff_hungryC = center(diff_hungry))
+HED <- HED %>% group_by(id) %>% mutate(ageC = center(age))
+HED <- HED %>% group_by(id) %>% mutate(diff_bmiC = center(BMI_t1 - BMI_t2))
+HED <- HED %>% group_by(id) %>% mutate(bmiC = center(BMI_t1))
 
-#create BMI diff (I have still NAN because missing data)
-HED <- HED %>% 
-  group_by(id) %>% 
-  mutate(diff_bmiZ = scale(HED$BMI_t1 - HED$BMI_t2))
 
 #change value of sessions
 HED$time = revalue(HED$session, c(second="0", third="1"))
@@ -73,11 +92,6 @@ HED$time = revalue(HED$session, c(second="0", third="1"))
 #change value of condition
 HED$condition = as.factor(revalue(HED$condition, c(Empty="-1", MilkShake="1")))
 HED$condition <- factor(HED$condition, levels = c("1", "-1"))
-
-
-# HED$group2 = c(1:length(HED$group))
-# HED$group2[HED$BMI_t1 >= 30 & HED$BMI_t1 < 35] <- '0' # Class I obesity: BMI = 30 to 35. -> - 0.22
-# HED$group2[HED$BMI_t1 >= 35] <- '1' # Class II obesity: BMI = 35 to 40. -> 0.89
 
 # save RData for cluster computing
 save.image(file = "HED_LIRA.RData", version = NULL, ascii = FALSE,
@@ -91,25 +105,54 @@ source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/LMER_misc_tools.R') #useful fun
 #set "better" lmer optimizer #nolimit # yoloptimizer
 control = lmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))
 
-mdl.aov = aov_4(likZ ~ condition*intervention*time +  (condition * time |id) ,
-                data = HED, factorize = FALSE, fun_aggregate = mean)
-
-summary(mdl.aov)
-
-# MODEL ASSUMPTION CHECKS :  -----------------------------------
-
-
-# PLOT --------------------------------------------------------------------
-source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R') #helpful plot functions
-
-# mdl.aov = aov_4(gripC ~ condition*intervention*time +  (condition * time |id) ,
+# mdl.aov = aov_4(likC~ condition*intervention*time +gender + ageC+ bmiC+ diff_bmiC+  hungryC+ thirstyC+ pissC+  (condition * time |id) ,
 #                 data = HED, factorize = FALSE, fun_aggregate = mean)
 # 
-# summary(mdl.aov)emm_options(pbkrtest.limit = 5000) #set emmeans options
+# summary(mdl.aov)
 
-# interaction plot interventionXconditionXtime #drop unused covariate to make it faster
-mod <- lmer(likZ ~ condition*time*intervention*group2 +(time*condition|id) + (1|trialxcondition) , 
+model = mixed(likC ~ condition*intervention*time + diff_bmiC  + condition:intC + condition:famC +(time*condition|id) + (1|trialxcondition), 
+              data = HED, method = "LRT", control = control, REML = FALSE)
+
+model #The ‘intercept’ of the lmer model is the mean liking rate in Empty coniditon for an average subject. 
+
+
+
+# Mixed Model Anova Table (Type 3 tests, LRT-method)
+# 
+# Model: likC ~ condition * intervention * time + diff_bmiC:condition + 
+#   Model:     pissC:condition + thirstyC:condition + hungryC:condition + 
+#   Model:     condition:intC + condition:famC + (time * condition | id) + 
+#   Model:     (1 | trialxcondition)
+# Data: HED
+# Df full model: 32
+# Effect df       Chisq p.value
+# 1                    condition  1   19.82 ***   <.001
+# 2                 intervention  1        0.20    .656
+# 3                         time  1     8.98 **    .003
+# 4       condition:intervention  1        0.03    .871
+# 5               condition:time  1      4.29 *    .038
+# 6            intervention:time  1        1.37    .242
+# 7          condition:diff_bmiC  2        0.17    .919
+# 8              condition:pissC  2        0.04    .982
+# 9           condition:thirstyC  2        0.13    .936
+# 10           condition:hungryC  2        0.07    .966
+# 11              condition:intC  2  333.74 ***   <.001
+# 12              condition:famC  2 2120.00 ***   <.001
+# 13 condition:intervention:time  1        0.05    .820
+
+
+mod <- lmer(likC ~ condition*intervention*time + diff_bmiC+ condition:intC + condition:famC +(time*condition|id) + (1|trialxcondition) , 
             data = HED, control = control) #need to be fitted using ML so here I just use lmer function so its faster
+#ref.grid(mod)
+
+#get CI and pval for inter
+p_inter = emmeans(mod, ~ condition:time)
+con_inter <- contrast(p_inter, interaction = 'pairwise', by = c('time'), side = ">")
+con_inter
+
+
+
+
 
 con <- list(
   #group1
@@ -138,7 +181,7 @@ df.HED = cbind(df.HED, intervention, time, group2)
 fac <- c("intervention", "time", "group2")
 df.HED[fac] <- lapply(df.HED[fac], factor)
 
-full.obs = ddply(HED, .(id, group2, intervention, time, condition), summarise, estimate = mean(likZ)) 
+full.obs = ddply(HED, .(id, group2, intervention, time, condition), summarise, estimate = mean(likC)) 
 plus = subset(full.obs, condition == 'MilkShake')
 minus = subset(full.obs, condition == 'Empty')
 df.observed = minus
@@ -208,18 +251,18 @@ save.image(file = "HED_LIRA.RData", version = NULL, ascii = FALSE,
 # PB calculates Nsim samples of the likelihood ratio test statistic (LRT) 
 
 #takes ages even on the cluster!
-# model = mixed(likZ ~ condition*time*intervention + gender + ageZ +  diff_bmiZ + famZ * intZ +(time*condition +famZ*intZ|id) + (1|trialxcondition) , 
+# model = mixed(likC ~ condition*time*intervention + gender + ageC +  diff_bmiC + famC * intC +(time*condition +famC*intC|id) + (1|trialxcondition) , 
 #       data = HED, method = "PB", control = control, REML = FALSE, args_test = list(nsim = 100))
 
-model = mixed(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ * condition:intZ +(time*condition +famZ +condition:intZ|id) + (1|trialxcondition) , 
+model = mixed(likC ~ condition*time*intervention + gender + ageC + diff_bmiC + famC * condition:intC +(time*condition +famC +condition:intC|id) + (1|trialxcondition) , 
               data = HED, method = "LRT", control = control, REML = FALSE)
 
 summary(model) #The ‘intercept’ of the lmer model is the mean liking rate in Empty coniditon for an average subject. 
 
 # Mixed Model Anova Table (Type 3 tests, LRT-method)
 # 
-# Model: likZ ~ condition * time * intervention + gender + ageZ + diff_bmiZ + 
-#   Model:     famZ * intZ + (time * condition + famZ * intZ | id) + (1 | 
+# Model: likC ~ condition * time * intervention + gender + ageC + diff_bmiC + 
+#   Model:     famC * intC + (time * condition + famC * intC | id) + (1 | 
 #                                                                       Model:     trialxcondition)
 # Data: HED
 # Df full model: 44
@@ -228,19 +271,19 @@ summary(model) #The ‘intercept’ of the lmer model is the mean liking rate in
 # 2                         time  1    4.05 *    .044
 # 3                 intervention  1      0.32    .570
 # 4                       gender  1      1.01    .315
-# 5                         ageZ  1      0.37    .541
-# 6                    diff_bmiZ  1      0.01    .906
-# 7                         famZ  1 30.71 ***   <.001
-# 8                         intZ  1      0.05    .820
+# 5                         ageC  1      0.37    .541
+# 6                    diff_bmiC  1      0.01    .906
+# 7                         famC  1 30.71 ***   <.001
+# 8                         intC  1      0.05    .820
 # 9               condition:time  1    4.96 *    .026
 # 10      condition:intervention  1      0.29    .590
 # 11           time:intervention  1      1.59    .208
-# 12                   famZ:intZ  1      1.85    .173
+# 12                   famC:intC  1      1.85    .173
 # 13 condition:time:intervention  1      0.40    .529
 
 
-# COMPUTE EFFECT SIZES (COMPUTE R Squared For Mixed Models VIA NAKAGAWA ESTIMATE)
-mod <- lmer(likZ ~ condition*time*intervention + gender + ageZ + diff_bmiZ + famZ * intZ +(time*condition +famZ*intZ|id) + (1|trialxcondition) , 
+# COMPUTE EFFECT SICES (COMPUTE R Squared For Mixed Models VIA NAKAGAWA ESTIMATE)
+mod <- lmer(likC ~ condition*time*intervention + gender + ageC + diff_bmiC + famC * intC +(time*condition +famC*intC|id) + (1|trialxcondition) , 
             data = HED, control = control) #need to be fitted using ML so here I just use lmer function so its faster
 
 R2 = r2beta(mod,method="nsj") #R(m)2, the proportion of variance explained by the fixed predictors 
@@ -283,7 +326,7 @@ cont
 df.HED = as.data.frame(cont$contrasts) 
 df.HED$bmiT <- as.character(df.HED$bmiT)
 
-full.obs = ddply(HED, .(id, group2, condition), summarise, estimate = mean(likZ)) 
+full.obs = ddply(HED, .(id, group2, condition), summarise, estimate = mean(likC)) 
 milk = subset(full.obs, condition == '1')
 tastless = subset(full.obs, condition == '-1')
 df.observed = tastless

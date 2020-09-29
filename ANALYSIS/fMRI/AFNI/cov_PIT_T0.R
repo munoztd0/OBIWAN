@@ -9,29 +9,29 @@ analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV')
 setwd(analysis_path)
 
 
-load('PIT_LIRA.RData')
+load('PIT.RData')
 
-PIT = PIT %>% filter(id %notin% c(210, 214, 216, 218, 219, 222, 223, 224, 233, 240, 242, 247, 249, 256, 258, 263, 267)) #& 266??
+#PIT = PIT %>% filter(id %notin% c(210, 214, 216, 218, 219, 222, 223, 224, 233, 240, 242, 247, 249, 256, 258, 263, 267)) #& 266??
 
-bs = ddply(PIT, .(id, condition, time, intervention, gender), summarise, eff = mean(AUC, na.rm = TRUE))
+bs = ddply(PIT, .(id, condition, group, gender), summarise, eff = mean(AUC, na.rm = TRUE))
 bs$eff = scale(bs$eff)
-cov = PIT %>% group_by(id) %>% summarise_if(is.numeric, mean)
-cov = select(cov, c(id, ageC, likC, bmiC, diff_bmiC, hungryC, thirstyC, pissC))
+# cov = PIT %>% group_by(id) %>% summarise_if(is.numeric, mean)
+# cov = select(cov, c(id, ageC, likC, bmiC, diff_bmiC, hungryC, thirstyC, pissC))
 
 # COVARIATE ------------------------------------------------------------------
 
-CSp_eff_t0 = subset(bs, time == '0' & condition == 1)
-CSp_eff_t1 = subset(bs, time == '1'& condition == 1)
-CSm_eff_t0 = subset(bs, time == '0' & condition == -1)
-CSm_eff_t1 = subset(bs, time == '1'& condition == -1)
+CSp_eff_con = subset(bs, group == '-1' & condition == 1)
+CSp_eff_obe = subset(bs, group == '1'& condition == 1)
+CSm_eff_con = subset(bs, group == '-1' & condition == -1)
+CSm_eff_obe = subset(bs, group == '1'& condition == -1)
 
 
-path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01_0'
-write.table(CSp_eff_t0, (file.path(path, "CSp_eff.txt")), row.names = F, sep="\t")
-write.table(CSm_eff_t0, (file.path(path, "CSm_eff.txt")), row.names = F, sep="\t")
-path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01_1'
-write.table(CSp_eff_t1, (file.path(path, "CSp_eff.txt")), row.names = F, sep="\t")
-write.table(CSm_eff_t1, (file.path(path, "CSm_eff.txt")), row.names = F, sep="\t")
+path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01_HW'
+write.table(CSp_eff_con, (file.path(path, "CSp_eff.txt")), row.names = F, sep="\t")
+write.table(CSm_eff_con, (file.path(path, "CSm_eff.txt")), row.names = F, sep="\t")
+path <-'~/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01_OB'
+write.table(CSp_eff_obe, (file.path(path, "CSp_eff.txt")), row.names = F, sep="\t")
+write.table(CSm_eff_obe, (file.path(path, "CSm_eff.txt")), row.names = F, sep="\t")
 
 # INPUT FOR FMRI -------------------------------------------------------------------
 df = merge(bs, cov, by = "id")
@@ -80,4 +80,3 @@ write.table(fMRI_PIT, (file.path(path, "PIT_LME_withcov.txt")), row.names = F, s
 # do
 # mv *${id}* placebo/
 # done
-mv sub* treatment/

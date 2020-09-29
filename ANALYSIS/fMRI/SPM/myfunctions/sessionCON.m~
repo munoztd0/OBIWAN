@@ -7,10 +7,12 @@ function DOcovariateCON(task, name_ana, name_soft, covariateNames, remove)
 %variables
 task = 'PIT'; %PIT hedonicreactivity
 name_soft = 'SPM'; % output folder for this analysis
-name_ana = 'GLM-01_HW'; % output folder for this analysis
+name_ana = 'GLM-01_0'; % output folder for this analysis
+name_ana1 = 'GLM-01_1'; % output folder for this analysis
+name_ana2 = 'GLM-01_LIRA'; % output folder for this analysis
 covariateNames = {'CSp_eff'; 'CSm_eff'}; %{'REW_lik'; 'NEU_lik'}; %{'CSp_eff'; 'CSm_eff'}; %9
 conImage = {'con-0001'; 'con-0002'};
-group = 'control' %'obese'
+group = 'obese' %'obese'
 covariate=1
 
 
@@ -27,7 +29,8 @@ homedir = [home '/OBIWAN'];
 mdldir   = fullfile (homedir, '/DERIVATIVES/GLM/', name_soft, task);% mdl directory (timing and outputs of the analysis)
 covdir   = fullfile (homedir, 'DERIVATIVES/GLM/', name_soft, task, name_ana); % director with the extracted second level covariates
 groupdir = fullfile (mdldir,name_ana, 'group');
-
+groupdir1 = fullfile (mdldir,name_ana1, 'group');
+LIRA = fullfile (mdldir,name_ana2, 'group');
 
 
 %% specify spm param
@@ -92,6 +95,31 @@ for c = 1:length(covariateNames)
            HeaderInfo.fname = ['sub-' group cov(c).ID{i} '_con-000' num2str(c) '.nii'];  % This is where you fill in the new filename
            HeaderInfo.private.dat.fname = HeaderInfo.fname;
            spm_write_vol(HeaderInfo,cof);
+           
+           volT0 = spm_read_vols(HeaderInfo);
+           
+           cd(groupdir1)
+           o = dir(['*' num2str(cov(c).ID{i})]);
+           HeaderInfo = spm_vol([pwd '/sub-' group num2str(cov(c).ID{i}) '_' conImageX '.nii']);
+           vol = spm_read_vols(HeaderInfo);
+           cof = vol .* cov(c).data(i);
+           cd('cov')
+
+           HeaderInfo.fname = ['sub-' group cov(c).ID{i} '_con-000' num2str(c) '.nii'];  % This is where you fill in the new filename
+           HeaderInfo.private.dat.fname = HeaderInfo.fname;
+           spm_write_vol(HeaderInfo,cof);
+           
+           volT1 = spm_read_vols(HeaderInfo);
+           
+           
+           cd(LIRA)
+           mkdir('cov')
+           cd('cov')
+           
+           volT1 .-
+           
+           
+           
        end   
     else
            mkdir('no_cov')

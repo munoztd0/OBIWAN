@@ -2,7 +2,7 @@
 # last modified on April 2020 by David MUNOZ TORD
 invisible(lapply(paste0('package:', names(sessionInfo()$otherPkgs)), detach, character.only=TRUE, unload=TRUE))
 # PRELIMINARY STUFF ----------------------------------------
-pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, emmeans,misty)
+pacman::p_load(tidyverse, dplyr, plyr, lme4, car, afex, r2glmm, optimx, emmeans,misty,bayestestR)
 
 if(!require(pacman)) {
   install.packages("pacman")
@@ -141,9 +141,36 @@ model
 # 7   condition:group  1      0.88    .349
 # 8 condition:hungryC  1 12.93 ***   <.001
 # 9    condition:intC  1 15.71 ***   <.001
-
-mod <- lmer(likC ~ condition*group + thirstyC + hungryC:condition + hungryC + famC + intC:condition + intC + (condition + famC+intC|id) + (1|trialxcondition) , data = HED, control = control)
+o
+mod <- lmer(likC ~ condition*group + thirstyC + hungryC:condition + hungryC + famC + intC:condition + intC + (condition + famC+intC|id) + (1|trialxcondition), data = HED, control = control)
 #ref_grid(mod)
+
+#manually do COND
+main = lmer(likC ~ condition + group + thirstyC + hungryC + famC  + intC + (condition + famC+intC|id) + (1|trialxcondition), 
+            data = HED, control = control, REML = FALSE)
+null = lmer(likC ~ group + thirstyC + hungryC + famC + intC + (condition + famC+intC|id) + (1|trialxcondition), 
+            data = HED, control = control, REML = FALSE)
+
+#manual test to double check and to get BF
+test = anova(main, null, test = 'Chisq')
+#test
+
+#get BF fro mixed see Wagenmakers, 2007
+exp((test[1,2] - test[2,2])/2) # immense
+
+#manually do Inter
+main = lmer(likC ~ condition*group + thirstyC + hungryC + famC  + intC + (condition + famC+intC|id) + (1|trialxcondition), 
+            data = HED, control = control, REML = FALSE)
+null = lmer(likC ~  condition:group + thirstyC + hungryC + famC + intC + (condition + famC+intC|id) + (1|trialxcondition), 
+            data = HED, control = control, REML = FALSE)
+
+#manual test to double check and to get BF
+test = anova(main, null, test = 'Chisq')
+#test
+
+#get BF fro mixed see Wagenmakers, 2007
+bayesfactor_models(main, null,  denominator = null) #mod2 #best random INTERCEPT
+
 ##### Computing CIs and Post-Hoc contrasts
 
 #increase repetitions limit

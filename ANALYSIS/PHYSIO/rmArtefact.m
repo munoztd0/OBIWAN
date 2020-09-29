@@ -125,7 +125,7 @@ for j = 1:length(session)
         % using local window using hampel to smooth more and remove more striclty extream values data of problematic
         % subjects (we dont want data that have been intrapolate for more than 40%
         % of the time to have a big impact on our analysis)
-        if  missingdata > 70.00 
+        if  missingdata > 75.00 
             x =  'attention'
             number
             session{j}
