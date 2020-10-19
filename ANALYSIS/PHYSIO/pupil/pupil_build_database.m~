@@ -101,18 +101,16 @@ for j = 1:length(session)
         EEG.times = EEG.times - EEG.times(1,find(EEG.data(5,:) == 1, 1, 'first'));
         EEG.data(6,:) =  EEG.times;
         
+        EEG.data(5,:) = circshift(EEG.data(5,:),6)
         if str2num(num) > 199
-            EEG.data(7,:) =  {'obese'};
+            EEG.data(7,:) =  1;
         else 
-            EEG.data(7,:) =  'control';
+            EEG.data(7,:) =  0;
         end
 
 
         df = EEG.data';
         
-        
-        
-
         % basic preproc
         pupil_raw = df(:,2);
 
@@ -185,7 +183,7 @@ for j = 1:length(session)
         
         %removed
         %ses 1 115 132 210 249
-        %ses 2 205 
+        %ses 2 205 221 249 266
         
         
         if dispPlot == 0
@@ -203,7 +201,7 @@ for j = 1:length(session)
     cd ([homedir 'DERIVATIVES/BEHAV'])
     filename = 'PAV_pup.txt';
     fid = fopen(filename, 'wt');
-    fprintf(fid, '%s\t%s\t%s\t%s\t%s\t%s\n', 'marker', 'pupil', 'ID', 'session', 'trial', 'time');  % header
+    fprintf(fid, '%s\t%s\t%s\t%s\t%s\t%s\t%s\n', 'marker', 'pupil', 'ID', 'session', 'trial', 'time', 'group');  % header
     fclose(fid);
     dlmwrite(filename,x,'delimiter','\t','-append');
     

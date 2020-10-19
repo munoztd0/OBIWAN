@@ -85,6 +85,8 @@ for j = 1:length(session)
         EEG.data(5,:) = str2num(num);
         EEG.data(6,:) = ses;
         EEG.data(7,:) = 0;
+        
+        EEG.data(3,:) = circshift(EEG.data(3,:),-6); %revert 100 sec back
 
         l = 0;
         for k  = 1:length(EEG.data(6,:)) 
@@ -98,9 +100,10 @@ for j = 1:length(session)
 
         EEG.data(1,:) = []; %remove X
         EEG.data(1,:) = []; %remove Y
-        EEG.times = EEG.times - EEG.times(1,find(EEG.data(5,:) == 1, 1, 'first'));
+        EEG.times = EEG.times - (EEG.times(1,find(EEG.data(5,:) == 1, 1, 'first')) +100);
         EEG.data(6,:) =  EEG.times;
         
+
         if str2num(num) > 199
             EEG.data(7,:) =  1;
         else 
@@ -182,7 +185,7 @@ for j = 1:length(session)
         
         %removed
         %ses 1 115 132 210 249
-        %ses 2 205 
+        %ses 2 205 221 249 266
         
         
         if dispPlot == 0

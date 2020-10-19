@@ -1,0 +1,18 @@
+#!/bin/bash
+
+dataDir="/home/OBIWAN/DATA/STUDY/DERIVED/PIT_HEDONIC/"
+codeDir="/home/OBIWAN/ANALYSIS/spm_scripts/"
+matlab_script="classic_preproc"
+matlabSubmit="/home/OBIWAN/ANALYSIS/spm_scripts/matlab_preproc.sh"
+sessionID="second"
+
+# Loop over subjects
+
+for subjID in obese226 obese227
+do
+	# prep for each session's data
+	for runID in PIT pavlovianlearning hedonicreactivity
+	do
+	  	qsub -o /home/OBIWAN/ClusterOutput -j oe -l walltime=3:00:00,pmem=6GB -M eva.pool@unige.ch -m e -l nodes=1  -q queue1 -N spm_preproc_${subjID}_${runID} -F "${subjID} ${runID} ${sessionID} ${codeDir} ${matlab_script}" ${matlabSubmit}
+	done
+done
