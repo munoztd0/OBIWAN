@@ -1,15 +1,7 @@
-####################################################################################################
-#                                                                                                  #
-#                                                                                                  # #                                                                                                  # 
-#                                    TITLE OF THE PAPER                                            #
-#                                                                                                  #
-#                                                                                                  #
-#                                                                                                  #
-# Created by E.R.P on NOVEMBER 2018                                                               #
-# modified by D.M.T. on AUGUST 2020                                                                 #
-####################################################################################################
-
-
+##################################################################################################
+# Created by E.R.P on NOVEMBER 2018                                                               
+# modified by D.M.T. on AUGUST 2020                                                               
+##################################################################################################
 
 
 #--------------------------------------  PRELIMINARY STUFF ----------------------------------------
@@ -17,17 +9,14 @@
 
 if(!require(pacman)) {
   install.packages("pacman")
+  install.packages("devtools")
   library(pacman)
 }
 
 pacman::p_load(apaTables, MBESS, afex, car, ggplot2, dplyr, plyr, tidyr, 
                reshape, Hmisc, Rmisc,  ggpubr, ez, gridExtra, plotrix, 
-               lsmeans, BayesFactor, effectsize, devtools, misty)
+               lsmeans, BayesFactor, effectsize, devtools, misty, bayestestR, lspline)
 
-if(!require(devtools)) {
-  install.packages("devtools")
-  library(devtools)
-}
 
 # get tool
 devtools::source_gist("2a1bb0133ff568cbe28d", 
@@ -36,31 +25,66 @@ devtools::source_gist("2a1bb0133ff568cbe28d",
 #SETUP
 
 # Set path
-#home_path       <- '/Users/evapool/mountpoint2'
 home_path       <- '~/OBIWAN'
 
 # Set working directory
 analysis_path <- file.path(home_path, 'CODE/ANALYSIS/BEHAV/ForPaper')
-figures_path <- file.path(analysis_path, 'figures')
+figures_path  <- file.path(home_path, 'DERIVATIVES/FIGURES/BEHAV') 
 setwd(analysis_path)
 
 #datasets dictory
 data_path <- file.path(home_path,'DERIVATIVES/BEHAV') 
 
 # open datasets
-PAV  <- read.delim(file.path(data_path,'PAV/REWOD_PAVCOND_ses_first.txt'), header = T, sep ='') # read in dataset
-INST <- read.delim(file.path(data_path,'INSTRU/REWOD_INSTRU_ses_first.txt'), header = T, sep ='') # read in dataset
-PIT  <- read.delim(file.path(data_path,'PIT/REWOD_PIT_ses_second.txt'), header = T, sep ='') # read in dataset
-HED  <- read.delim(file.path(data_path,'HED/REWOD_HEDONIC_ses_second.txt'), header = T, sep ='') # read in dataset
+PAV  <- read.delim(file.path(data_path,'OBIWAN_PAV.txt'), header = T, sep ='') # 
+INST <- read.delim(file.path(data_path,'OBIWAN_INST.txt'), header = T, sep ='') # 
+PIT  <- read.delim(file.path(data_path,'OBIWAN_PIT.txt'), header = T, sep ='') # 
+HED  <- read.delim(file.path(data_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # 
+info <- read.delim(file.path(data_path,'info_expe.txt'), header = T, sep ='') # 
+intern <- read.delim(file.path(data_path,'OBIWAN_INTERNAL.txt'), header = T, sep ='') # 
+
+#subset only pretest
+tables <- c("PAV","INST","PIT","HED", "intern")
+dflist <- lapply(mget(tables),function(x)subset(x, session == 'second'))
+list2env(dflist, envir=.GlobalEnv)
+
+#exclude participants (242 really outlier everywhere, 256 can't do the task, 114 & 228 REALLY hated the solution and thus didn't "do" the conditioning)
+`%notin%` <- Negate(`%in%`)
+dflist <- lapply(mget(tables),function(x)filter(x, id %notin% c(242, 256, 114, 228)))
+list2env(dflist, envir=.GlobalEnv)
+
+#merge with info
+tables = tables[-length(tables)] # remove intern
+dflist <- lapply(mget(tables),function(x)merge(x, info, by = "id"))
+list2env(dflist, envir=.GlobalEnv)
+
+# creates internal states variables for each data
+listA = 2:5
+def = function(data, number){
+  baseINTERN = subset(intern, phase == number)
+  data = merge(x = get(data), y = baseINTERN[ , c("piss", "thirsty", 'hungry', 'id')], by = "id", all.x=TRUE)
+  diffINTERN = subset(intern, phase == number | phase == number+1) #before and after 
+  before = subset(diffINTERN, phase == number); after = subset(diffINTERN, phase == number+1); diff = after
+  diff$diff_piss = diff$piss - before$piss
+  diff$diff_thirsty = diff$thirsty - before$thirsty
+  diff$diff_hungry = diff$hungry - before$hungry
+  data= merge(data, y = diff[ , c("diff_piss", "diff_thirsty", 'diff_hungry', 'id')], by = "id", all.x=TRUE)
+  return(data)
+}
+dflist = mapply(def,tables,listA)
+list2env(dflist, envir=.GlobalEnv)
+
 
 # themes for plots
-
 averaged_theme <- theme_bw(base_size = 32, base_family = "Helvetica")+
   theme(strip.text.x = element_text(size = 32, face = "bold"),
         strip.background = element_rect(color="white", fill="white", linetype="solid"),
-        legend.position="none",
-        legend.text  = element_blank(),
-        panel.grid.major = element_blank(),
+        legend.position=c(.9,.9),
+        legend.title  = element_text(size = 12),
+        legend.text  = element_text(size = 10),
+        legend.key.size = unit(0.2, "cm"),
+        panel.grid.major.x = element_blank() ,
+        panel.grid.major.y = element_line(size=.2, color="lightgrey") ,
         panel.grid.minor = element_blank(),
         axis.title.x = element_text(size = 32),
         axis.title.y = element_text(size =  32),
@@ -81,108 +105,103 @@ timeline_theme <- theme_bw(base_size = 32, base_family = "Helvetica")+
 
 pal = viridis::inferno(n=5)
 
+
+
+# Miscellaneous  ----------------------------------------------------------
+
+options(contrasts = rep("contr.sum", 2)) #set options
+set.seed(666) #set random seed
+
+source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/pes_ci.R', echo=F) #source PES function
+
+# global functions
+scale2 <- function(x, na.rm = TRUE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
+
+
+# Check Demo
+AGE = ddply(PAV,~group,summarise,mean=mean(age),sd=sd(age), min = min(age), max = max(age))
+BMI = ddply(PAV,~group,summarise,mean=mean(BMI_t1),sd=sd(BMI_t1), min = min(BMI_t1), max = max(BMI_t1))
+GENDER = ddply(PAV, .(id, group), summarise, gender=mean(as.numeric(gender)))  %>%
+  group_by(gender, group) %>%
+  tally() #2 = female
+
+N_group = ddply(PAV, .(id, group), summarise, group=mean(as.numeric(group)))  %>%
+  group_by(group) %>% tally()
+
 # -------------------------------------------------------------------------------------------------
 #                                             PAVLOVIAN
 # -------------------------------------------------------------------------------------------------
 
+# define as.factors
+fac <- c("id", "trial", "condition", "group" ,"trialxcondition", "gender")
+PAV[fac] <- lapply(PAV[fac], factor)
+
+#center covariates
+numer <- c("piss", "thirsty", "hungry", "diff_piss", "diff_thirsty", "diff_hungry", "age")
+PAV = PAV %>% group_by %>% mutate_at(numer, scale)
+
 # -------------------------------------- PREPROCESSING RT ----------------------------------------
 
-# define factors
-PAV$id               <- factor(PAV$id)
-PAV$trial            <- factor(PAV$trial)
-PAV$session          <- factor(PAV$session)
-PAV$condition        <- factor(PAV$condition)
 
 # get times in milliseconds 
 PAV$RT               <- PAV$RT * 1000
 
-# remove sub 8 (bc we dont have scans)
-PAV <- subset (PAV,!id == '8') 
-
 #Preprocessing
-##only first round
-PAV.clean <- filter(PAV, rounds == 1)
-PAV.clean$condition <- droplevels(PAV.clean$condition, exclude = "Baseline")
-full = length(PAV.clean$RT)
+PAV$condition <- droplevels(PAV$condition, exclude = "Baseline")
+acc_bef = mean(PAV$ACC, na.rm = TRUE) #0.93
+full = length(PAV$RT)
 
 ##shorter than 100ms and longer than 3sd+mean
-PAV.clean <- filter(PAV.clean, RT >= 100) # min RT is 106ms
+PAV.clean <- filter(PAV, RT >= 100) # min RT is 
 PAV.clean <- ddply(PAV.clean, .(id), transform, RTm = mean(RT))
 PAV.clean <- ddply(PAV.clean, .(id), transform, RTsd = sd(RT))
 PAV.clean <- filter(PAV.clean, RT <= RTm+3*RTsd) 
 
 # calculate the dropped data in the preprocessing
-clean= length(PAV.clean$RT)
+clean = length(PAV.clean$RT)
 dropped = full-clean
 (dropped*100)/full
 
+densityPlot(PAV.clean$RT) #not that skewed 
+
+# #log transform function
+# t_log_scale <- function(x){
+#   if(x==0){y <- 1} 
+#   else {y <- (sign(x)) * (log(abs(x)))}
+#   y }
+# 
+# PAV.clean$RT_T <- sapply(PAV.clean$RT,FUN=t_log_scale)
+# densityPlot(PAV.clean$RT_T) # much better !
+
 # -------------------------------------- STATS -----------------------------------------------
-PAV.means <- aggregate(PAV.clean$RT, by = list(PAV.clean$id, PAV.clean$condition, PAV.clean$liking_ratings), FUN='mean') # extract means
-colnames(PAV.means) <- c('id','condition','liking','RT')
+PAV.means <- aggregate(PAV.clean$RT, by = list(PAV.clean$id, PAV.clean$condition, PAV.clean$liking, PAV.clean$group), FUN='mean') # extract means
+colnames(PAV.means) <- c('id','condition','liking','group', 'RT')
 
 # -------------------------------------- RT
 # stat
-anova.RT <- aov_car(RT ~ condition+ Error (id/condition), data = PAV.means, anova_table = list(correction = "GG", es = "pes"))
-
-# effect sizes (90%CI)
-F_to_eta2(f = c(6.67), df = c(1), df_error = c(23))
+anova.RT <- aov_car(RT ~ condition*group + Error (id/condition), data = PAV.means, anova_table = list(correction = "GG", es = "pes")); anova.RT
+pes_RT = pes_ci(RT ~ condition*group + Error (id/condition), PAV.means); pes_RT
 
 # Bayes factors
-RT.BF <- anovaBF(RT ~ condition  + id, data = PAV.means, 
-                 whichRandom = "id", iterations = 50000)
-RT.BF <- recompute(RT.BF, iterations = 50000)
-RT.BF
+RT.BF <- anovaBF(RT ~ condition *group  + id, data = PAV.means, 
+                 whichRandom = "id", iterations = 50000); RT.BF
+#plot(RT.BF)
 
 # -------------------------------------- Liking
 # stat
-anova.liking <- aov_car(liking ~ condition+ Error (id/condition), data = PAV.means, anova_table = list(correction = "GG", es = "pes"))
+anova.liking <- aov_car(liking ~ condition*group+ Error (id/condition), data = PAV.means, anova_table = list(correction = "GG", es = "pes")); anova.liking
+pes_lik = pes_ci(liking ~ condition*group+ Error (id/condition), PAV.means); pes_lik
 
-# effect sizes (90%CI)
-F_to_eta2(f = c(6.70), df = c(1), df_error = c(23))
 
 # Bayes factors
-liking.BF <- anovaBF(liking ~ condition  + id, data = PAV.means, 
-                     whichRandom = "id", iterations = 50000)
-liking.BF <- recompute(liking.BF, iterations = 50000)
-liking.BF
+liking.BF <- anovaBF(liking ~ condition*group + id, data = PAV.means, 
+                     whichRandom = "id", iterations = 50000); liking.BF
+#plot(liking.BF)
 
 # -------------------------------------- PLOT -----------------------------------------------
 # rename factor levels for plot
 PAV.means$condition  <- dplyr::recode(PAV.means$condition, "CSplus" = "CS+", "CSminus" = "CS-" )
 
-dfL <- summarySEwithin(PAV.means,
-                       measurevar = "liking",
-                       withinvars = "condition", 
-                       idvar = "id")
-
-dfL$cond <- ifelse(dfL$condition == "CS+", -0.25, 0.25)
-PAV.means$cond <- ifelse(PAV.means$condition == "CS+", -0.25, 0.25)
-set.seed(666)
-PAV.means <- PAV.means %>% mutate(condjit = jitter(as.numeric(cond), 0.3),
-                                  grouping = interaction(id, cond))
-
-# Liking
-pp <- ggplot(PAV.means, aes(x = cond, y = liking, 
-                            fill = condition, color = condition)) +
-  geom_line(aes(x = condjit, group = id, y = liking), alpha = .5, size = 0.5, color = 'gray' ) +
-  geom_flat_violin(scale = "count", trim = FALSE, alpha = .2, aes(fill = condition, color = NA)) +
-  geom_point(aes(x = condjit), alpha = .3) +
-  geom_crossbar(data = dfL, aes(y = liking, ymin=liking-se, ymax=liking+se), width = 0.2 , alpha = 0.1)+
-  ylab('Liking Ratings')+
-  xlab('Conditioned stimulus')+
-  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 25)), limits = c(-0.5,100.5)) +
-  scale_x_continuous(labels=c("CS+", "CS-"),breaks = c(-.25,.25), limits = c(-.5,.5)) +
-  scale_fill_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), guide = 'none') +
-  scale_color_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), guide = 'none') +
-  theme_bw()
-
-
-ppp <- pp + averaged_theme 
-
-
-pdf(file.path(figures_path,'Figure_PavlovianLiking.pdf'))
-print(ppp)
-dev.off()
 
 # RT
 dfR <- summarySEwithin(PAV.means,
@@ -194,9 +213,9 @@ dfR$cond <- ifelse(dfL$condition == "CS+", -0.25, 0.25)
 
 pp <- ggplot(PAV.means, aes(x = cond, y = RT, 
                             fill = condition, color = condition)) +
-  geom_line(aes(x = condjit, group = id, y = RT), alpha = .5, size = 0.5, color = 'gray') +
+  geom_line(aes(x = condjit, group = id, y = RT), alpha = .3, size = 0.5, color = 'gray') +
   geom_flat_violin(scale = "count", trim = FALSE, alpha = .2, aes(fill = condition, color = NA))+
-  geom_point(aes(x = condjit), alpha = .3,) +
+  geom_point(aes(x = condjit, shape = group), alpha = .3,) +
   geom_crossbar(data = dfR, aes(y = RT, ymin=RT-se, ymax=RT+se), width = 0.2 , alpha = 0.1)+
   ylab('Reaction Times (ms)')+
   xlab('Conditioned stimulus')+
@@ -204,11 +223,12 @@ pp <- ggplot(PAV.means, aes(x = cond, y = RT,
   scale_x_continuous(labels=c("CS+", "CS-"),breaks = c(-.25,.25), limits = c(-.5,.5)) +
   scale_fill_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), guide = 'none') +
   scale_color_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), guide = 'none') +
+  scale_shape_manual(name="Group", labels=c("Lean", "Obese"), values = c(1, 2)) +
   theme_bw()
 
 
 ppp <- pp + averaged_theme 
-
+ppp
 
 pdf(file.path(figures_path,'Figure_PavlovianRT.pdf'))
 print(ppp)
@@ -216,89 +236,126 @@ dev.off()
 
 
 
+dfL <- summarySEwithin(PAV.means,
+                       measurevar = "liking",
+                       withinvars = "condition", 
+                       idvar = "id")
+
+dfL$cond <- ifelse(dfL$condition == "CS+", -0.25, 0.25)
+PAV.means$cond <- ifelse(PAV.means$condition == "CS+", -0.25, 0.25)
+PAV.means <- PAV.means %>% mutate(condjit = jitter(as.numeric(cond), 0.3),
+                                  grouping = interaction(id, cond))
+
+# Liking
+pp <- ggplot(PAV.means, aes(x = cond, y = liking, 
+                            fill = condition, color = condition)) +
+  geom_line(aes(x = condjit, group = id, y = liking), alpha = .3, size = 0.5, color = 'gray' ) +
+  geom_flat_violin(scale = "count", trim = FALSE, alpha = .2, aes(fill = condition, color = NA)) +
+  geom_point(aes(x = condjit, shape = group), alpha = .3) +
+  geom_crossbar(data = dfL, aes(y = liking, ymin=liking-se, ymax=liking+se), width = 0.2 , alpha = 0.1)+
+  ylab('Liking Ratings')+
+  xlab('Conditioned stimulus')+
+  scale_y_continuous(expand = c(0, 0), breaks = c(seq.int(0,100, by = 25)), limits = c(-0.5,100.5)) +
+  scale_x_continuous(labels=c("CS+", "CS-"),breaks = c(-.25,.25), limits = c(-.5,.5)) +
+  scale_fill_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), guide = 'none') +
+  scale_color_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), guide = 'none') +
+  scale_shape_manual(name="Group", labels=c("Lean", "Obese"), values = c(1, 2)) +
+  theme_bw()
+
+
+ppp <- pp + averaged_theme 
+ppp
+
+pdf(file.path(figures_path,'Figure_PavlovianLiking.pdf'))
+print(ppp)
+dev.off()
 
 # -------------------------------------------------------------------------------------------------
 #                                             INSTRUMENTAL
 # -------------------------------------------------------------------------------------------------
 
+fac <- c("id", "trial", "gender", "group")
+INST[fac] <- lapply(INST[fac], factor)
+
 # -------------------------------------- PREPROC  --------------------------------------------------
 
-## remove sub 8 (we dont have scans)
-INST <- subset (INST,!id == '8') 
-
-# define factors
-INST$id                       <- factor(INST$id)
-INST$session                  <- factor(INST$session)
-INST$rewarded_response        <- factor(INST$rewarded_response)
-INST$trial                    <- factor(INST$trial)
 
 # CREATE BINS OF 6
 INST$trial        <- as.numeric(INST$trial)
 INST  <- ddply(INST, "id", transform, bin = as.numeric(cut2(trial, g = 6)))
-INST$trial                    <- factor(INST$trial)
+INST$trial      <- factor(INST$trial)
 
 
 # get the averaged dataset
-INST.means <- aggregate(INST$n_grips, by = list(INST$id, INST$trial), FUN='mean') # extract means
-colnames(INST.means) <- c('id','trial','n_grips')
+INST.means <- aggregate(INST$grips, by = list(INST$id, INST$trial, INST$group), FUN='mean') # extract means
+colnames(INST.means) <- c('id','trial','group', 'grips')
+
+
 
 # -------------------------------------- STAT -----------------------------------------------------
 
 
 # --------------------------------------- all trials
 
-# stat
-anova.Ins.all <- aov_car(n_grips ~ trial+ Error (id/trial), data = INST.means, anova_table = list(correction = "GG", es = "pes"))
+# stat -  linear 
+anova.Ins.all <- aov_car(grips ~ trial*group + Error (id/trial), data = INST.means, anova_table = list(correction = "GG", es = "pes")); anova.Ins.all
+pes_Ins.all = pes_ci(grips ~ trial*group + Error (id/trial), INST.means); pes_Ins.all
 
-# effect sizes (90%CI)
-F_to_eta2(f = c(1.54), df = c(5.08), df_error = c(116.84))
 
 # Bayes factors
-inst.BF.all <- anovaBF(n_grips ~ trial  + id, data = INST.means, 
-                       whichRandom = "id", iterations = 50000)
-inst.BF.all  <- recompute(inst.BF.all  , iterations = 50000)
-inst.BF.all 
+inst.BF.all <- anovaBF(grips ~ trial*group  + id, data = INST.means, 
+                       whichRandom = "id", iterations = 50000); inst.BF.all 
 
-
-
-# --------------------------------------- first trials
-INST.T <- subset(INST, trial == 1 | trial == 2)
-INST.T$trial <- factor(INST.T$trial)
-
-# stat
-anova.Ins <- aov_car(n_grips ~ trial+ Error (id/trial), data = INST.T, anova_table = list(correction = "GG", es = "pes"))
-
-# effect sizes (90%CI)
-F_to_eta2(f = c(24.77), df = c(1), df_error = c(23))
-
-# Bayes factors
-inst.BF <- anovaBF(n_grips ~ trial  + id, data = INST.T, 
-                   whichRandom = "id", iterations = 50000)
-inst.BF <- recompute(inst.BF , iterations = 50000)
-inst.BF 
+# stat -  different fit
+INST.means$trial = as.numeric(INST.means$trial)
+## LINEAR FIT  
+linmod <- lmer(grips~trial*group + (1 |id),data=INST.means, REML = FALSE)
+## POLYNOMIAL FIT  
+quadmod <- lmer(grips~trial*group+I(trial^2) + (1 |id), data=INST.means, REML = FALSE)
+cubmod <- lmer(grips~trial*group+I(trial^2)+I(trial^3) + (1 |id),data=INST.means, REML = FALSE)
+## PIECEWISE REGRESSION WITH SPLINES
+splinemod <- lmer(grips ~ lspline(trial, 5) *group + (1 |id), data = INST.means, REML = FALSE)
+bayesfactor_models(linmod, quadmod, cubmod, splinemod, denominator = linmod) #splinemod is the best fit
+summary(splinemod)
 
 
 # -------------------------------------- PLOT  ---------------------------------------------------------
 
 #over time
 dfTRIAL <- summarySEwithin(INST.means,
-                           measurevar = "n_grips",
+                           measurevar = "grips",
                            withinvars = "trial", 
                            idvar = "id")
+
 dfTRIAL$trial       <- as.numeric(dfTRIAL$trial)
 
+dfTRIALg <- summarySEwithin(INST.means,
+                           measurevar = "grips",
+                           withinvars = "trial", 
+                           betweenvars = "group",
+                           idvar = "id")
 
-pp <- ggplot(INST.means, aes(x =trial, y = n_grips)) +
-  geom_point(data = dfTRIAL, alpha = 0.5, color = pal[4]) +
-  geom_line(data = dfTRIAL, color = pal[4]) +
-  geom_ribbon(data = dfTRIAL,aes(ymin=n_grips-se, ymax=n_grips+se), fill = pal[4], alpha = 0.3)+
+dfTRIALg$trial       <- as.numeric(dfTRIALg$trial)
+
+dfTRIAL$x = dfTRIAL$trial; dfTRIAL$y = dfTRIAL$grips
+splinelm <- lm(y ~ lspline(x, 5), data=dfTRIAL)
+
+
+pp <- ggplot(dfTRIAL, aes(x =trial, y = grips)) +
+  geom_point(data = dfTRIALg, aes(shape = group), alpha = 0.3, color = 'black') +
+  geom_point(data = dfTRIAL, alpha = 0.5, color = pal[4], shape = 18) +
+  geom_line(color = pal[4]) +
+  #geom_smooth(method="lm", formula=formula(splinelm), color="tomato",fill = NA, size=0.7) +
+  geom_ribbon(aes(ymin=grips-se, ymax=grips+se), fill = pal[4], alpha = 0.3)+
   ylab('Number of Grips')+
   xlab('Trial') +
-  scale_y_continuous(expand = c(0, 0),  limits = c(0,25),  breaks=c(seq.int(0,25, by = 5))) +
+  scale_y_continuous(expand = c(0, 0),  limits = c(10.5,14.05),  breaks=c(seq.int(11,14, by = 1))) +
   scale_x_continuous(expand = c(0, 0),  limits = c(0,25),  breaks=c(seq.int(0,25, by = 5))) +
+  scale_shape_manual(name="Group", labels=c("Lean", "Obese"), values = c(1, 2, 18)) +
   theme_bw()
 
 ppp <- pp + averaged_theme
+ppp
 
 pdf(file.path(figures_path,'Figure_Instrumental_trial.pdf'))
 print(ppp)
@@ -321,7 +378,7 @@ INST.T <- INST.T %>% mutate(trialjit = jitter(as.numeric(trial), 0.3),
 
 pp <- ggplot(INST.T, aes(x = trial, y = n_grips, 
                          fill = factor(trial), color = factor(trial))) +
-  geom_line(aes(x = trialjit, group = id, y = n_grips), alpha = .5, size = 0.5, color = 'gray') +
+  geom_line(aes(x = trialjit, group = id, y = n_grips), alpha = .3, size = 0.5, color = 'gray') +
   geom_flat_violin(scale = "count", trim = FALSE, alpha = .2, aes(fill = factor(trial), color = NA))+
   geom_point(aes(x = trialjit), alpha = .3) +
   geom_crossbar(data = dfT, aes(y = n_grips, ymin=n_grips-se, ymax=n_grips+se), width = 0.2 , alpha = 0.1)+
@@ -348,16 +405,19 @@ dev.off()
 #                                             PIT
 # -------------------------------------------------------------------------------------------------
 
+# define as.factors
+fac <- c("id", "trial", "condition", "trialxcondition", "gender", "group")
+PIT[fac] <- lapply(PIT[fac], factor)
+
+#center covariates
+numer <- c("piss", "thirsty", "hungry", "diff_piss", "diff_thirsty", "diff_hungry", "age")
+PIT = PIT %>% group_by %>% mutate_at(numer, scale)
+
+# Center level-1 predictor within cluster (CWC)
+PIT$AUC = center(PIT$AUC, type = "CWC", group = PIT$id)
+
+PIT.all = PIT
 #--------------------------------------- PREPROC  -----------------------------------------------------
-
-## remove sub 8 (we dont have scans)
-PIT <- subset (PIT,!id == '8') 
-
-## subsetting into 3 differents tasks
-PIT.all <- PIT
-# define factors
-fac <- c("id", "session", "condition",  "trialxcondition")
-PIT.all[fac] <- lapply(PIT.all[fac], factor)
 
 #subset phases
 RIM <- subset (PIT.all,task == 'Reminder') 
@@ -368,22 +428,26 @@ PIT <- subset (PIT.all,task == 'PIT')
 PIT$trialxcondition        <- as.numeric(PIT$trialxcondition)
 PIT  <- ddply(PIT, "id", transform, bin = as.numeric(cut2(trialxcondition, g = 5)))
 
-
+# Center level-1 predictor within cluster (CWC)
+PIT$AUC = center(PIT$AUC, type = "CWC", group = PIT$id) 
 
 
 # -------------------------------------- STATS -----------------------------------------------
 PIT.s <- subset (PIT, condition == 'CSplus'| condition == 'CSminus')
 PIT.s$trialxcondition <- factor(PIT.s$trialxcondition)
-PIT.means <- aggregate(PIT.s$n_grips, by = list(PIT.s$id, PIT.s$condition), FUN='mean') # extract means
-colnames(PIT.means) <- c('id','condition','n_grips')
+PIT.means <- aggregate(PIT.s$AUC, by = list(PIT.s$id, PIT.s$condition, PIT.s$group), FUN='mean') # extract means
+colnames(PIT.means) <- c('id','condition', 'group', 'AUC')
 
-PIT.trial <- aggregate(PIT.s$n_grips, by = list(PIT.s$id, PIT.s$trialxcondition), FUN='mean') # extract means
-colnames(PIT.trial) <- c('id','trialxcondition','n_grips')
+PIT.trial <- aggregate(PIT.s$AUC, by = list(PIT.s$id, PIT.s$trialxcondition), FUN='mean') # extract means
+colnames(PIT.trial) <- c('id','trialxcondition','AUC')
 
 
 # stat
-PIT.stat <- aov_car(n_grips ~ condition*trialxcondition + Error (id/condition*trialxcondition), data = PIT.s, anova_table = list(correction = "GG", es = "pes"))
+PIT.stat <- aov_car(AUC ~ condition*group + Error (id/condition), data = PIT.means, anova_table = list(correction = "GG", es = "pes")); PIT.stat
+pes_PIT.stat = pes_ci(AUC ~ condition*group*trialxcondition + Error (id/condition*trialxcondition), PIT.s)
 
+model = mixed(AUC ~ condition*group + hungry + hungry:condition + thirsty + piss  + (condition|id) + (1|trialxcondition), data = PIT, method = "LRT",  REML = FALSE)
+model
 
 # effect sizes (90%CI)
 F_to_eta2(f = c(13.58), df = c(1), df_error = c(23))
@@ -417,7 +481,7 @@ PIT.means$condition  <- dplyr::recode(PIT.means$condition, "CSplus" = "CS+", "CS
 
 # AVERAGED EFFECT
 dfG <- summarySEwithin(PIT.means,
-                       measurevar = "n_grips",
+                       measurevar = "AUC",
                        withinvars = "condition", 
                        idvar = "id")
 
@@ -430,7 +494,7 @@ PIT.means <- PIT.means %>% mutate(condjit = jitter(as.numeric(cond), 0.3),
 
 pp <- ggplot(PIT.means, aes(x = cond, y = n_grips, 
                             fill = condition, color = condition)) +
-  geom_line(aes(x = condjit, group = id, y = n_grips), alpha = .5, size = 0.5, color = 'gray') +
+  geom_line(aes(x = condjit, group = id, y = n_grips), alpha = .3, size = 0.5, color = 'gray') +
   geom_flat_violin(scale = "count", trim = FALSE, alpha = .2, aes(fill = condition, color = NA))+
   geom_point(aes(x = condjit), alpha = .3,) +
   geom_crossbar(data = dfG, aes(y = n_grips, ymin=n_grips-se, ymax=n_grips+se), width = 0.2 , alpha = 0.1)+
@@ -489,7 +553,7 @@ df$condition <- droplevels(df$condition)
 pp <- ggplot(df, aes(x = as.numeric(trial), y = n_grips,
                      color = condition, 
                      fill  = condition))+
-  geom_line(alpha = .7, size = 1, show.legend = F) +
+  geom_line(alpha = .5, size = 1, show.legend = F) +
   geom_ribbon(aes(ymax = n_grips + se, ymin = n_grips - se, fill = condition, color =NA),  alpha=0.4) + 
   geom_point() +
   ylab('Number of Grips')+
@@ -672,7 +736,7 @@ minl = 0
 
 pp <- ggplot(HED.means, aes(x = cond, y = perceived_liking, 
                             fill = condition, color = condition)) +
-  geom_line(aes(x = condjit, group = id, y = perceived_liking), alpha = .5, size = 0.5, color = 'gray') +
+  geom_line(aes(x = condjit, group = id, y = perceived_liking), alpha = .3, size = 0.5, color = 'gray') +
   geom_flat_violin(scale = "count", trim = FALSE, alpha = .2, aes(fill = condition, color = NA))+
   geom_point(aes(x = condjit), alpha = .3,) +
   geom_crossbar(data = dfG, aes(y = perceived_liking, ymin=perceived_liking-se, ymax=perceived_liking+se), width = 0.2 , alpha = 0.1)+
@@ -735,3 +799,6 @@ print(ppp)
 dev.off()
 
 
+#save RData for cluster computing
+save.image(file = "OBIWAN.RData", version = NULL, ascii = FALSE,
+           compress = FALSE, safe = TRUE)

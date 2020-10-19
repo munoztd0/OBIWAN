@@ -31,12 +31,16 @@ info$Subject = info$id
 data  <- subset(full, Group == 'O') #subset #only session one 
 data  <- subset(data, Phase == 'proc1') #only learning phase
 
-#stil have to watch for 2225140
+#recode participants
 for (i in  1:length(data$Subject)) {
-  if(data$Subject[i] > 2000) 
-  {data$Subject[i] = data$Subject[i] - 2000}  
+  if(data$Subject[i] == 2251) #fix the bug
+      {data$Subject[i] = 245}
+  else if(data$Subject[i] == 2512210) 
+      {data$Subject[i] = 251}
+  else if(data$Subject[i] > 2000) 
+      {data$Subject[i] = data$Subject[i] - 2000} 
   else 
-  {data$Subject[i] = data$Subject[i]}
+      {data$Subject[i] = data$Subject[i]}
 }
 
 
