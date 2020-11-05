@@ -23,7 +23,7 @@ library(ggplot2)
 }
 
 geom_right_violin <- function(mapping = NULL, data = NULL, stat = "ydensity",
-                             position = "dodge", trim = TRUE, scale = "area",
+                             position = "dodge", trim = FALSE, scale = "area",
                              show.legend = NA, inherit.aes = TRUE, ...) {
   layer(
     data = data,
@@ -136,7 +136,7 @@ geom_left_violin <- function(mapping = NULL, data = NULL, stat = "ydensity", pos
 #'   coord_flip()
 #' @import ggplot2
 geom_flat_violin <- function(mapping = NULL, data = NULL, stat = "ydensity",
-                             position = "dodge", trim = TRUE, scale = "area",
+                             position = "dodge", trim = FALSE, scale = "area",
                              show.legend = NA, inherit.aes = TRUE, ...) {
   layer(
     data = data,

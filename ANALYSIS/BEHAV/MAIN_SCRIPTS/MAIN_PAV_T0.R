@@ -26,7 +26,7 @@ PAV_full <- read.delim(file.path(analysis_path,'OBIWAN_PAV.txt'), header = T, se
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # read in dataset
 intern <- read.delim(file.path(analysis_path,'OBIWAN_INTERNAL.txt'), header = T, sep ='') # read in dataset
 
-#subset #only group obese 
+#subset #only pretest
 PAV  <- subset(PAV_full, session == 'second') 
 intern  <- subset(intern, session == 'second') 
 

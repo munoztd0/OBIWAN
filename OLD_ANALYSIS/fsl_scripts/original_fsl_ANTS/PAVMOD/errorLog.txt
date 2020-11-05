@@ -1,0 +1,5 @@
+Error Time: 04/16/2019 04:37:23
+Error using call_fsl (line 36)
+FSL call (/bin/sh -c '. /usr/local/fsl/etc/fslconf/fsl.sh; FSLOUTPUTTYPE=NIFTI_PAIR; export FSLOUTPUTTYPE; $FSLDIR/bin/fslmaths /home/shared/fix/data/OBIWAN/sub-control130/task-hedonicreactivity/melodic_run.ica/fix/dummyd /tmp/tp5191672306033842') failed, Cannot open volume /home/shared/fix/data/OBIWAN/sub-control130/task-hedonicreactivity/melodic_run.ica/fix/dummyd for reading!
+
+ 

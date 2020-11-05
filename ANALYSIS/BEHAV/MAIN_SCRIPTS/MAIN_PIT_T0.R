@@ -1,6 +1,6 @@
 ## R code for FOR PIT OBIWAN
 # last modified on April 2020 by David MUNOZ TORD
-invisible(lapply(paste0('package:', names(sessionInfo()$otherPkgs)), detach, character.only=TRUE, unload=TRUE))
+#invisible(lapply(paste0('package:', names(sessionInfo()$otherPkgs)), detach, character.only=TRUE, unload=TRUE))
 # PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
   install.packages("pacman")
