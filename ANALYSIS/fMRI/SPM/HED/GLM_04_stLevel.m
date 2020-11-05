@@ -28,8 +28,8 @@ obeseX = dir(obese);
 subj = vertcat(controlX, obeseX);
 
 %% What to do
-firstLevel    = 0;
-constrasts    = 0;
+firstLevel    = 1;
+constrasts    = 1;
 copycontrasts = 1;
 covariates = 0;
 

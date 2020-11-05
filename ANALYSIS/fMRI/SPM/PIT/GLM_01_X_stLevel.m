@@ -10,7 +10,7 @@ cluster = 0;
 %% define task variable
 sessionX = 'second';
 task = 'PIT';
-name_ana = 'GLM-01_HW'; % output folder for this analysis
+name_ana = 'GLM-01_OB'; % output folder for this analysis
 
 
 %% DEFINE PATH
@@ -19,11 +19,11 @@ cd ~
 home = pwd;
 homedir = [home '/OBIWAN'];
 
-control = [homedir '/DERIVATIVES/GLM/SPM/' task '/' name_ana '/sub-control*'];
-%obese = [homedir '/DERIVATIVES/GLM/SPM/' task '/' name_ana '/sub-obese*'];
+%control = [homedir '/DERIVATIVES/GLM/SPM/' task '/' name_ana '/sub-control*'];
+obese = [homedir '/DERIVATIVES/GLM/SPM/' task '/' name_ana '/sub-obese*'];
 
-subjX = dir(control);
-%subjX = dir(obese);
+%subjX = dir(control);
+subjX = dir(obese);
 
 
 
@@ -73,32 +73,27 @@ for i = 1:length(param.task)
     % these names must correspond identically to the names from your ONS*mat.
     param.Cnam{i} = {'ONS.onsets.CS.CSp',...%1
         'ONS.onsets.CS.CSm',...%2
-        'ONS.onsets.CS.Baseline',...%3
-        'ONS.onsets.ITI'};%4      %'ONS.onsets.grips',...%5
+        'ONS.onsets.CS.Baseline'};
     
     % duration of the blocks (if events, put '0'). Specify it for each condition of each session
     % the values must be included in your onsets in seconds
     param.duration{i} = {'ONS.durations.CS.CSp',...
         'ONS.durations.CS.CSm',...
-        'ONS.durations.CS.Baseline',...
-        'ONS.durations.ITI'};         %'%ONS.durations.grips',...
+        'ONS.durations.CS.Baseline'};      
     
     % parametric modulation of your events or blocks (ex: linear time, or emotional value, or pupillary size, ...)
     % If you have a parametric modulation
     param.modulName{i} = {'none',...%1
         'none',...%2
-        'none',...%3
         'none'};    
     
     param.modul{i} = {'none',...%1
         'none',... %2
-        'none',... %3
         'none'};
     
     % value of the modulators, If you have a parametric modulation
     param.time{i} = {'0',... %1
         '0',... %2
-        '0',... %3
         '0'};
     
 end
@@ -107,15 +102,15 @@ end
 %subj = subj([91],:); %60 -> 233 234 91 -> 269
 
 for i = 1:length(subj)
-    %i = i + 33 for third
-    if i == 39 %fails at 242 ?? for second
-        continue
-    end
+   
+    %if i = i + 33 for third
+       % continue
+    %end
     
     
     %subjT       =  [group subj{i}];
     if cluster
-        subjT  = subj;
+        subjT = subj;
     else
         subjT = subj(i).name;
     end
@@ -189,7 +184,7 @@ end
             
             taskX = char(param.task(ses));
             smoothfolder       = [subjfuncdir '/func'];
-            targetscan         = dir (fullfile(smoothfolder, ['*' taskX '*smoothBold*' param.im_format]));
+            targetscan         = dir (fullfile(smoothfolder, ['sub*' taskX '*smoothBold*' param.im_format]));
             tmp{ses}           = spm_select('List',smoothfolder,targetscan.name);
 
             % get the number of EPI for each session
@@ -321,7 +316,7 @@ end
 %         end
         cd([subjoutdir '/output/'])
         
-        SPM.xsDes = length(ONS.onsets.ITI); %or whatever is just to have the number of trials
+        SPM.xsDes = length(ONS.durations.CS.CSm) *3; %or whatever is just to have the number of trials
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % basis functions and timing parameters

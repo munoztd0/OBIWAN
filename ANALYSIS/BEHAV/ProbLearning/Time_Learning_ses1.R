@@ -17,7 +17,7 @@ task = 'PBlearning'
 
 # Set working directory #change here if the switchdrive is not on your home folder
 analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV') 
-figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV') 
+figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV/T0') 
 
 setwd(analysis_path)
 
@@ -86,11 +86,51 @@ bf = ttestBF(formula = n ~ Group, data = df)
 bf <- recompute(bf, iterations = 50000)
 bf
 
-ggplot(df, aes(x = n, fill = Group)) +
-  #geom_histogram() + # two-sample t-test results in an expression
-  geom_density(alpha = 0.5) +
-  xlim(range(df$n)+ c(-10, 0.02)) +
-  labs(subtitle = bf_two_sample_ttest(df, Group, n, output = "alternative"), x ='trials') 
+
+# plot --------------------------------------------------------------------
+
+
+pal= "#21908CFF" # add color
+pal[2] = "black" # add one
+
+
+averaged_theme <- theme_bw(base_size = 32, base_family = "Helvetica")+
+  theme(strip.text.x = element_text(size = 32, face = "bold"),
+        strip.background = element_rect(color="white", fill="white", linetype="solid"),
+        legend.position=c(.9,.9),
+        plot.subtitle  = element_text(size = 14),
+        legend.text  = element_text(size = 10),
+        legend.key = element_rect(fill = "transparent", colour = "transparent"),
+        panel.grid.major.x = element_blank() ,
+        panel.grid.major.y = element_line(size=.2, color="lightgrey") ,
+        panel.grid.minor = element_blank(),
+        axis.title.x = element_text(size = 30),
+        axis.title.y = element_text(size =  30),
+        axis.line = element_line(size = 0.5),
+        panel.border = element_blank())
+
+mod = lm(formula = n ~ Group, data = df)
+plot = interactions::cat_plot(mod, pred = Group, modx = Group, geom = "bar", interval = T, plot.points = TRUE)
+
+ppp = plot + labs(x ='', y ='Trials to achieve criterion') + 
+  scale_color_manual(name = "", labels=c("Lean", "Obese"), values=c("C" = pal[2],"O"=pal[1]), guide = 'none') + 
+  scale_fill_manual(name = "", labels=c("Lean", "Obese"), values=c("C" = pal[2],"O"=pal[1]), guide = 'none')  + scale_x_discrete(labels=c("Lean", "Obese")) + theme_bw() + averaged_theme
+ppp
+
+
+
+ppp = ggplot(df, aes(x = n, fill = Group, color = Group)) +
+  geom_rug() +
+  geom_density(alpha = 0.5, color = "black") + labs(subtitle = tidyBF::bf_two_sample_ttest(df, Group, n, output = "alternative"), x ='Trials to achieve criterion', y ='Density')  + 
+  scale_color_manual(name = "", labels=c("Lean", "Obese"), values=c("C" = pal[2],"O"=pal[1])) + 
+  scale_fill_manual(name = "", labels=c("Lean", "Obese"), values=c("C" = pal[2],"O"=pal[1])) + averaged_theme
+ppp
+
+
+cairo_pdf(file.path(figures_path,'Figure_learningXtrials.pdf'))
+print(ppp)
+dev.off()
+
 
 #frequentist
 classical.test = t.test(control$n, obese$n, var.eq = FALSE)

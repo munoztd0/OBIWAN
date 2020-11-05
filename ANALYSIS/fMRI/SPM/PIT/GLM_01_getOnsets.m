@@ -21,7 +21,7 @@ mdldir        = fullfile (homedir, '/DERIVATIVES/GLM/SPM');
 sourcefiles   = fullfile(homedir, '/DERIVATIVES/PREPROC');
 addpath (genpath(fullfile(homedir,'/CODE/ANALYSIS/fMRI/dependencies')));
 
-ana_name      = 'GLM-01_HW';
+ana_name      = 'GLM-01_OB';
 task          = {'PIT'}; 
 
 
@@ -32,7 +32,7 @@ controlX = dir(control);
 obeseX = dir(obese);
 
 %subj = controlX; 
-subj = vertcat(controlX); %, controlX);
+subj = vertcat(obeseX); %, controlX);
 
 session = {'second'};
 
@@ -134,13 +134,7 @@ for j = 1:length(task)
         modulators.CS.Baseline = BEHAVIOR.AUC(strcmp ('BL', CONDITIONS.CS))';
         
         
-       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Get onsets and durations for ITI
-        
-        onsets.ITI          = ONSETS.ITI;
-        durations.ITI          = DURATIONS.ITI;
-        modulators.ITI           = ones  (length(onsets.ITI),1);
-        
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Get onsets grips
         %change here
@@ -161,7 +155,7 @@ for j = 1:length(task)
         
         % create text file with 3 colons: onsets, durations, paretric modulators
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        name = { 'CS';  'ITI'; 'grips'; 'peaks'};
+        name = { 'CS'; 'grips'; 'peaks'};
         
         for ii = 1:length(name)
             

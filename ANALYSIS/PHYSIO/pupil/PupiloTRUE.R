@@ -1,17 +1,17 @@
 
 # PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
-   install.packages("pacman")
-   library(pacman)
- }
-pacman::p_load(tidyverse, dplyr, plyr, zoo, PupillometryR, BayesFactor, mgcv, Rmisc, itsadug)
+  install.packages("pacman")
+  library(pacman)
+}
+pacman::p_load(tidyverse, dplyr, plyr, zoo, PupillometryR, BayesFactor, mgcv, Rmisc, itsadug, R.utils)
 
 # SETUP ------------------------------------------------------------------
 task = 'PAV_pup'
 
 # Set working directory
 analysis_path <- file.path('~/OBIWAN/DERIVATIVES/BEHAV') 
-figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV') 
+figures_path  <- file.path('~/OBIWAN/DERIVATIVES/FIGURES/BEHAV/T0') 
 setwd(analysis_path)
 
 group_pav <- read_delim(file.path(analysis_path,'PAV_pup.txt'), "\t")
@@ -53,21 +53,21 @@ data = data %>% filter(timeO < 12000)
 data = select(data, c(ID, trial,  timeO,  marker, pupil, condition, group))
 
 #save RData for cluster computing
-save.image(file = "PAV_pup.RData", version = NULL, ascii = FALSE, compress = FALSE, safe = TRUE)
+# save.image(file = "PAV_pup.RData", version = NULL, ascii = FALSE, compress = FALSE, safe = TRUE)
 
 pupil_data = data 
 
 #Check that IDs are not numeric
 pupil_data$ID <- as.factor(pupil_data$ID)
 
-  
+
 
 Sdata <- make_pupillometryr_data(data = pupil_data,
-                  subject = ID,
-                        trial = trial,
-                         time = timeO,
-                          condition = condition,
-                          other = group) #c(group, marker))
+                                 subject = ID,
+                                 trial = trial,
+                                 time = timeO,
+                                 condition = condition,
+                                 other = group) #c(group, marker))
 
 Sdata = filter(Sdata, condition != 64)
 
@@ -75,9 +75,9 @@ Sdata$condition = as.factor(Sdata$condition)
 
 #check this 
 mean_data <- downsample_time_data(data = Sdata,
-                               pupil = pupil,
-                         timebin_size = 50,
-                           option = 'median')
+                                  pupil = pupil,
+                                  timebin_size = 50,
+                                  option = 'median')
 
 plot(mean_data, pupil = pupil, group = 'condition')
 
@@ -95,25 +95,25 @@ plot(mean_data, pupil = pupil, group = 'condition')
 
 # hanning filtering the data c("median", "hanning", "lowpass") # check here
 filtered_data <- filter_data(data = mean_data,
-                                  pupil = pupil,
-                                  filter = 'median',
-                                     degree = 11)
+                             pupil = pupil,
+                             filter = 'median',
+                             degree = 11)
 
 plot(filtered_data, pupil = pupil, group = 'condition')
 
 # interpolate across blinks (linear or cubic)
 int_data <- interpolate_data(data = filtered_data,
-                       pupil = pupil,
-                       type = 'linear')
+                             pupil = pupil,
+                             type = 'linear')
 
 plot(int_data, pupil = pupil, group = 'subject')
 
 #Baselining #its the data is a powerful way of making sure we control for between-participant variance of average pupil size. If we are looking at analyses that are largely within-subject, as we do here, this may not be such an issue, but we will do this anyway. This function allows us to baseline to the mean pupil size within a time window. Here we are just taking the first 100ms of the trial. If your baseline period is just outside of your analysis window (which it often will be), you can use subset_data() to remove that after baselining.
 #check
 base_data <- baseline_data(data = int_data,
-                          pupil = pupil,
-                          start = -100,
-                        stop = 0)
+                           pupil = pupil,
+                           start = -100,
+                           stop = 0)
 
 plot(base_data, pupil = pupil, group = 'condition')
 
@@ -129,15 +129,25 @@ bst1 = summarySE(base_data, measurevar="pupil", groupvars=c("condition", "Timebi
 bst1$Timebin = bst1$Timebin * 50
 bst1$condition = revalue(bst1$condition, c("32"="CS+", "16"="CS-")) #, "64" ="Baseline"
 
+pal = viridis::inferno(n=5) # specialy conceived for colorblindness
+pal[6] = "#21908CFF" # add one
+
 SE_plot <- ggplot(bst1)+
   aes(Timebin, pupil, linetype=condition, color=condition) + 
   stat_summary(fun = "mean", geom = "line", size = 1) + 
   theme_bw() +
-  labs(x = "Time (ms)",y = "Pupil Dilation") + #(change from baseline (a.u.)
+  labs(x = "Time (ms)",y = "Change in Pupil size (au)") + #(change from baseline (a.u.)
   #geom_hline(yintercept=0.0) + 
-  geom_ribbon(aes(ymin = pupil - se, ymax = pupil + se), alpha = 0.1) 
+  geom_ribbon(aes(ymin = pupil - se, ymax = pupil + se), alpha = 0.1) +
+  scale_color_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), name = 'Condition') + 
+  scale_linetype_manual(values=c("CS+"= 1, "CS-"= 2), guide = 'none')
 
-SE_plot
+ppp <- SE_plot + theme_bw() + theme(strip.background = element_rect(fill="white"))
+ppp
+
+cairo_pdf(file.path(figures_path,'Figure_pupil.pdf'))
+print(ppp)
+dev.off()
 
 
 bst = summarySE(base_data, measurevar="pupil", groupvars=c("ID","condition", "Timebin"), na.rm = TRUE)
@@ -156,21 +166,30 @@ bst$ID = as.factor(bst$ID)
 
 bst$condition = revalue(bst$condition, c("32"="CS+", "16"="CS-"))
 
-bst$Timebin = bst$Timebin * 100
-
 bst2 = summarySE(bst, measurevar="pupil", groupvars=c("group", "condition", "Timebin"), na.rm = TRUE)
-
+bst2$Timebin = bst2$Timebin * 50
+labels <- c("control" = "Lean", "obese" = "Obese")
 
 SE2_plot <- ggplot(bst2)+
-  aes(Timebin, pupil, linetype=condition, color=condition) + 
+  aes(Timebin, pupil, linetype=condition, color=condition, fill = condition) + 
   stat_summary(fun = "mean", geom = "line", size = 1) + 
   theme_bw() +
-  labs(x = "Time (ms)",y = "Pupil Dilation") + #(change from baseline (a.u.)
+  labs(x = "Time (ms)",y = "Change in Pupil size (au)") + #(change from baseline (a.u.)
   geom_hline(yintercept=0.0) + 
   geom_ribbon(aes(ymin = pupil - se, ymax = pupil + se), alpha = 0.1) + 
-  facet_wrap(~group)
+  facet_wrap(~group, labeller=labeller(group = labels)) + 
+  scale_color_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), name = 'Condition')+
+  scale_fill_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), name = 'Condition')+
+  scale_linetype_manual(values=c("CS+"= 1, "CS-"= 2), guide = 'none')+ 
+  scale_x_continuous(breaks = c(seq.int(0,12000, by = 2000)), limits = c(-100,12000))
 
-SE2_plot
+
+ppp <- SE2_plot + theme_bw() + theme(strip.background = element_rect(fill="white"), axis.text.x = element_text(angle = 90))
+ppp
+
+cairo_pdf(file.path(figures_path,'Figure_pupilXgroup.pdf'))
+print(ppp)
+dev.off()
 
 
 
@@ -183,28 +202,28 @@ SE2_plot
 # levels(base_data$condition)  = unique(levels(base_data$condition))
 # levels(base_data$condition)
 
-differences <- create_difference_data(data = data_func,pupil = pupil)
+differences <- create_difference_data(data = base_data,pupil = pupil)
 
 #CS+ minus CS-
-plot(differences, pupil = pupil, geom = 'line')
-
+pp = plot(differences, pupil = pupil, geom = 'line')
+pp + scale_x_continuous(breaks = c(seq.int(0,12000, by = 500)), limits = c(-100,12000))
 
 #We can now convert this to a functional data structure, made up of curves. To do this for this data we are going to make it up of cubics (order = 4) with 10 knots (basis = 10).
-spline_data <- create_functional_data(data = differences,
-                                      pupil = pupil,
-                                      basis = 10,
-                                      order = 4)
-
-plot(spline_data, pupil = pupil, geom = 'line', colour = 'blue')
+# spline_data <- create_functional_data(data = differences,
+#                                       pupil = pupil,
+#                                       basis = 10,
+#                                       order = 4)
+# 
+# plot(spline_data, pupil = pupil, geom = 'line', colour = 'blue')
 
 #That looks like it's done a pretty good job capturing the data. The advantage of this kind of analysis is that we can treat each curve as a function, and run a single functional t-test to work out during which window there are divergences. This package allows us to do that directly, and to observe the results.
 
-ft_data <- run_functional_t_test(data = spline_data,
-                                 pupil = pupil,
-                                 alpha = 0.05)
-
-
-plot(ft_data, show_divergence = T, colour = 'red', fill = 'orange')
+# ft_data <- run_functional_t_test(data = spline_data,
+#                                  pupil = pupil,
+#                                  alpha = 0.05)
+# 
+# 
+# plot(ft_data, show_divergence = T, colour = 'red', fill = 'orange')
 
 
 
@@ -212,11 +231,11 @@ plot(ft_data, show_divergence = T, colour = 'red', fill = 'orange')
 # windowing ---------------------------------------------------------------
 
 window <- create_time_windows(data = base_data, #base_data,
-                            pupil = pupil,
-                            breaks = c(0, 1800, 2500,10000))
+                              pupil = pupil,
+                              breaks = c(-100, 750, 1750, 5000, 6000,11900))
 
 # I only want timewin 3
-timeslot = window %>% filter(Window == 3)
+timeslot = window %>% filter(Window %in% c(2,4))
 
 timeslot$condition = as.factor(timeslot$condition)
 timeslot$condition = revalue(timeslot$condition, c("32"="CS+", "16"="CS-"))
@@ -237,18 +256,73 @@ for (i in  1:length(timeslot$ID)) {
   }
 }
 
-timeslot$Window = timeslot$group #just do that for plotting
 
-plot(timeslot, pupil = pupil, windows = T, geom = 'raincloud')
+#theme
+averaged_theme <- theme_bw(base_size = 32, base_family = "Helvetica")+
+  theme(strip.text.x = element_text(size = 32, face = "bold"),
+        strip.background = element_rect(color="white", fill="white", linetype="solid"),
+        legend.position= 'none',
+        legend.title  = element_text(size = 12),
+        legend.text  = element_text(size = 10),
+        legend.key.size = unit(0.2, "cm"),
+        legend.key = element_rect(fill = "transparent", colour = "transparent"),
+        panel.grid.major.x = element_blank() ,
+        panel.grid.major.y = element_line(size=.2, color="lightgrey") ,
+        panel.grid.minor = element_blank(),
+        axis.title.x = element_text(size = 30),
+        axis.title.y = element_text(size =  30),
+        axis.line = element_line(size = 0.5),
+        panel.border = element_blank())
 
+
+pal = viridis::inferno(n=5) # specialy conceived for colorblindness
+pal[6] = "#21908CFF" # add one
+
+#timeslot$Window = timeslot$group #just do that for plotting
+labels <- c("control" = "Lean", "obese" = "Obese")
+
+#little detour to change defaults of pupillometryR
+source('~/OBIWAN/CODE/ANALYSIS/BEHAV/R_functions/rainclouds.R', echo=TRUE)
+org <- PupillometryR::geom_flat_violin;
+myfct <- geom_flat_violin
+reassignInPackage("geom_flat_violin", pkgName="PupillometryR", myfct);
+
+
+pp = plot(timeslot, pupil = pupil, windows = T, geom = 'raincloud')
+
+ppp = pp + scale_x_discrete(labels=c("Cue", "Stimulus")) +
+  scale_fill_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), name = 'Condition') +
+  scale_color_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), name = 'Condition') +
+  ylab('Change in Pupil size (au)') +
+  theme_bw() + 
+  facet_wrap(~group, labeller=labeller(group = labels))+ 
+  theme(strip.background = element_rect(fill="white"))  +  xlab('Time Window') + averaged_theme
+
+ppp
+
+cairo_pdf(file.path(figures_path,'Figure_time_pupilXgroup.pdf'))
+print(ppp)
+dev.off()
 
 
 # ANOVA -------------------------------------------------------------------
 
-freqAno = summary(aov(pupil ~ condition * group + Error(ID), data = timeslot))
-freqAno
+freqAno = aov(pupil ~ condition * group + Error(ID), data = timeslot)
+summary(freqAno)
 
+p_g = emmeans::emmeans(freqAno, pairwise~ group); p_g
 
+pp = plot(timeslot, pupil = pupil, windows = T, geom = 'raincloud')
+
+ppp = pp + scale_x_discrete(labels=c("Cue", "Stimulus")) +
+  scale_fill_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), name = 'Condition') +
+  scale_color_manual(values=c("CS+"= pal[2], "CS-"=  pal[1]), name = 'Condition') +
+  ylab('Change in Pupil size (au)') +
+  theme_bw() + 
+  facet_wrap(~group, labeller=labeller(group = labels))+ 
+  theme(strip.background = element_rect(fill="white")) 
+
+ppp
 
 bd = summarySE(timeslot, measurevar="pupil", groupvars=c("group", "condition"), na.rm = TRUE)
 
@@ -257,11 +331,9 @@ bd = summarySE(timeslot, measurevar="pupil", groupvars=c("group", "condition"), 
 
 
 
-
-
 timeslots1 <- create_time_windows(data = data_func,
-                                 pupil = pupil,
-                                 breaks = c(0, 1000, 4000, 5000, 8000, 10000))
+                                  pupil = pupil,
+                                  breaks = c(0, 1000, 4000, 5000, 8000, 10000))
 # I only want timewin 2 VS 4
 `%notin%` <- Negate(`%in%`)
 timeslots1 = timeslots1 %>% filter(Window %in% c(2, 4))
@@ -298,8 +370,8 @@ plot(timeslots10, pupil = pupil, windows = T, geom = 'raincloud')
 data_func$cond <- ifelse(data_func$condition == '32', .5, -.5)
 m1 <- bam(pupil ~ s(timeO) +
             s(timeO,  by = cond),
-         data = data_func,
-         family = gaussian)
+          data = data_func,
+          family = gaussian)
 
 summary(m1) # bs model to test
 
@@ -309,13 +381,13 @@ model_data <- data_func
 model_data <- start_event(model_data,column = 'timeO', event = 'Event')
 
 model_data <- droplevels(model_data[order(model_data$ID,
-                                       model_data$trial,
-                                        model_data$timeO),])
+                                          model_data$trial,
+                                          model_data$timeO),])
 m2 <- bam(pupil ~ cond +  s(timeO,  by = cond) + s(timeO, Event, bs = 'fs', m = 1),
-        data = data_func,
-         family = gaussian,
-        discrete = T,
-        AR.start = model_data$start.event, rho = .6)
+          data = data_func,
+          family = gaussian,
+          discrete = T,
+          AR.start = model_data$start.event, rho = .6)
 
 save.image(file = "m2.RData", version = NULL, ascii = FALSE, compress = FALSE, safe = TRUE)
 
