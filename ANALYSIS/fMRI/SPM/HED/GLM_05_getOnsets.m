@@ -1,4 +1,4 @@
-function GLM_01_getOnsets()
+function GLM_05_getOnsets()
 
 % intended for OBIWAN hedonic reactivity task
 
@@ -9,7 +9,7 @@ function GLM_01_getOnsets()
 
 dbstop if error
 clear all
-ana_name      = 'GLM-01_OB';
+ana_name      = 'GLM-05';
 
 %% DEFINE PATH
 
@@ -30,10 +30,10 @@ obese = [homedir '/sub-obese*'];
 controlX = dir(control);
 obeseX = dir(obese);
 
-%subj = controlX;
+subj = controlX;
 subj = obeseX;
 
-%subj = vertcat(controlX, obeseX);
+subj = vertcat(controlX, obeseX);
 
 session = {'second'}; % 'third'};
 
@@ -41,7 +41,7 @@ session = {'second'}; % 'third'};
 mkdir (fullfile (mdldir, char(task), ana_name)); % this is only because we have one task per task
 
 %% extract and save data
-for s = 1:length(session)
+for s = 1:length(session5)
     
     taskX      = char(task(s));
     sessionX  = char(session(s));

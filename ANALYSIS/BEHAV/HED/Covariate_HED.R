@@ -47,6 +47,8 @@ write.table(rew_con_lik_hw, (file.path(path, "rew_con_lik_hw.txt")), row.names =
 
 write.table(mslik, (file.path(path, "rew_lik.txt")), row.names = F, sep="\t")
 write.table(emplik, (file.path(path, "con_lik.txt")), row.names = F, sep="\t")
+write.table(lik, (file.path(path, "HED_covariateT0_Liking.tsv")), row.names = F, sep="\t") 
+
 
 
 

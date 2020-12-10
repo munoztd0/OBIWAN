@@ -1,7 +1,7 @@
 ## R code for FOR PROBA LEARNING TASK OBIWAN
 # last modified on April 2020 by David MUNOZ TORD
 #invisible(lapply(paste0('package:', names(sessionInfo()$otherPkgs)), detach, character.only=TRUE, unload=TRUE))
-
+#TODO do correlatin between parameters
 # PRELIMINARY STUFF ----------------------------------------
 if(!require(pacman)) {
   install.packages("pacman", "devtools")
@@ -14,7 +14,7 @@ if(!require(tidyBF)) {
   library(tidyBF)
 }
 
-pacman::p_load(tidyverse, plyr,dplyr,readr, car, BayesFactor, sjmisc, parallel, effectsize, tidyBF) #whatchout to have tidyBF 0.2.0
+pacman::p_load(tidyverse, plyr,dplyr,readr, car, BayesFactor, sjmisc, parallel, effectsize, tidyBF) #whatchout to have tidyBF 0.3.0
 pacman::p_load_gh("munoztd0/hBayesDM") # your need to install this modfied version of hBayesDM where I implement an alternate model of the PST task 
 
 
@@ -99,10 +99,10 @@ count_trial = dataclean %>% group_by(subjID) %>%tally()
 ### Group Lean
 Lean_data  <- subset(dataclean, Group == 'C')
 #Q-learning via Rescorla-Wagner update rule with one learning speed: αlpha.
-Lean_output1 <- pst_gain_Q(data = Lean_data, niter = 50000, nwarmup = 500, nchain = 4, ncore = 8, nthin = 1, inits = "random", indPars = "mean", modelRegressor = FALSE, vb = FALSE, inc_postpred = FALSE, adapt_delta = 0.95, stepsize = 1, max_treedepth = 10)
+Lean_output1 <- pst_gain_Q(data = Lean_data, niter = 5000, nwarmup = 1000,nchain = 4, ncore = 8,nthin = 1,inits = "random", indPars = "median", modelRegressor = FALSE, vb = T, inc_postpred = FALSE, adapt_delta = 0.95, stepsize = 1, max_treedepth = 10)
 
 #Q-learning via Rescorla-Wagner update rule with two different learning speeds: α-Gain referring to player’s sensitivity to rewards and α-Loose referring to player’s sensitivity to punishments.
-Lean_output2 <- pst_gainloss_Q(data = Lean_data, niter = 50000, nwarmup = 500, nchain = 4, ncore = 8, nthin = 1, inits = "random", indPars = "mean", modelRegressor = FALSE, vb = FALSE, inc_postpred = FALSE, adapt_delta = 0.95, stepsize = 1, max_treedepth = 10)
+Lean_output2 <- pst_gainloss_Q(data = Lean_data, niter = 5000, nwarmup = 1000, nchain = 4, ncore = 8, nthin = 1, inits = "random", indPars = "mean", modelRegressor = FALSE, vb = T, inc_postpred = FALSE, adapt_delta = 0.95, stepsize = 1, max_treedepth = 10)
 
 #BIC; k*ln(n) - 2*logLik
 BIC11 = 2*log(length(Lean_output1$allIndPars$subjID)) - 2*mean(Lean_output1$parVals$log_lik); BIC11
@@ -116,24 +116,24 @@ extract_ic(mod) #check the LOOIC in more details
 plot(mod, type = 'trace', inc_warmup=T) #The trace plots indicate that MCMC samples are indeed well mixed and converged, which is consistent with their R^ values #grey area is the burn in samples
 
 #Visualize individual parameters
-# plotInd(mod, "beta_pos")  
+# plotInd(mod, "alpha_pos")  
 # plotInd(mod, "beta")  
 
 # Check Rhat values (all Rhat values should be less than or equal to 1.1)
 #rhat(mod)
 
 # Plot the posterior distributions of the hyper-parameters (distributions should be unimodal)
-#densityPlot(mod$parVals$mu_beta_pos)
+#densityPlot(mod$parVals$mu_alpha_pos)
 #densityPlot(mod$parVals$mu_beta)
 
 
 ### Group Obese
 Obese_data  <- subset(dataclean, Group == 'O')
 #Q-learning via Rescorla-Wagner update rule with one learning speed: αlpha.
-Obese_output1 <- pst_gain_Q(data = Obese_data, niter = 50000, nwarmup = 500,nchain = 4, ncore = 8,nthin = 1,inits = "random", indPars = "mean", modelRegressor = FALSE, vb = FALSE, inc_postpred = FALSE, adapt_delta = 0.95, stepsize = 1, max_treedepth = 10)
+Obese_output1 <- pst_gain_Q(data = Obese_data, niter = 5000, nwarmup = 1000,nchain = 4, ncore = 8,nthin = 1,inits = "random", indPars = "median", modelRegressor = FALSE, vb = F, inc_postpred = FALSE, adapt_delta = 0.95, stepsize = 1, max_treedepth = 10)
 
 #Q-learning via Rescorla-Wagner update rule with two different learning speeds: α-Gain referring to player’s sensitivity to rewards and α-Loose referring to player’s sensitivity to punishments.
-Obese_output2 <- pst_gainloss_Q(data = Obese_data, niter = 50000, nwarmup = 500, nchain = 4, ncore = 8,nthin = 1,inits = "random", indPars = "mean", modelRegressor = FALSE, vb = FALSE, inc_postpred = FALSE, adapt_delta = 0.95, stepsize = 1, max_treedepth = 10)
+Obese_output2 <- pst_gainloss_Q(data = Obese_data, niter = 5000, nwarmup = 1000, nchain = 4, ncore = 8,nthin = 1,inits = "random", indPars = "mean", modelRegressor = FALSE, vb = T, inc_postpred = FALSE, adapt_delta = 0.95, stepsize = 1, max_treedepth = 10)
 
 #BIC approx ; k*ln(n) - 2*logLik
 BIC12 = 2*log(length(Obese_output1$allIndPars$subjID)) - 2*mean(Obese_output1$parVals$log_lik); BIC12
@@ -146,14 +146,14 @@ extract_ic(mod) #check the LOOIC in more details
 plot(mod, type = 'trace', inc_warmup=T) #The trace plots indicate that MCMC samples are indeed well mixed and converged, which is consistent with their R^ values #grey area is the burn in smaples
 
 #Visualize individual parameters
-# plotInd(mod, "beta_pos")  
+# plotInd(mod, "alpha_pos")  
 # plotInd(mod, "beta")  
 
 # Check Rhat values (all Rhat values should be less than or equal to 1.1)
 #rhat(mod)
 
 # Plot the posterior distributions of the hyper-parameters (distributions should be unimodal)
-#densityPlot(mod$parVals$mu_beta_pos)
+#densityPlot(mod$parVals$mu_alpha_pos)
 #densityPlot(mod$parVals$mu_beta)
 
 

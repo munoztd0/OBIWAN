@@ -1,0 +1,117 @@
+---
+title: OBIWAN BEHAVIORAL ANALYSIS
+author: David Munoz Tord
+date: 2020-12-03
+repro:
+  packages:
+    - aaronpeikert/repro@adb5fa569
+    - apaTables
+    - MBESS
+    - afex
+    - car
+    - ggplot2
+    - dplyr
+    - plyr
+    - tidyr
+    - reshape
+    - Hmisc
+    - Rmisc
+    - ggpubr
+    - ez
+    - gridExtra
+    - plotrix
+    - parallel
+    - emmeans
+    - BayesFactor
+    - effectsize
+    - devtools
+    - misty
+    - bayestestR
+    - lspline
+  scripts:
+    - functions/options.R
+    - functions/clean.R
+    - functions/plots.R
+    - functions/pes_ci.R
+    - functions/LMER_misc_tools.R
+  data:
+    info:   data/info.csv
+    intern: data/internal.csv
+    PAV:    data/PAV.csv
+    INST:   data/INST.csv
+    PIT:    data/PIT.csv
+    HED:    data/HEDONIC.csv
+output: html_document
+---
+
+```{r setup, echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+
+library(repro)
+# load packages from yaml header
+automate_load_packages()
+# include external scripts
+automate_load_scripts()
+# load data 'mycars' (ok it is mtcars...)
+info <- automate_load_data(info, read.csv, stringsAsFactors = T)
+intern <- automate_load_data(intern, read.csv, stringsAsFactors = T)
+PAV <- automate_load_data(PAV, read.csv, stringsAsFactors = T)
+INST <- automate_load_data(INST, read.csv, stringsAsFactors = T)
+PIT <- automate_load_data(PIT, read.csv, stringsAsFactors = T)
+HED <- automate_load_data(HED, read.csv, stringsAsFactors = T)
+```
+
+## Setup
+
+May I suggest running `repro::automate()`? This will create a `Dockerfile` & `Makefile` based on every RMarkdown in this folder and the special yamls in them.
+
+If you are unsure weather or not you have `git` `make` & `docker`.
+
+```{r, eval=T}
+check_git()
+check_make()
+check_docker()
+```
+
+
+```{r clean, echo=F, include=F}
+# see functions/clean.R
+# this chunk (as long as it is empty) runs external
+# code from scripts listed in the YAML
+```
+
+### Demographics
+Summary statistics AGE 
+```{r}
+AGE = ddply(PAV,~group,summarise,mean=mean(age),sd=sd(age), min = min(age), max = max(age)); AGE
+```
+Summary statistics BMI 
+```{r}
+BMI = ddply(PAV,~group,summarise,mean=mean(BMI_t1),sd=sd(BMI_t1), min = min(BMI_t1), max = max(BMI_t1)); BMI
+```
+Summary statistics GENDER (Women = 1, Men = 0)
+```{r}
+GENDER = ddply(PAV, .(id, group), summarise, gender=mean(as.numeric(gender)))  %>%
+  group_by(gender, group) %>%
+  tally(); GENDER #1 = women
+```
+N by groups 
+```{r}
+N_group = ddply(PAV, .(id, group), summarise, group=mean(as.numeric(group)))  %>%
+  group_by(group) %>% tally(); N_group
+```
+
+## Including Plots
+
+```{r plot, echo=FALSE}
+#with(mycars, plot(mpg, hp))
+```
+
+## Including Fancy Plots
+
+```{r fany-plot, echo=FALSE}
+#ggplot(mycars, aes(mpg, hp)) +
+  #geom_point() +
+  #theme_minimal() +
+  #NULL
+```

@@ -94,7 +94,7 @@ for j = 1:length(session)
             end
 
             %missing hedonic sess
-            if strcmp(subjX(end-2:end), '212')
+            if strcmp(subjX(end-2:end), '212') || strcmp(subjX(end-2:end), '114' || strcmp(subjX(end-2:end), '226')
                 continue
             end
         

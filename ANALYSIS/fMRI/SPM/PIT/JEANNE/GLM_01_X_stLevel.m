@@ -10,7 +10,7 @@ cluster = 0;
 %% define task variable
 sessionX = 'second';
 task = 'PIT';
-name_ana = 'GLM-01_HW'; % output folder for this analysis
+name_ana = 'GLM-JEANNE'; % output folder for this analysis
 
 
 %% DEFINE PATH
@@ -19,11 +19,10 @@ cd ~
 home = pwd;
 homedir = [home '/OBIWAN'];
 
-control = [homedir '/DERIVATIVES/GLM/SPM/' task '/' name_ana '/sub-control*'];
-obese = [homedir '/DERIVATIVES/GLM/SPM/' task '/' name_ana '/sub-obese*'];
+control = dir([homedir '/DERIVATIVES/GLM/SPM/' task '/' name_ana '/sub-control*']);
+obese = dir([homedir '/DERIVATIVES/GLM/SPM/' task '/' name_ana '/sub-obese*']);
 
-subjX = dir(control);
-%subjX = dir(obese);
+subjX = obese;
 
 
 
@@ -148,7 +147,7 @@ for i = 1:length(subj)
         cd (fullfile(subjoutdir,'output'))
         
         % copy images T
-        Timages = ['01'; '02'; '03'];% constrasts of interest
+        Timages = ['01'];% constrasts of interest
         for y =1:size(Timages,1)
             copyfile(['con_00' (Timages(y,:)) '.nii'],[groupdir, subjX '_con-00' (Timages(y,:)) '.nii'])
         end
@@ -413,23 +412,29 @@ end
         Ct = []; Ctnames = []; ntask = size(param.task,1);
         
         % | CONSTRASTS FOR T-TESTS
-
         
-        % con1
-        Ctnames{1} = 'CSp';
+                % con6
+        Ctnames{1} = 'CSp_CSm';
         weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
-        Ct(1,:)    = weightPos;
-        
-                     
-        % con2
-        Ctnames{2} = 'CSm';
-        weightPos  = ismember(conditionName, {'task1.CS.CSm'}) * 1;
-        Ct(2,:)    = weightPos;
-        
-        % con3
-        Ctnames{3} = 'Baseline';
-        weightPos  = ismember(conditionName, {'task1.CS.Baseline'})* 1;
-        Ct(3,:)    = weightPos;
+        weightNeg  = ismember(conditionName, {'task1.CS.CSm'})* -1;
+        Ct(1,:)    = weightPos+weightNeg;
+
+%         
+%         % con1
+%         Ctnames{1} = 'CSp';
+%         weightPos  = ismember(conditionName, {'task1.CS.CSp'}) * 1;
+%         Ct(1,:)    = weightPos;
+%         
+%                      
+%         % con2
+%         Ctnames{2} = 'CSm';
+%         weightPos  = ismember(conditionName, {'task1.CS.CSm'}) * 1;
+%         Ct(2,:)    = weightPos;
+%         
+%         % con3
+%         Ctnames{3} = 'Baseline';
+%         weightPos  = ismember(conditionName, {'task1.CS.Baseline'})* 1;
+%         Ct(3,:)    = weightPos;
 %         
 %         % con5
 %         Ctnames{5} = 'CSm_Baseline';

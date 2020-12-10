@@ -21,7 +21,7 @@ mdldir        = fullfile (homedir, '/DERIVATIVES/GLM/SPM');
 sourcefiles   = fullfile(homedir, '/DERIVATIVES/PREPROC');
 addpath (genpath(fullfile(homedir,'/CODE/ANALYSIS/fMRI/dependencies')));
 
-ana_name      = 'GLM-01_HW';
+ana_name      = 'GLM-JEANNE';
 task          = {'PIT'}; 
 
 
@@ -32,7 +32,7 @@ controlX = dir(control);
 obeseX = dir(obese);
 
 subj = controlX; 
-%subj = obeseX; %, vertcat()
+subj = obeseX; %, vertcat()
 
 session = {'second'};
 

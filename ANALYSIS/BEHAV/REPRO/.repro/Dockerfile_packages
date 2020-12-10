@@ -1,0 +1,26 @@
+RUN install2.r --error --skipinstalled \ 
+  afex \ 
+  apaTables \ 
+  BayesFactor \ 
+  bayestestR \ 
+  car \ 
+  devtools \ 
+  dplyr \ 
+  effectsize \ 
+  emmeans \ 
+  ez \ 
+  ggplot2 \ 
+  ggpubr \ 
+  gridExtra \ 
+  Hmisc \ 
+  lspline \ 
+  MBESS \ 
+  misty \ 
+  parallel \ 
+  plotrix \ 
+  plyr \ 
+  reshape \ 
+  Rmisc \ 
+  tidyr
+RUN installGithub.r \ 
+  aaronpeikert/repro@adb5fa569

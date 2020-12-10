@@ -1,3 +1,4 @@
+
 function GLM_04_stLevel(subID)
 
 % compute first level model contrasts reward-control
@@ -28,7 +29,7 @@ obeseX = dir(obese);
 subj = vertcat(controlX, obeseX);
 
 %% What to do
-firstLevel    = 1;
+firstLevel    = 0;
 constrasts    = 0;
 copycontrasts = 0;
 covariates = 0;

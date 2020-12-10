@@ -78,7 +78,6 @@ dflist = mapply(def,tables,listA)
 list2env(dflist, envir=.GlobalEnv)
 
 
-
 # -------------------------------------- themes for plots --------------------------------------------------------
 
 averaged_theme <- theme_bw(base_size = 32, base_family = "Helvetica")+
@@ -116,11 +115,12 @@ scale2 <- function(x, na.rm = TRUE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm) 
 
 
 # Check Demo
+PAV$group = as.numeric(as.factor(PAV$group))
 AGE = ddply(PAV,~group,summarise,mean=mean(age),sd=sd(age), min = min(age), max = max(age))
 BMI = ddply(PAV,~group,summarise,mean=mean(BMI_t1),sd=sd(BMI_t1), min = min(BMI_t1), max = max(BMI_t1))
 GENDER = ddply(PAV, .(id, group), summarise, gender=mean(as.numeric(gender)))  %>%
   group_by(gender, group) %>%
-  tally() #2 = female
+  tally() #1 = women
 
 N_group = ddply(PAV, .(id, group), summarise, group=mean(as.numeric(group)))  %>%
   group_by(group) %>% tally()
@@ -193,19 +193,22 @@ test = anova(main, null, test = 'Chisq')
 #get BF from mixed models see Wagenmakers, 2007
 BF_RT = exp((test[1,2] - test[2,2])/2); BF_RT 
 
-
 ### Get posthoc contrasts pval and CI
 mod <- lmer(formula, data = PAV.clean, control = control, REML = T) # recompute model with REML = T now for further analysis
 
 p_cond = emmeans(mod, pairwise~ condition, side = "<"); p_cond #for condition (CS+ < CS- left sided!)
 CI_cond = confint(emmeans(mod, pairwise~ condition),level = 0.95, method = c("boot"), nsim = 5000); CI_cond$contrasts #get CI condition
 
-inter = emmeans(mod, pairwise~ condition|group, adjust = "tukey", side = "<"); inter$contrasts  #for group X condition (adjusted but still left sided)
-CI_inter = confint(emmeans(mod, pairwise~ condition|group),level = 0.95,method = c("boot"),nsim = 5000); CI_inter$contrasts ##get CI inter
+# inter = emmeans(mod, pairwise~ condition|group, adjust = "tukey", side = "<"); inter$contrasts  #for group X condition (adjusted but still left sided)
+# CI_inter = confint(emmeans(mod, pairwise~ condition|group),level = 0.95,method = c("boot"),nsim = 5000); CI_inter$contrasts ##get CI inter
 
 
 # -------------------------------------- Liking
 # stat regular anova because no repeated measures
+
+PAV.means <- aggregate(PAV.clean$RT, by = list(PAV.clean$id, PAV.clean$condition, PAV.clean$liking, PAV.clean$group), FUN='mean') # extract means
+colnames(PAV.means) <- c('id','condition','liking','group', 'RT')
+
 anova.liking <- aov_car(formula = liking ~ condition*group + Error (id/condition), data = PAV.means, anova_table = list(correction = "GG", es = "pes")); anova.liking
 pes_lik = pes_ci(liking ~ condition*group + Error (id/condition), PAV.means); pes_lik
 
@@ -216,8 +219,7 @@ liking.BF <- anovaBF(liking ~ condition*group + id, data = PAV.means,
 #plot(liking.BF)
 
 # -------------------------------------- PLOT -----------------------------------------------
-PAV.means <- aggregate(PAV.clean$RT, by = list(PAV.clean$id, PAV.clean$condition, PAV.clean$liking, PAV.clean$group), FUN='mean') # extract means
-colnames(PAV.means) <- c('id','condition','liking','group', 'RT')
+
 
 # RT
 dfR <- summarySEwithin(PAV.means,
@@ -329,7 +331,7 @@ null = lmer(paste('grips ~ trial', formu), data = INST, control = control, REML 
 test = anova(main, null, test = 'Chisq')
 
 #get BF from mixed models see Wagenmakers, 2007
-BF_RT = exp((test[1,3] - test[2,3])/2); BF_RT 
+BF_gr = exp((test[1,3] - test[2,3])/2); BF_gr 
 
 
 
@@ -435,6 +437,10 @@ CI_cond = confint(emmeans(mod, pairwise~ condition),level = 0.95, method = c("bo
 
 inter = emmeans(mod, pairwise~ condition|group, adjust = "tukey", side = ">"); inter$contrasts  #for group X condition (adjusted but still right sided)
 CI_inter = confint(emmeans(mod, pairwise~ condition|group),level = 0.95,method = c("boot"),nsim = 5000); CI_inter$contrasts ##get CI inter
+
+
+
+ID <- as.numeric(as.character(rownames(coef(mod)$id))) #get ID names
 
 
 
@@ -718,6 +724,3 @@ print(ppp)
 dev.off()
 
 
-#save RData for cluster computing
-# save.image(file = "OBIWAN.RData", version = NULL, ascii = FALSE,
-#            compress = FALSE, safe = TRUE)
