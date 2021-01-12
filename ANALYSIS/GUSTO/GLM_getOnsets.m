@@ -3,14 +3,14 @@ function GLM_getOnsets()
 % intended for OBIWAN hedonic reactivity task
 
 % get onsets 
-% Simplified model on ONSETs 7 (STARTTRIAL, 2*TASTE with modulator (liking
-% ratings) 3*questions 1 RINSE)
-% last modified on MARCH 2020
+% Simplified model on ONSETs 7 (STARTTRIAL, 2*TASTE,  3*questions 1 RINSE)
+% last modified on MARCH 2021
 
 dbstop if error
 clear all
-ana_name      = 'GLM-01_GUSTO';
-session = {'second'};%{'second'}; %{
+ana_name  = 'GLM_GUSTO';
+session = {'second'};
+
 %% DEFINE PATH
 
 cd ~
@@ -30,8 +30,6 @@ obese = [homedir '/sub-obese*'];
 controlX = dir(control);
 obeseX = dir(obese);
 
-subj = controlX;
-subj = obeseX;
 
 subj = vertcat(controlX, obeseX);
 

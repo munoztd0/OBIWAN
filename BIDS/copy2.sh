@@ -6,21 +6,25 @@ home=$(eval echo ~$user)/OBIWAN
 
 #subjID=$1
 
-#group='control1'
 group='obese2'
-#for subjID in	00 01 02 03	04	05	06	07	08	09	10	11	12	13	14	15 16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	44	45	46	47	48	49	50	51	52	53	54	56	58	59	62	63	64	65	66	67	68	69	70
+for subjID in	33 40 47 58 63 67  10 14 16 19 22 23 #
+#for subjID in 00 01 02 03	04	05	06	07	08	09	10	11	12	13	14	15 16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	44	45	46	47	48	49	50	51	52	53	54	56	58	59	62	63	64	65	66	67	68	69	70
 #second
-for subjID in	28	29	30	31	32	34	35	36	37	38	39	41	44	45	46	48	49	50	51	52	53	54	56	59	62	64	65	66	68	69	70 #	00 01 02 03	04	05	06	07	08	09	11	13	15	17	18	20	21	24	25	26	27
+#for subjID in	00 01 02 03	04	05	06	07	08	09	11	13	15	17	18	20	21	24	25	26	27 28	29	30	31	32	34	35	36	37	38	39	41	44	45	46	48	49	50	51	52	53	54	56	59	62	64	65	66	68	69	70 #	
 #third
-#for subjID in 22 #00 01 02 03	05	06	07	08	09	10 12	13	14	15	16	18	19	20	21 22 23	24	25	26	27	28	29	30	31	32	33 #
+#group='control1'
+#for subjID in 00 01 02 03	05	06	07	08	09	10 12	13	14	15	16	18	19	20	21 22 23	24	25	26	27	28	29	30	31	32	33 #
 #control
   do 
-  for ses in third #second # 
+  for ses in second # third
     do
-      rm ${home}/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-${ses}/func/*bold.nii
-      for file in ${home}/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-${ses}/func/*unsmoothedBold*; do cp -f $file ${file//unsmoothedBold/QC_bold} ; done
+      for file in ${home}/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-${ses}/func/*pavlovianlearning*; do mv -f $file ${file//pavlovianlearning/inst} ; done 
   done
 done
+
+      #rm ${home}/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-${ses}/func/*bold.nii
+      #for file in ${home}/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-${ses}/func/*unsmoothedBold*; do cp -f $file ${file//unsmoothedBold/QC_bold} ; done
+     
 
     # # input directory containing unsmoothed data
     # FILE=/home/OBIWAN/DERIVATIVES/PREPROC/sub-${group}${subjID}/ses-${ses}/func/sub-${group}${subjID}_ses-${ses}_task-pav_smoothBold.nii

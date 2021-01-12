@@ -1,4 +1,4 @@
-function GLM_01_X_stLevel(subID)
+function GLM_stLevel(subID)
 
 % compute first level model contrasts reward-control
 % no PM -> covariate 2nd level
@@ -11,16 +11,14 @@ dbstop if error
 %% What to do
 firstLevel    = 1;
 constrasts    = 1;
-covariate     = 1;
 copycontrasts = 1;
 
 
 %% define task variable
 sessionX = 'second';
-COVA    = 'covariateT0';
 task = 'hedonicreactivity';
-name_ana = 'GLM-01_0'; % output folder for this analysis
-cluster = 0;
+name_ana = 'GLM_GUSTO'; % output folder for this analysis
+
 %% DEFINE PATH
 cd ~
 home = pwd;
@@ -29,16 +27,10 @@ homedir = [home '/OBIWAN'];
 control = [homedir '/DERIVATIVES/GLM/SPM/' task '/' name_ana '/sub-control*'];
 obese = [homedir '/DERIVATIVES/GLM/SPM/' task '/' name_ana '/sub-obese*'];
 
-%subjX = dir(control);
-subjX = dir(obese);
+controlX = dir(control);
+obeseX = dir(obese);
 
-
-if cluster
-    subj  = subID;
-else
-    subj = subjX;
-end
-
+subj = vertcat(controlX, obeseX);
 
 funcdir  = fullfile(homedir, '/DERIVATIVES/PREPROC');% directory with  post processed functional scans
 mdldir   = fullfile (homedir, '/DERIVATIVES/GLM/SPM', task);% mdl directory (timing and outputs of the analysis)
@@ -117,15 +109,7 @@ end
 %% apply design for first level analysis for each participant
 
 for i = 1:length(subj)
-    %%i == 10 || i == 13 || i == 15 ||
-    if  i == 18 || i == 21 || i == 22 || i == 30 %i == 36 || i == 41 || i == 49 || i == 52 || i == 56 
-        x =1;
-    else
-        continue
-    end
-    subj(i).name
-    subjT = subj(i).name;
-    %subjT       =  [group subj{i}];
+
 
     % participant's specifics
     subjX = char(subjT);
@@ -152,10 +136,6 @@ for i = 1:length(subj)
         doContrasts(subjoutdir,param, SPM);
     end
 
-    %%%%%%%%%%%%%%%%%%%%%%%  DO COVARIATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if covariate == 1
-        doCovariate(subjoutdir,param, SPM, homedir, subjT, COVA);
-    end
 
     %%%%%%%%%%%%%%%%%%%%% COPY CONSTRASTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      if copycontrasts == 1
@@ -168,14 +148,7 @@ for i = 1:length(subj)
         for ii = 1:length(list_dir)
             copyfile(list_dir(ii).name, [groupdir, subjX '_' list_dir(ii).name])
         end
-        
-        
-%         list_dir = dir(fullfile(subjoutdir,'output', 'ess*'));
-%         list_files = '';
-%         for iii = 1:lencovariate0     = 1;gth(list_dir)
-%             copyfile(list_dir(iii).name, [groupdir,  subjX '_' list_dir(iii).name])
-%         end
-        
+          
         display('contrasts copied!');
         
     end
@@ -311,13 +284,6 @@ end
             SPM.Sess(ses).C.C = [];
             SPM.Sess(ses).C.name = {};
 
-            %movement
-%                         targetfile         = dir (fullfile(smoothfolder, ['rp_*' taskX '*.txt']));
-%
-%                         fn = spm_select('List',smoothfolder,targetfile.name);% path
-%                         [r1,r2,r3,r4,r5,r6] = textread([smoothfolder '/' fn(1,:)],'%f%f%f%f%f%f'); % path
-%                         SPM.Sess(ses).C.C = [r1 r2 r3 r4 r5 r6];
-%                         SPM.Sess(ses).C.name = rnam;
         end
 
 
@@ -426,82 +392,17 @@ end
         % | CONSTRASTS FOR T-TESTS
         
         % con1
-        Ctnames{1} = 'reward';
+        Ctnames{1} = 'reward_control';
         weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 1;
-        Ct(1,:)    = weightPos;
+        weightNeg  = ismember(conditionName, {'task1.taste.control'}) * -1;
+        Ct(1,:)    = weightPos + weightNeg;
         
-        % con2
-        Ctnames{2} = 'neutral';
-        weightPos  = ismember(conditionName, {'task1.taste.control'}) * 1;
-        Ct(2,:)    = weightPos;
-        
-%                 % con
-%         Ctnames{3} = 'reward-neutral';
-%         weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 1;
-%         weightNeg  = ismember(conditionName, {'task1.taste.control'})* -1;
-%         Ct(3,:)    = weightPos+weightNeg;
-%        
-%         
-%         % con
-%         Ctnames{4} = 'reward-ALL';
-%         weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 2;
-%         weightNeg  = ismember(conditionName, {'task1.taste.control', 'task1.rinse'})* -1;
-%         Ct(4,:)    = weightPos+weightNeg;
-%         
-%          % con
-%         Ctnames{5} = 'TasteNoTaste';
-%         weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 1;
-%         weightNeg  = ismember(conditionName, {'task1.rinse'}) * -2;
-%         Ct(5,:)    = weightPos+weightNeg;
-        
-
-%         % con3
-%         Ctnames{3} = 'mod.reward';
-%         weightPos  = ismember(conditionName, {'task1.taste.rewardxliking^1'}) * 1;
-%         Ct(3,:)    = weightPos;
-% 
-%         % con4
-%         Ctnames{4} = 'mod.control';
-%         weightPos = ismember(conditionName, {'task1.taste.controlxliking^1'})* -1;
-%         Ct(4,:)    = weightPos;
-%         
-%         % con2
-%         Ctnames{2} = 'overaLiquid';
-%         weightPos  = ismember(conditionName, {'task1.taste.reward', 'task1.taste.control', 'task1.rinse'}) * 1;
-%         Ct(2,:)    = weightPos;
-%         
-
-
-
-%         
-%         % con4 
-%         Ctnames{4} = 'question_presence';
-%         weightPos  = ismember(conditionName, {'task1.liking', 'task1.intensity', 'task1.familiarity'}) * 1;
-%         Ct(4,:)    = weightPos;
-%         
-%         
-%         % con5
-%         Ctnames{5} = 'reward-ALL';
-%         weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 2;
-%         weightNeg  = ismember(conditionName, {'task1.taste.control', 'task1.rinse'})* -1;
-%         Ct(5,:)    = weightPos+weightNeg;
-%         
+       
         % define F constrasts
         %------------------------------------------------------------------
         Cf = []; Cfnames = [];
         
-%         Cfnames{end+1} = 'F_task1';
-%         Ftask1 = [1 0 0 0 0 0 0 0 0 0 0 0 0    %1 CS.plus
-%             0 1 0 0 0 0 0 0 0 0 0 0 0    %2 CS.minus
-%             0 0 1 0 0 0 0 0 0 0 0 0 0    %3 ANT.plus
-%             0 0 0 1 0 0 0 0 0 0 0 0 0    %4 ANT.minus
-%             0 0 0 0 1 0 0 0 0 0 0 0 0   %5 US
-%             0 0 0 0 0 1 0 0 0 0 0 0 0    %6 reward presnece
-%             0 0 0 0 0 0 1 0 0 0 0 0 0];   %7 right modulator
-%         
-%         
-%         Cf = repmat(Ftask1,1,ntask);
-%         
+  
         % put the contrast matrix
         %------------------------------------------------------------------
         
@@ -511,11 +412,6 @@ end
             jobs{1}.stats{1}.con.consess{icon}.tcon.convec = Ct(icon,:);
         end
         
-        % F constrats
-%         for iconf = 1:1 % until the number of F constrast computed
-%             jobs{1}.stats{1}.con.consess{iconf+icon}.fcon.name = Cfnames{iconf};
-%             jobs{1}.stats{1}.con.consess{iconf+icon}.fcon.convec = Cf(iconf);
-%         end
         
         
         % task the job
@@ -524,34 +420,6 @@ end
         disp ('contrasts created!')
     end
 
-    function [] = doCovariate(subjoutdir, param, SPM, Dpath, subj, COVA)
-
-        % Import the data
-        REWARD  = tdfread([Dpath '/DERIVATIVES/BEHAV/HED_' COVA '_REWARD.tsv'], '\t');
-        CONTROL = tdfread([Dpath '/DERIVATIVES/BEHAV/HED_' COVA '_CONTROL.tsv'], '\t');
-        %REWARD.x0x22id0x22 = num2str(REWARD.x0x22id0x22);
-        IDX = strcmp(REWARD.x0x22id0x22(:), subj(end-2:end));
-        %IDX = strcmp(REWARD.x0x22id0x22, subj(end-2:end));
-        rew_cov = REWARD.x0x22lik0x22(IDX);
-        con_cov = CONTROL.x0x22lik0x22(IDX);
-        
-
-       HeaderInfo = spm_vol('con_0001.nii');
-       vol1 = spm_read_vols(HeaderInfo);
-       cof1 = vol1 .* rew_cov;
-       HeaderInfo.fname = ['con_0003.nii'];  % This is where you fill in the new filename
-       HeaderInfo.private.dat.fname = HeaderInfo.fname;
-       spm_write_vol(HeaderInfo,cof1);
-       
-       HeaderInfo = spm_vol('con_0002.nii');
-       vol2 = spm_read_vols(HeaderInfo);
-       cof2 = vol2 .* con_cov;
-       HeaderInfo.fname = ['con_0004.nii'];  % This is where you fill in the new filename
-       HeaderInfo.private.dat.fname = HeaderInfo.fname;
-       spm_write_vol(HeaderInfo,cof2);
-
-
-    end
 
 
 

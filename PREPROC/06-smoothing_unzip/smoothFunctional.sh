@@ -16,8 +16,8 @@ outDir=/home/OBIWAN/DATA/STUDY/CLEAN/sub-${subjectID}/ses-${sessionID}/func/
 funcDav=/home/OBIWAN/DERIVATIVES/PREPROC/sub-${subjectID}/ses-${sessionID}/func/
 
 # make subject level directories
-mkdir -p ${outDir}
-mkdir -p ${funcDav}
+##mkdir -p ${outDir}
+#mkdir -p ${funcDav}
 
 funcImage=filtered_func_data_clean_unwarped_Coreg.nii.gz
 
@@ -35,18 +35,18 @@ echo "Smoothing functionals for subject ${subjectID}, session ${sessionID}, task
 
 # kernel gauss takes the sigma (not the pixel FWHM) = sigma*2.3548
 fslmaths ${funcDir}${funcImage} -kernel gauss ${smoothKern} -fmean ${outDir}sub-${subjectID}_ses-${sessionID}_task-${taskID}_smoothBold
+echo "Done smoothing functionals for subject ${subjectID}, session ${sessionID}, task ${taskID} at $(date +"%T")"
+
 
 # copy smoothed functionals to funcDav
 cp ${outDir}sub-${subjectID}_ses-${sessionID}_task-${taskID}_smoothBold.nii.gz  ${funcDav}sub-${subjectID}_ses-${sessionID}_task-${taskID}_smoothBold.nii.gz
 
-echo "Done smoothing functionals for subject ${subjectID}, session ${sessionID}, task ${taskID} at $(date +"%T")"
-
-
 echo "Expanding functionals for subject ${subjectID}, session ${sessionID}, task ${taskID} at $(date +"%T")"
 
-# unzip for use in SPM
-gunzip -f ${outDir}sub-${subjectID}_ses-${sessionID}_task-${taskID}_smoothBold.nii.gz
-
 gunzip -f ${funcDav}sub-${subjectID}_ses-${sessionID}_task-${taskID}_smoothBold.nii.gz
+# unzip for use in SPM
+
+#gunzip -f ${outDir}sub-${subjectID}_ses-${sessionID}_task-${taskID}_smoothBold.nii.gz
 
 echo "Done expanding functionals for subject ${subjectID}, session ${sessionID}, task ${taskID} at $(date +"%T")"
+

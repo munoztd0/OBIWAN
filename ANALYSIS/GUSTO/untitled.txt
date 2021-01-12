@@ -1,0 +1,35 @@
+# cluster correction using (AFNI_20.1.17)
+1) make sure that you have the residual files from each subject (checking "write residuals"on the "estimation" step) e.g Res_0001.nii
+#e.g. matlabbatch{2}.spm.stats.fmri_est.write_residuals = 1;
+
+2) concatenate the Res files
+fslmerge -t Res_4D.nii.gz Res*
+
+3) estimate spatial smoothness #with roi mask
+3dFWHMx -acf smooth.txt -mask mask.nii Res_4D.nii
+# the ouput will look lik this :
+
+# ++start ACF calculations out to radius = 36.46 mm
+# +ACF done (0.74 CPU s thus far)
+# 0  0  0    0
+#  0.524543  7.16007  16.9124
+
+# you want the 3 first number of the second row (updated estimate of the smoothness)
+
+4) run simulations with roi mask
+3dClustSim -acf 0.524543  7.16007  16.9124 -mask mask.nii -athr 0.05 -pthr 0.001
+
+#OUR DATA CLUSTER THRESHOLD
+
+# 2-sided thresholding
+# Grid: 61x73x51 3.00x3.00x3.60 mm^3 (59699 voxels in mask)
+#
+# CLUSTER SIZE THRESHOLD(pthr,alpha) in Voxels
+# -NN 1  | alpha = Prob(Cluster >= given size)
+#  pthr  | .05000
+# ------ | ------
+ 0.001000    48.8
+
+
+
+

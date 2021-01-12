@@ -30,10 +30,14 @@ standardAnatDir=/home/OBIWAN/DERIVATIVES/EXTERNALDATA/CANONICALS/
 codeDir=/home/OBIWAN/ANALYSIS/fsl_scripts/preproc/fsl_ANTS/
 fixedT1=CIT168_T1w_MNI
 fixedT2=CIT168_T2w_MNI
-echo "Running Flirt to downsample T1 & T2 $(date +"%T")"
-flirt -ref ${standardAnatDir}${fixedT1} -in ${standardAnatDir}${fixedT1} -out ${standardAnatDir}${fixedT1}_lowres -applyisoxfm 2.5 -omat ${standardAnatDir}${fixedT1}_lowres.mat
-flirt -ref ${standardAnatDir}${fixedT2} -in ${standardAnatDir}${fixedT2} -out ${standardAnatDir}${fixedT2}_lowres -applyisoxfm 2.5 -omat ${standardAnatDir}${fixedT2}_lowres.mat
-echo "Done Flirt to downsample T1 & T2 $(date +"%T")"
+
+#these line will run only once (cannot owerwrite same name file)
+echo "Running 3dresample to downsample T1 & T2 $(date +"%T")"
+3dresample -dxyz 3.0 3.0 3.6 -input ${standardAnatDir}${fixedT1}.nii.gz -prefix ${standardAnatDir}${fixedT1}_lowres.nii.gz
+3dresample -dxyz 3.0 3.0 3.6 -input ${standardAnatDir}${fixedT2}.nii.gz -prefix ${standardAnatDir}${fixedT2}_lowres.nii.gz
+#flirt -ref ${standardAnatDir}${fixedT1} -in ${standardAnatDir}${fixedT1} -out ${standardAnatDir}${fixedT1}_lowres -applyisoxfm 3.0 -omat ${standardAnatDir}${fixedT1}_lowres.mat
+#flirt -ref ${standardAnatDir}${fixedT2} -in ${standardAnatDir}${fixedT2} -out ${standardAnatDir}${fixedT2}_lowres -applyisoxfm 3.0 -omat ${standardAnatDir}${fixedT2}_lowres.mat
+echo "Done 3dresample to downsample T1 & T2 $(date +"%T")"
 
 
 #############
