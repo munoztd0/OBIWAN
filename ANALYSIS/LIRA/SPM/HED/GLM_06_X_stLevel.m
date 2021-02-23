@@ -1,7 +1,7 @@
-function GLM_01_X_stLevel(subID)
+function GLM_06_X_stLevel(subID)
 
-% compute first level model contrasts reward-control
-% no PM -> covariate 2nd level
+% get onsets for model with change and improvement and liking and intesity as 1st level modulator
+% Model on ONSETs (start, taste + tasteless air + 3*questions + rinse(control))
 
 dbstop if error
 
@@ -9,17 +9,14 @@ dbstop if error
 %subj       =   %subID;
 
 %% What to do
-firstLevel    = 1;
-constrasts    = 1;
-covariate     = 1;
+firstLevel    = 0;
+constrasts    = 0;
 copycontrasts = 1;
-
 
 %% define task variable
 sessionX = 'second';
-COVA    = 'covariateT0';
 task = 'hedonicreactivity';
-name_ana = 'GLM-01_OB'; % output folder for this analysis
+name_ana = 'GLM-06_0'; % output folder for this analysis
 cluster = 0;
 %% DEFINE PATH
 cd ~
@@ -67,19 +64,24 @@ for i = 1:length(param.task)
     % Specify each conditions of your desing matrix separately for each session. The sessions
     % represent a line in Cnam, and the conditions correspond to a item in the line
     % these names must correspond identically to the names from your ONS*mat.
-    param.Cnam{i} = {'ONS.onsets.trialstart',... %1
-        'ONS.onsets.taste.reward',...%2
-        'ONS.onsets.taste.control',...%3
-        'ONS.onsets.liking',...%4
-        'ONS.onsets.intensity',...%5
-        'ONS.onsets.familiarity',...%6
-        'ONS.onsets.rinse'};%7
+    param.Cnam{i} = {'start',... %1
+        'taste',...%2
+        'Qliking',...%3
+        'Qintensity',...%4
+        'Qfamiliarity',...%5
+        'rinse'};%6
+    
+        param.onset{i} = {'ONS.onsets.trialstart',... %1
+        'ONS.onsets.taste.conc',...%2
+        'ONS.onsets.liking',...%3
+        'ONS.onsets.intensity',...%4
+        'ONS.onsets.familiarity',...%5
+        'ONS.onsets.rinse'};%6
     
     % duration of the blocks (if events, put '0'). Specify it for each condition of each session
     % the values must be included in your onsets in seconds
     param.duration{i} = {'ONS.durations.trialstart',...
-        'ONS.durations.taste.reward',...
-        'ONS.durations.taste.control',...
+        'ONS.durations.taste.conc',...
         'ONS.durations.liking',...
         'ONS.durations.intensity',...
         'ONS.durations.familiarity',...
@@ -88,28 +90,25 @@ for i = 1:length(param.task)
     % parametric modulation of your events or blocks (ex: linear time, or emotional value, or pupillary size, ...)
     % If you have a parametric modulation
     param.modulName{i} = {'none',...%1
-        'none',...%2
+        'multiple',...%2
         'none',...%3
         'none',...%4
         'none',...%5
-        'none',...
         'none'};
     
     param.modul{i} = {'none',...%1
-        'none',... %2
+        'ONS.modulators.taste.conc',... %2
         'none',... %3
         'none',... %4
         'none',... %5
-        'none',...
         'none'};
     
     % value of the modulators, If you have a parametric modulation
     param.time{i} = {'0',... %1
-        '0',... %2
+        '1',... %2
         '0',... %3
         '0',... %4
         '0',... %5
-        '0',...
         '0'};
       
 end
@@ -135,7 +134,7 @@ for i = 1:length(subj)
     fprintf('participant number: %s \n', subjT);
     cd (subjoutdir)
 
-    if ~exist('output','dir');
+    if ~exist('output','dir')
         mkdir ('output');
     end
 
@@ -150,11 +149,6 @@ for i = 1:length(subj)
     %%%%%%%%%%%%%%%%%%%%%%%  DO CONSTRASTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if constrasts == 1
         doContrasts(subjoutdir,param, SPM);
-    end
-
-    %%%%%%%%%%%%%%%%%%%%%%%  DO COVARIATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if covariate == 1
-        doCovariate(subjoutdir,param, SPM, homedir, subjT, COVA);
     end
 
     %%%%%%%%%%%%%%%%%%%%% COPY CONSTRASTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -235,72 +229,66 @@ end
             %%%%%%%%%%%%%%%%%%%%%% !!!!!!!!!!!!!!!! %%%%%%%%%%%%%%%%%%%%%%%
             % ATTENTION HERE WE NEED TO INITALIZE c for every new session
 
-            c = 0; % we need a counter because we include only condition that are non empty
-
+             c = 0; % we need a counter because we include only condition that are non empty
+            
             for cc=1:nconds
-
-                if ~ isempty(eval(param.Cnam{ses}{cc})) % only if the onsets are not all 0
-
+                
+                if ~ std(eval(param.onset{ses}{cc}))== 0 % only if the onsets are not all 0
+               
                     c = c+1; % update counter
-
+                    
                     SPM.Sess(ses).U(c).name      = {param.Cnam{ses}{cc}};
-                    SPM.Sess(ses).U(c).ons       = eval(param.Cnam{ses}{cc});
+                    SPM.Sess(ses).U(c).ons       = eval(param.onset{ses}{cc});
                     SPM.Sess(ses).U(c).dur       = eval(param.duration{ses}{cc});
-                    SPM.Sess(ses).U(c).orth      = 1; % orthogonalization on
-
+                    
                     SPM.Sess(ses).U(c).P(1).name = 'none';
-
+                    SPM.Sess(ses).U(c).orth = 0;
+                    
+                    
                     if isfield (param, 'modul') % this parameters are specified only if modulators are defined in the design
-
-                        if ~ strcmp (param.modul{ses}{cc}, 'none')
-
+                        
+                        if ~ strcmp(param.modul{ses}{cc}, 'none')
+                            
                             if isstruct (eval(param.modul{ses}{cc}))
-
+                                SPM.Sess(ses).U(c).orth = 0; %!! no ortho BUT be careful
                                 mod_names = fieldnames (eval(param.modul{ses}{cc}));
                                 nc = 0; % intialize the modulators count
-
+                                
                                 for nmod = 1:length(mod_names)
-
+                                    
                                     nc = nc+1;
                                     mod_name = char(mod_names(nmod));
+                                    
+                                    if  ~ round(std(eval([param.modul{ses}{cc} '.' mod_name])),10)== 0  %verify that there is variance in mod
+                                      
+                                    
+                                        SPM.Sess(ses).U(c).P(nc).name  = mod_name;
+                                        SPM.Sess(ses).U(c).P(nc).P     = eval([param.modul{ses}{cc} '.' mod_name]);
+                                        SPM.Sess(ses).U(c).P(nc).h     = 1;
+                                        
+                                    else
 
-                                    SPM.Sess(ses).U(c).P(nc).name  = mod_name;
-                                    SPM.Sess(ses).U(c).P(nc).P     = eval([param.modul{ses}{cc} '.' mod_name]);
-                                    SPM.Sess(ses).U(c).P(nc).h     = 1;
+                                       SPM.Sess(ses).U(c).P(nc).name  = [];
+                                       SPM.Sess(ses).U(c).P(nc).P     = [];
+                                       SPM.Sess(ses).U(c).P(nc).h     = []; 
+                                    end
 
-                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).name       = {param.Cnam{ses}{cc}};
-                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).onset      = eval(param.Cnam{ses}{cc});
-                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).duration   = eval(param.duration{ses}{cc});
-                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).tmod       = 0;
-
-                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod(nc).name  = mod_name;
-                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod(nc).param = eval([param.modul{ses}{cc} '.' mod_name]);
-                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod(nc).poly  = 1;
-                                    matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).orth = 0;
                                 end
-
+                                
 
                             else
+                                
                                 SPM.Sess(ses).U(c).P(1).name  = char(param.modulName{ses}{cc});
                                 SPM.Sess(ses).U(c).P(1).P     = eval(param.modul{ses}{cc});
-                                SPM.Sess(ses).U(c).P(1).h     = 1;
-
-                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).name       = {param.Cnam{ses}{cc}};
-                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).onset      = eval(param.Cnam{ses}{cc});
-                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).duration   = eval(param.duration{ses}{cc});
-                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).tmod       = 0;
-
-                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod.name  = char(param.modulName{ses}{cc});
-                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod.param = eval(param.modul{ses}{cc});
-                                matlabbatch{1}.spm.stats.fmri_spec.sess(ses).cond(c).pmod.poly  = 1;
-
+                                SPM.Sess(ses).U(c).P(1).h     = 1; 
+                           
                             end
                         end
                     end
                 end
             end
         end
-
+        
         %-----------------------------
         %multiple regressors for mvts parameters ( no movement regressor
         %after ICA)
@@ -371,8 +359,8 @@ end
 
         % intrinsic autocorrelations: OPTIONS: 'none'|'AR(1) + w'
         %--------------------------------------------------------------------------
-        SPM.xVi.form       = 'AR(1)'; %AR(0.2)???? SOSART
-
+        SPM.xVi.form       = 'AR'; 
+        
         % specify SPM working dir for this sub
         %==========================================================================
         SPM.swd = pwd;
@@ -417,7 +405,7 @@ end
 
             taskN = SPM.xX.name{j} (4);
             task  = ['task' taskN '.'];
-            conditionName{j} = strcat(task,SPM.xX.name{j} (18:end-6));
+            conditionName{j} = strcat(task,SPM.xX.name{j} (7:end-6));
 
         end
 
@@ -426,66 +414,33 @@ end
         % | CONSTRASTS FOR T-TESTS
         
         % con1
-        Ctnames{1} = 'reward';
-        weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 1;
+        Ctnames{1} = 'taste_lik';
+        weightPos  = ismember(conditionName, {'task1.tastexlik^1'}) * 1; 
         Ct(1,:)    = weightPos;
         
-        % con2
-        Ctnames{2} = 'neutral';
-        weightPos  = ismember(conditionName, {'task1.taste.control'}) * 1;
+        %con2
+        Ctnames{2} = 'taste_int';
+        weightPos  = ismember(conditionName, {'task1.tastexint^1'}) * 1; 
         Ct(2,:)    = weightPos;
+
+        %con3
+        Ctnames{3} = 'taste_fam';
+        weightPos  = ismember(conditionName, {'task1.tastexfam^1'}) * 1; 
+        Ct(3,:)    = weightPos;
         
-%                 % con
-%         Ctnames{3} = 'reward-neutral';
-%         weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 1;
-%         weightNeg  = ismember(conditionName, {'task1.taste.control'})* -1;
-%         Ct(3,:)    = weightPos+weightNeg;
-%        
-%         
-%         % con
-%         Ctnames{4} = 'reward-ALL';
-%         weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 2;
-%         weightNeg  = ismember(conditionName, {'task1.taste.control', 'task1.rinse'})* -1;
-%         Ct(4,:)    = weightPos+weightNeg;
-%         
-%          % con
-%         Ctnames{5} = 'TasteNoTaste';
-%         weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 1;
-%         weightNeg  = ismember(conditionName, {'task1.rinse'}) * -2;
-%         Ct(5,:)    = weightPos+weightNeg;
         
+        %con4
+        Ctnames{4} = 'taste_ch';
+        weightPos  = ismember(conditionName, {'task1.tastexch^1'}) * 1; 
+        Ct(4,:)    = weightPos;
 
-%         % con3
-%         Ctnames{3} = 'mod.reward';
-%         weightPos  = ismember(conditionName, {'task1.taste.rewardxliking^1'}) * 1;
-%         Ct(3,:)    = weightPos;
-% 
-%         % con4
-%         Ctnames{4} = 'mod.control';
-%         weightPos = ismember(conditionName, {'task1.taste.controlxliking^1'})* -1;
-%         Ct(4,:)    = weightPos;
-%         
-%         % con2
-%         Ctnames{2} = 'overaLiquid';
-%         weightPos  = ismember(conditionName, {'task1.taste.reward', 'task1.taste.control', 'task1.rinse'}) * 1;
-%         Ct(2,:)    = weightPos;
-%         
+        
+        %con5
+        Ctnames{5} = 'taste_ChAbs';
+        weightPos  = ismember(conditionName, {'task1.tastexchAbs^1'}) * 1;
+        Ct(5,:)    = weightPos;
 
 
-
-%         
-%         % con4 
-%         Ctnames{4} = 'question_presence';
-%         weightPos  = ismember(conditionName, {'task1.liking', 'task1.intensity', 'task1.familiarity'}) * 1;
-%         Ct(4,:)    = weightPos;
-%         
-%         
-%         % con5
-%         Ctnames{5} = 'reward-ALL';
-%         weightPos  = ismember(conditionName, {'task1.taste.reward'}) * 2;
-%         weightNeg  = ismember(conditionName, {'task1.taste.control', 'task1.rinse'})* -1;
-%         Ct(5,:)    = weightPos+weightNeg;
-%         
         % define F constrasts
         %------------------------------------------------------------------
         Cf = []; Cfnames = [];
@@ -522,35 +477,6 @@ end
         spm_jobman('run',jobs)
         
         disp ('contrasts created!')
-    end
-
-    function [] = doCovariate(subjoutdir, param, SPM, Dpath, subj, COVA)
-
-        % Import the data
-        REWARD  = tdfread([Dpath '/DERIVATIVES/BEHAV/HED_' COVA '_REWARD.tsv'], '\t');
-        CONTROL = tdfread([Dpath '/DERIVATIVES/BEHAV/HED_' COVA '_CONTROL.tsv'], '\t');
-        %REWARD.x0x22id0x22 = num2str(REWARD.x0x22id0x22);
-        IDX = strcmp(REWARD.x0x22id0x22(:), subj(end-2:end));
-        %IDX = strcmp(REWARD.x0x22id0x22, subj(end-2:end));
-        rew_cov = REWARD.x0x22lik0x22(IDX);
-        con_cov = CONTROL.x0x22lik0x22(IDX);
-        
-
-       HeaderInfo = spm_vol('con_0001.nii');
-       vol1 = spm_read_vols(HeaderInfo);
-       cof1 = vol1 .* rew_cov;
-       HeaderInfo.fname = ['con_0003.nii'];  % This is where you fill in the new filename
-       HeaderInfo.private.dat.fname = HeaderInfo.fname;
-       spm_write_vol(HeaderInfo,cof1);
-       
-       HeaderInfo = spm_vol('con_0002.nii');
-       vol2 = spm_read_vols(HeaderInfo);
-       cof2 = vol2 .* con_cov;
-       HeaderInfo.fname = ['con_0004.nii'];  % This is where you fill in the new filename
-       HeaderInfo.private.dat.fname = HeaderInfo.fname;
-       spm_write_vol(HeaderInfo,cof2);
-
-
     end
 
 

@@ -33,7 +33,7 @@ PIT  <- read.delim(file.path(analysis_path,'OBIWAN_PIT.txt'), header = T, sep ='
 HED  <- read.delim(file.path(analysis_path,'OBIWAN_HEDONIC.txt'), header = T, sep ='') # 
 info <- read.delim(file.path(analysis_path,'info_expe.txt'), header = T, sep ='') # 
 intern <- read.delim(file.path(analysis_path,'OBIWAN_INTERNAL.txt'), header = T, sep ='') # 
-medic <- read.delim(file.path(physio_path,'medic.txt'), header = T, sep ='') # 
+medic <- read.delim(file.path(physio_path,'medic.txt'), header = T, sep =',') # 
 medic$session = as.factor(revalue(as.factor(medic$session), c('1'="second", '2'="third"))) #change value of session
 
 #subset only pretest
@@ -96,7 +96,7 @@ intern = ddply(HED, .(id), summarise, piss = mean(piss, na.rm = TRUE), hungry = 
 d = merge(lik, intern, by = "id")
 dt = merge(d, medic, by = "id", all.x  = T)
 dtf = merge(dt, info, by = "id")
-numer <- c("lik", "int",   "fam",  "piss"   ,      "hungry"  ,  "thirsty",  "GLP1",      "OEA",  "PEA","X2.AG","AEA","Leptin","Resistin","MCP","TNFalpha","Ghrelin","reelin", "glucagon" ,"adiponectin" ,"obestatin","age")
+numer <- c("lik", "int",   "fam",  "piss"   ,      "hungry"  ,  "thirsty",  "GLP1",      "OEA",  "PEA","X2.AG","AEA","Leptin","Resistin","MCP","TNFalpha","Ghrelin","reelin", "glucagon" ,"adiponectin" ,"obestatin","age", "insulin",  "Fast_glu")
 dtf_c = dtf %>% group_by %>% mutate_at(numer, scale)
 
 write.table(lik_c, (file.path(analysis_path, "HED_covariateT0_Ratings.tsv")), row.names = F, sep="\t")

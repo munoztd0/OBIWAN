@@ -5,17 +5,18 @@ cd /home/OBIWAN/DERIVATIVES/GLM/AFNI/HED
   
 #run 3dlme in afni
 3dLME  -prefix lme_full -jobs 20 \
--model "condition*time*intervention*bmiZ+gender+ageZ" \
+-model "condition*intervention*session+gender+age+bmi_diff+BMI_t1+GLP1+insulin+Fast_glu+thirsty+hungry+piss+fam+int" \
 -mask /home/OBIWAN/DERIVATIVES/EXTERNALDATA/LABELS/GM/CIT_GM.nii \
--resid  all_residuals \
--qVars 'bmiZ,ageZ' \
--qVarsCenters '0,0' \
--ranEff '~time*condition|Subj' \
+-resid  all_residuals.nii \
+-qVars 'age,bmi_diff,BMI_t1,GLP1,insulin,Fast_glu,thirsty,hungry,piss,fam,int' \
+-qVarsCenters '0,0,0,0,0,0,0,0,0,0,0' \
+-ranEff '~1|Subj' \
 -SS_type 3 \
 -num_glt 1 \
 -gltLabel 1 'Reward-Neutral' -gltCode 1 'condition : 1*Reward -1*Neutral'  \
 -dataTable @HED_LME_withcov.txt\
 
+#-gltLabel 2 'inter' -gltCode 2 'condition : 1*Reward -1*Neutral session: 1 intervention: 1*1 - 1*0'   \
 #AFNItoNIFTI -prefix test lme+tlrc[5]
 for i in 1 2 3 4 5 6 7 8 9 #10 12 12 13 14 15 16 17 18 19
 do
