@@ -19,7 +19,7 @@ copycontrasts = 1;
 sessionX = 'second';
 COVA    = 'covariateT0';
 task = 'hedonicreactivity';
-name_ana = 'GLM-01_0'; % output folder for this analysis
+name_ana = 'GLM-01_full'; % output folder for this analysis
 cluster = 0;
 %% DEFINE PATH
 cd ~

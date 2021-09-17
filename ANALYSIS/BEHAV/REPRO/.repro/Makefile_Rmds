@@ -1,6 +1,0 @@
-markdown.html: markdown.Rmd data/info.csv data/internal.csv data/PAV.csv data/INST.csv data/PIT.csv data/HEDONIC.csv functions/options.R functions/clean.R functions/plots.R functions/pes_ci.R functions/LMER_misc_tools.R
-	$(RUN1) Rscript -e 'rmarkdown::render("$(WORKDIR)/$<", "all")' $(RUN2)
-
-test.html: test.Rmd data/info_expe.txt R/clean.R
-	$(RUN1) Rscript -e 'rmarkdown::render("$(WORKDIR)/$<", "all")' $(RUN2)
-

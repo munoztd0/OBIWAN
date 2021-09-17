@@ -1,23 +1,52 @@
-3dLMEr -prefix LME \
--jobs 12                         \
--model  'CS*RT+(RT|Subj)'          \
--bounds -2 2                            \
--qVars  'RT'                            \
--qVarCenters 1                          \
--gltCode pos      'CS : 1*pos'                       \
--gltCode neg      'CS : 1*neg'                       \
--gltCode pos-neg  'CS : 1*pos -1*neg'                \
--dataTable                              \
-Subj CS  RT  InputFile             \
-s1    pos     23   /home/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01/group/sub-obese201_con-0001.nii \
-s1    neg     34   /home/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01/group/sub-obese201_con-0002.nii \
-s2    pos     23   /home/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01/group/sub-obese202_con-0001.nii \
-s2    neg     34   /home/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01/group/sub-obese202_con-0002.nii \
-s3    pos     43   /home/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01/group/sub-obese203_con-0001.nii \
-s3    neg     34   /home/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01/group/sub-obese203_con-0002.nii \
-s4    pos     43   /home/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01/group/sub-obese204_con-0001.nii \
-s4    neg     54   /home/OBIWAN/DERIVATIVES/GLM/SPM/PIT/GLM-01/group/sub-obese204_con-0002.nii \
+#!/bin/bash 
 
+cd /home/OBIWAN/DERIVATIVES/GLM/AFNI/HED
+
+
+
+3dLMEr -prefix LME \
+-jobs 20       \
+-model  'condition*perceived_liking*session*intervention+(condition*perceived_liking*session|Subj)+(1|trialxcondition)'          \
+-mask mask.nii \
+-qVars  'perceived_liking,trialxcondition'                            \
+-qVarCenters '0,0'                       \
+-gltCode Rew_Neu  'condition : 1*Reward -1*Neutral'            \
+-gltCode inter   'condition : 1*Reward session : 1*Post -1*Pre intervention : 1*Treatment -1*Placebo perceived_liking :'   \
+-dataTable @HED_LMER.txt\
+
+
+3dLMEr -prefix LME \
+-jobs 20       \
+-model  'condition*perceived_liking+(condition*perceived_liking|Subj)+(1|trialxcondition)'          \
+-mask mask.nii \
+-qVars  'perceived_liking,trialxcondition'                            \
+-qVarCenters '0,0'                       \
+-gltCode Rew_Neu  'condition : 1*Reward -1*Neutral'                \
+-gltCode Rew_NeuXlIk   'condition : 1*Reward -1*Neutral perceived_liking :'                       \
+-gltCode RewXlIk   'condition : 1*Reward perceived_liking :'                       \
+-dataTable @HED_LMER.txt\
+
+
+
+
+-qVarCenters '0'                       \
+#chnage trialxcoinsition
+
+-gltCode pos      'condition : 1*Reward'                       \
+-gltCode pos-neg  'condition : 1*Reward -1*Neutral'                \
+-gltCode Lik      'condition : 1*Reward perceived_liking :'                       \
+#run 3dlme in afni
+3dLME  -prefix lme_4 -jobs 20 \
+-model "condition*time*intervention*bmiZ+gender+ageZ" \
+-mask /home/OBIWAN/DERIVATIVES/EXTERNALDATA/LABELS/GM/CIT_GM.nii \
 
 -gltCode CS-eff1  'CS : 0.5*pos +0.5*neg -1*neu'     \
 -glfCode CS-eff2  'CS : 1*pos -1*neg & 1*pos -1*neu' \
+
+#AFNItoNIFTI -prefix test lme+tlrc[5]
+for i in 0 1 2 4 6 8
+do
+#/usr/local/abin/3dAFNItoNIFTI -prefix lme_con${i} LME+tlrc[${i}]
+fslmaths lme_con${i} -ztop -add -1 -mul -1 lme_con${i}
+done
+
