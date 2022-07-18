@@ -25,7 +25,7 @@ Python 2.7 (and python 3.5 or above for the BIDS)
 R 3.1.1 or a more resent version
 
 
-Please get in touch with your experiences with using the codes and data, and any bug reports or issues to me at david.munoz@etu.unige.ch
+Please get in touch with your experiences with using the codes and data, and any bug reports or issues to me at david.munoztord@mailbox.org
 
 
 This data and code are being released with a permissive open-source license. You should feel free to use or adapt the utility code as long as you follow the terms of the license, which are enumerated below.
